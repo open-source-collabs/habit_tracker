@@ -48,6 +48,7 @@ abstract final class AppColors {
   // ===========================================================================
   // Dusk (Dark Mode)
   static const Color obsidianTwilight = Color(0xFF0F1016);
+  static const Color darkScaffold = obsidianTwilight;
   static const Color cardSurface = Color(0xFF181924);
   static const Color surfaceElevated = Color(0xFF202230);
   static const Color borderSubtle = Color(0xFF262837);

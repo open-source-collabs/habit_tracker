@@ -50,7 +50,10 @@ class AppDialog extends StatelessWidget {
       insetPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
       child: Center(
         child: Container(
-          constraints: BoxConstraints(maxWidth: 420.w.clamp(320.0, 460.0)),
+          constraints: BoxConstraints(
+            maxWidth: 420.w.clamp(320.0, 460.0),
+            maxHeight: MediaQuery.of(context).size.height * 0.88,
+          ),
           padding: EdgeInsets.all(24.r),
           decoration: BoxDecoration(
             color: context.cardBackgroundColor,
@@ -100,18 +103,23 @@ class AppDialog extends StatelessWidget {
               ],
               if (content != null) ...[
                 SizedBox(height: 16.h),
-                content!,
+                Flexible(
+                  child: SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: content!,
+                  ),
+                ),
               ],
               SizedBox(height: 24.h),
               Wrap(
                 alignment: WrapAlignment.end,
                 crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 8.w.clamp(6.0, 12.0),
+                spacing: 10.w.clamp(8.0, 14.0),
                 runSpacing: 8.h.clamp(6.0, 12.0),
                 children: [
                   AppButton(
                     text: cancelText,
-                    variant: AppButtonVariant.ghost,
+                    variant: AppButtonVariant.outline,
                     size: AppButtonSize.md,
                     onPressed: () {
                       if (onCancel != null) {

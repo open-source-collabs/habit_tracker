@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:habit_tracker/core/theme/app_colors.dart';
-import 'package:habit_tracker/core/theme/app_text_styles.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
-import '../../../../core/widgets/widgets.dart';
 import '../../../habits/data/models/habit_model.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
 import '../../../habits/presentation/widgets/habit_card.dart';
+import '../../../habits/presentation/widgets/add_habit_sheet.dart';
 import '../../../themes/data/models/dynamic_theme_model.dart';
 import '../../../themes/presentation/providers/theme_provider.dart';
 import '../../../themes/presentation/screens/theme_studio_sheet.dart';
@@ -56,7 +54,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         onPressed: () => _showAddHabitDialog(context, activeTheme),
         backgroundColor: primaryAccent,
         foregroundColor: context.onPrimaryColor,
-        elevation: 4,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.r),
+          side: BorderSide(color: context.cardBorderColor, width: 1.2),
+        ),
         icon: Icon(Icons.add_rounded, size: 22.sp.clamp(20.0, 24.0)),
         label: Text(
           'New Habit',
@@ -466,128 +468,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   void _showAddHabitDialog(BuildContext context, UserThemeModel activeTheme) {
-    AppHaptics.mediumImpact();
-    final titleController = TextEditingController();
-    final subtitleController = TextEditingController();
-    String selectedRoutine = 'General';
-    int selectedAccent = 0;
-
-    final routineItems = const [
-      AppDropdownItem(value: 'General', label: 'General Routine', icon: Text('🎯')),
-      AppDropdownItem(value: 'Morning', label: 'Morning Routine', icon: Text('☀️')),
-      AppDropdownItem(value: 'Focus', label: 'Deep Focus', icon: Text('⚡')),
-      AppDropdownItem(value: 'Health', label: 'Health & Hydration', icon: Text('💧')),
-      AppDropdownItem(value: 'Evening', label: 'Evening Calm', icon: Text('🌙')),
-      AppDropdownItem(value: 'Fitness', label: 'Fitness & Gym', icon: Text('💪')),
-    ];
-
-    showAppDialog(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AppDialog(
-              title: 'New Habit',
-              message: 'Establish a new intentional routine to track daily.',
-              icon: Icon(
-                Icons.add_task_rounded,
-                size: 24.sp,
-                color: context.primaryAccent,
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  AppTextField(
-                    controller: titleController,
-                    labelText: 'HABIT TITLE',
-                    hintText: 'e.g. Morning Breathwork',
-                    showClearButton: true,
-                    autofocus: true,
-                  ),
-                  SizedBox(height: 14.h),
-                  AppTextField(
-                    controller: subtitleController,
-                    labelText: 'SUBTITLE / NOTES',
-                    hintText: 'e.g. 15 minutes outdoors',
-                  ),
-                  SizedBox(height: 14.h),
-                  AppDropdown<String>(
-                    labelText: 'ROUTINE CATEGORY',
-                    value: selectedRoutine,
-                    items: routineItems,
-                    onChanged: (val) {
-                      setDialogState(() => selectedRoutine = val);
-                    },
-                  ),
-                  SizedBox(height: 16.h),
-                  Text(
-                    'ACCENT COLOR',
-                    style: AppTextStyles.labelSmall(context),
-                  ),
-                  SizedBox(height: 8.h),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: List.generate(
-                      context.accentPalette.length,
-                      (idx) {
-                        final color = context.accentPalette[idx];
-                        final isSelected = selectedAccent == idx;
-                        return GestureDetector(
-                          onTap: () {
-                            AppHaptics.selectionClick();
-                            setDialogState(() => selectedAccent = idx);
-                          },
-                          child: Container(
-                            width: 32.r,
-                            height: 32.r,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                              border: isSelected
-                                  ? Border.all(color: AppColors.white, width: 2.5)
-                                  : null,
-                              boxShadow: isSelected
-                                  ? [
-                                      BoxShadow(
-                                        color: color.withValues(alpha: 0.5),
-                                        blurRadius: 8.r,
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              confirmText: 'Add Habit',
-              cancelText: 'Cancel',
-              onConfirm: () {
-                final title = titleController.text.trim();
-                if (title.isEmpty) return;
-
-                final newHabit = HabitModel(
-                  id: 'habit_${DateTime.now().millisecondsSinceEpoch}',
-                  title: title,
-                  subtitle: subtitleController.text.trim(),
-                  frequency: const HabitFrequency.daily(),
-                  routineGroup: selectedRoutine,
-                  accentIndex: selectedAccent,
-                  createdAt: DateTime.now(),
-                );
-
-                ref.read(habitListProvider.notifier).createHabit(newHabit);
-                Navigator.of(dialogContext).pop();
-                AppHaptics.heavyImpact();
-              },
-              onCancel: () => Navigator.of(dialogContext).pop(),
-            );
-          },
-        );
-      },
-    );
+    AddHabitSheet.show(context);
   }
 }

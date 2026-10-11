@@ -246,11 +246,16 @@ class _AppButtonState extends State<AppButton>
                     widget.leadingIcon!,
                     SizedBox(width: 8.w),
                   ],
-                  Text(
-                    widget.text,
-                    style: textStyle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        widget.text,
+                        style: textStyle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ),
                   if (widget.trailingIcon != null && !widget.isLoading) ...[
                     SizedBox(width: 8.w),
