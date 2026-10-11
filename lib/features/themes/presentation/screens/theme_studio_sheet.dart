@@ -19,7 +19,7 @@ class ThemeStudioSheet extends ConsumerStatefulWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => const ThemeStudioSheet(),
     );
   }
@@ -100,13 +100,16 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
         SnackBar(
           content: Text(
             'Theme "${updatedTheme.name}" saved & applied!',
-            style: const TextStyle(fontWeight: FontWeight.w600),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: AppColors.white,
+            ),
           ),
           backgroundColor: updatedTheme.accentPalette.isNotEmpty
               ? updatedTheme.accentPalette.first
               : AppColors.emeraldMint,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
         ),
       );
     }
@@ -168,9 +171,9 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
             border: Border.all(color: _workingTheme.cardBorder, width: 1.2),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
-                blurRadius: 30,
-                offset: const Offset(0, -6),
+                color: AppColors.overlay50,
+                blurRadius: 30.r,
+                offset: Offset(0, -6.h),
               ),
             ],
           ),
@@ -372,7 +375,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                 color: activeAccent.withValues(alpha: 0.35),
                 blurRadius: 20.r,
                 spreadRadius: 0,
-                offset: const Offset(0, 4),
+                offset: Offset(0, 4.h),
               ),
             ],
           ),
@@ -421,7 +424,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.check, color: Colors.white, size: 20),
+                    child: Icon(Icons.check, color: AppColors.white, size: 20.sp),
                   ),
                 ],
               ),
@@ -787,12 +790,12 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                     BoxShadow(
                       color: color.withValues(alpha: 0.3),
                       blurRadius: 8.r,
-                      offset: const Offset(0, 2),
+                      offset: Offset(0, 2.h),
                     ),
                   ],
                 ),
                 child: Icon(Icons.colorize,
-                    color: Colors.white.withValues(alpha: 0.8), size: 16.sp),
+                    color: AppColors.white.withValues(alpha: 0.8), size: 16.sp),
               ),
             );
           }),
@@ -809,13 +812,16 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
           height: 48.h,
           child: FilledButton.icon(
             icon: const Icon(Icons.palette),
-            label: const Text(
+            label: Text(
               'Save & Apply Theme',
-              style: TextStyle(fontWeight: FontWeight.w700),
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.white,
+              ),
             ),
             style: FilledButton.styleFrom(
               backgroundColor: activeAccent,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16.r),
               ),
@@ -829,7 +835,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                icon: const Icon(Icons.copy, size: 16),
+                icon: Icon(Icons.copy, size: 16.sp),
                 label: const Text('Duplicate'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _workingTheme.textPrimary,
@@ -845,14 +851,16 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
               SizedBox(width: 10.w),
               Expanded(
                 child: OutlinedButton.icon(
-                  icon: const Icon(Icons.delete_outline,
-                      size: 16, color: AppColors.error),
-                  label: const Text(
+                  icon: Icon(Icons.delete_outline,
+                      size: 16.sp, color: Theme.of(context).colorScheme.error),
+                  label: Text(
                     'Delete',
-                    style: TextStyle(color: AppColors.error),
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.error, width: 1.2),
+                    side: BorderSide(color: Theme.of(context).colorScheme.error, width: 1.2),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14.r),
                     ),

@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_tracker/core/theme/app_colors.dart';
 import 'package:habit_tracker/core/theme/app_theme_extension.dart';
-import 'package:habit_tracker/core/theme/dynamic_theme_model.dart';
 import 'package:habit_tracker/core/theme/theme_factory.dart';
 import 'package:habit_tracker/core/utils/haptics.dart';
-import 'package:habit_tracker/presentation/providers/theme_provider.dart';
+import 'package:habit_tracker/features/themes/data/models/dynamic_theme_model.dart';
+import 'package:habit_tracker/features/themes/presentation/providers/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

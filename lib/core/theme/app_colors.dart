@@ -3,46 +3,92 @@ import 'package:flutter/material.dart';
 /// Semantic colors, base surfaces, and vibrant habit palettes
 /// representing the "Dusk & Dawn" mental wellness aesthetic.
 abstract final class AppColors {
-  // --- Dark Base Surfaces ("Dusk") ---
+  // ===========================================================================
+  // Tier 1: Primitives, Scrims & Ambient Shadows
+  // ===========================================================================
+  static const Color transparent = Color(0x00000000);
+  static const Color white = Color(0xFFFFFFFF);
+  static const Color black = Color(0xFF000000);
+  static const Color black87 = Color(0xDD000000);
+
+  /// Canonical modal scrim and overlays
+  static const Color scrim = Color(0x80000000); // 50% black
+  static const Color barrier = Color(0x8C000000); // 55% modal barrier
+  static const Color overlay50 = scrim;
+
+  /// Ambient elevations
+  static const Color shadowDark = Color(0x40000000); // 25% black
+  static const Color shadowLight = Color(0x0A000000); // 4% black
+
+  /// Dynamic shadow color respecting theme brightness
+  static Color shadow({required bool isDark}) =>
+      isDark ? shadowDark : shadowLight;
+
+  // ===========================================================================
+  // Tier 2: Neutral Slate Palette (Single Hex Source of Truth)
+  // ===========================================================================
+  static const Color slate50 = Color(0xFFF8FAFC);
+  static const Color slate400 = Color(0xFF94A3B8);
+  static const Color slate500 = Color(0xFF64748B);
+  static const Color slate600 = Color(0xFF475569);
+  static const Color slate900 = Color(0xFF0F172A);
+
+  // Semantic Typography Mappings (Zero duplicate hex codes)
+  static const Color textPrimary = slate50;
+  static const Color textSecondary = slate400;
+  static const Color textMuted = slate500;
+  static const Color textDisabled = slate600;
+
+  static const Color textPrimaryLight = slate900;
+  static const Color textSecondaryLight = slate600;
+  static const Color textMutedLight = slate400;
+
+  // ===========================================================================
+  // Tier 3: Base Surfaces ("Dusk & Dawn")
+  // ===========================================================================
+  // Dusk (Dark Mode)
   static const Color obsidianTwilight = Color(0xFF0F1016);
   static const Color cardSurface = Color(0xFF181924);
   static const Color surfaceElevated = Color(0xFF202230);
   static const Color borderSubtle = Color(0xFF262837);
-  static const Color borderActive = Color(0xFF383B4F);
 
-  // --- Light Base Surfaces ("Dawn") ---
+  // Dawn (Light Mode)
   static const Color porcelainBg = Color(0xFFF8F9FD);
-  static const Color porcelainCard = Color(0xFFFFFFFF);
+  static const Color porcelainCard = white; // Canonical alias to white (zero duplicate hex)
   static const Color porcelainBorder = Color(0xFFE2E8F0);
 
-  // --- Vibrant Habit Accent Palette ---
+  // ===========================================================================
+  // Tier 4: Vibrant Habit Accents & Semantic Feedback
+  // ===========================================================================
   static const Color sunsetCoral = Color(0xFFFF6B55);
   static const Color neonLavender = Color(0xFF8B5CF6);
   static const Color emeraldMint = Color(0xFF10B981);
   static const Color cyanGlow = Color(0xFF06B6D4);
   static const Color mangoSunrise = Color(0xFFFFAE33);
   static const Color bubblegumPink = Color(0xFFEC4899);
+  static const Color crimsonError = Color(0xFFEF4444);
 
-  // --- Reference Design Surfaces & Accents ---
+  // Semantic Status Aliases (Cleanly mapped to palette, zero duplicate hexes)
+  static const Color success = emeraldMint;
+  static const Color warning = mangoSunrise;
+  static const Color info = cyanGlow;
+  static const Color error = crimsonError;
+
+  // ===========================================================================
+  // Tier 5: Curated Editorial Swatches
+  // ===========================================================================
   static const Color nordicTeal = Color(0xFF0E4856);
   static const Color nordicMist = Color(0xFFEBF2F5);
   static const Color nordicBorder = Color(0xFFDCE5EA);
-
   static const Color peachMist = Color(0xFFFFF7F2);
-
-  /// Warm Peach border outline (#F5E2D8)
   static const Color peachBorder = Color(0xFFF5E2D8);
-
-  /// Ethereal Orchid accent (#A855F7)
   static const Color etherealOrchid = Color(0xFFA855F7);
-
-  /// Rose Quartz accent (#FB7185)
   static const Color roseQuartz = Color(0xFFFB7185);
-
-  /// Deep Espresso Plum text (#231924)
   static const Color espressoText = Color(0xFF231924);
 
-  /// Immutable list of the core vibrant habit accent colors
+  // ===========================================================================
+  // Tier 6: Habit Palette & Utilities
+  // ===========================================================================
   static const List<Color> habitPalette = <Color>[
     sunsetCoral,
     neonLavender,
@@ -69,25 +115,8 @@ abstract final class AppColors {
         cardSurface,
       );
     }
-    return Color.alphaBlend(accent.withValues(alpha: opacity), porcelainCard);
+    return Color.alphaBlend(accent.withValues(alpha: opacity), white);
   }
-
-  // --- Typography & Content Hierarchy (Dark) ---
-  static const Color textPrimary = Color(0xFFF8FAFC);
-  static const Color textSecondary = Color(0xFF94A3B8);
-  static const Color textMuted = Color(0xFF64748B);
-  static const Color textDisabled = Color(0xFF475569);
-
-  // --- Typography & Content Hierarchy (Light) ---
-  static const Color textPrimaryLight = Color(0xFF0F172A);
-  static const Color textSecondaryLight = Color(0xFF475569);
-  static const Color textMutedLight = Color(0xFF94A3B8);
-
-  // --- Semantic State Feedback ---
-  static const Color success = Color(0xFF10B981);
-  static const Color warning = Color(0xFFFFAE33);
-  static const Color error = Color(0xFFEF4444);
-  static const Color info = Color(0xFF06B6D4);
 
   // --- Hex Utilities ---
   /// Parses a hex color string (e.g., `#0F1016`, `#FF0F1016`, `0F1016`).

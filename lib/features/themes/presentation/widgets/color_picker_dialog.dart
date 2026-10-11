@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
 
 /// Interactive modal for selecting colors via Hue/Saturation/Lightness sliders,
@@ -44,7 +46,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
     AppColors.peachMist,
     AppColors.obsidianTwilight,
     AppColors.cardSurface,
-    AppColors.porcelainCard,
+    AppColors.white,
     // Vibrant Accents
     AppColors.sunsetCoral,
     AppColors.neonLavender,
@@ -88,22 +90,21 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
   @override
   Widget build(BuildContext context) {
     final currentColor = _hslColor.toColor();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Dialog(
-      backgroundColor: isDark ? const Color(0xFF181924) : Colors.white,
+      backgroundColor: context.cardBackgroundColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(24.r),
         side: BorderSide(
-          color: isDark ? const Color(0xFF262837) : const Color(0xFFE2E8F0),
+          color: context.cardBorderColor,
           width: 1.2,
         ),
       ),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400),
+        constraints: BoxConstraints(maxWidth: 400.w.clamp(320.0, 440.0)),
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(24.r),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -114,61 +115,60 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                 children: [
                   Text(
                     widget.title,
-                    style: TextStyle(
-                      fontSize: 18,
+                    style: context.textTheme.titleMedium?.copyWith(
+                      fontSize: 18.sp,
                       fontWeight: FontWeight.w700,
-                      color: isDark ? Colors.white : Colors.black87,
+                      color: context.textPrimaryColor,
                       letterSpacing: -0.3,
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, size: 20),
+                    icon: Icon(Icons.close, size: 20.sp),
                     onPressed: () => Navigator.of(context).pop(),
-                    color: isDark ? Colors.white60 : Colors.black45,
+                    color: context.textMutedColor,
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16.h),
 
               // Preview Box & Hex Field
               Row(
                 children: [
                   Container(
-                    width: 56,
-                    height: 56,
+                    width: 56.r,
+                    height: 56.r,
                     decoration: BoxDecoration(
                       color: currentColor,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(16.r),
                       border: Border.all(
-                        color: isDark ? Colors.white24 : Colors.black12,
+                        color: context.cardBorderColor,
                         width: 1.5,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: currentColor.withValues(alpha: 0.35),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                          blurRadius: 12.r,
+                          offset: Offset(0, 4.h),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16.w),
                   Expanded(
                     child: TextField(
                       controller: _hexController,
-                      style: TextStyle(
-                        fontFamily: 'Inter',
+                      style: context.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white : Colors.black87,
+                        color: context.textPrimaryColor,
                       ),
                       decoration: InputDecoration(
                         labelText: 'Hex Code',
                         hintText: '#RRGGBB',
                         isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 12),
+                        contentPadding: EdgeInsets.symmetric(
+                            horizontal: 14.w, vertical: 12.h),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(12.r),
                         ),
                       ),
                       onSubmitted: _onHexSubmitted,
@@ -176,22 +176,22 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
 
               // Hue Slider
               Text(
                 'Hue (${_hslColor.hue.round()}°)',
-                style: TextStyle(
-                  fontSize: 12,
+                style: context.textTheme.labelMedium?.copyWith(
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white70 : Colors.black54,
+                  color: context.textSecondaryColor,
                 ),
               ),
               SliderTheme(
                 data: SliderTheme.of(context).copyWith(
-                  trackHeight: 6,
+                  trackHeight: 6.h,
                   thumbShape:
-                      const RoundSliderThumbShape(enabledThumbRadius: 9),
+                      RoundSliderThumbShape(enabledThumbRadius: 9.r),
                 ),
                 child: Slider(
                   value: _hslColor.hue,
@@ -205,17 +205,17 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
               // Saturation Slider
               Text(
                 'Saturation (${(_hslColor.saturation * 100).round()}%)',
-                style: TextStyle(
-                  fontSize: 12,
+                style: context.textTheme.labelMedium?.copyWith(
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white70 : Colors.black54,
+                  color: context.textSecondaryColor,
                 ),
               ),
               SliderTheme(
                 data: SliderTheme.of(context).copyWith(
-                  trackHeight: 6,
+                  trackHeight: 6.h,
                   thumbShape:
-                      const RoundSliderThumbShape(enabledThumbRadius: 9),
+                      RoundSliderThumbShape(enabledThumbRadius: 9.r),
                 ),
                 child: Slider(
                   value: _hslColor.saturation,
@@ -230,17 +230,17 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
               // Lightness Slider
               Text(
                 'Lightness (${(_hslColor.lightness * 100).round()}%)',
-                style: TextStyle(
-                  fontSize: 12,
+                style: context.textTheme.labelMedium?.copyWith(
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white70 : Colors.black54,
+                  color: context.textSecondaryColor,
                 ),
               ),
               SliderTheme(
                 data: SliderTheme.of(context).copyWith(
-                  trackHeight: 6,
+                  trackHeight: 6.h,
                   thumbShape:
-                      const RoundSliderThumbShape(enabledThumbRadius: 9),
+                      RoundSliderThumbShape(enabledThumbRadius: 9.r),
                 ),
                 child: Slider(
                   value: _hslColor.lightness,
@@ -250,21 +250,21 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                   onChanged: (val) => _updateHsl(_hslColor.withLightness(val)),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12.h),
 
               // Quick Swatches
               Text(
                 'Curated Presets',
-                style: TextStyle(
-                  fontSize: 12,
+                style: context.textTheme.labelMedium?.copyWith(
+                  fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white70 : Colors.black54,
+                  color: context.textSecondaryColor,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: 8.h),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 8.w,
+                runSpacing: 8.h,
                 children: _curatedSwatches.map((color) {
                   final isSelected = currentColor.toARGB32() == color.toARGB32();
                   return InkWell(
@@ -272,17 +272,17 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                       _updateHsl(HSLColor.fromColor(color));
                       AppHaptics.lightImpact();
                     },
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10.r),
                     child: Container(
-                      width: 28,
-                      height: 28,
+                      width: 28.r,
+                      height: 28.r,
                       decoration: BoxDecoration(
                         color: color,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(8.r),
                         border: Border.all(
                           color: isSelected
-                              ? (isDark ? Colors.white : Colors.black)
-                              : Colors.white24,
+                              ? context.textPrimaryColor
+                              : context.cardBorderColor,
                           width: isSelected ? 2.5 : 1,
                         ),
                       ),
@@ -290,7 +290,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24.h),
 
               // Confirm / Cancel Buttons
               Row(
@@ -300,23 +300,23 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                     onPressed: () => Navigator.of(context).pop(),
                     child: Text(
                       'Cancel',
-                      style: TextStyle(
-                        color: isDark ? Colors.white60 : Colors.black54,
+                      style: context.textTheme.labelLarge?.copyWith(
+                        color: context.textMutedColor,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8.w),
                   FilledButton(
                     style: FilledButton.styleFrom(
                       backgroundColor: currentColor,
                       foregroundColor: _hslColor.lightness > 0.6
-                          ? Colors.black87
-                          : Colors.white,
+                          ? AppColors.black87
+                          : AppColors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(14.r),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 12),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: 20.w, vertical: 12.h),
                     ),
                     onPressed: () {
                       AppHaptics.lightImpact();

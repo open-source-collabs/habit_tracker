@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:habit_tracker/data/models/habit_model.dart';
-import 'package:habit_tracker/presentation/widgets/habit_card.dart';
+import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
+import 'package:habit_tracker/features/habits/presentation/widgets/habit_card.dart';
+
+Widget _buildTestableCard(Widget child) {
+  return ProviderScope(
+    child: ScreenUtilInit(
+      designSize: const Size(390, 844),
+      builder: (context, _) => MaterialApp(
+        home: Scaffold(
+          body: child,
+        ),
+      ),
+    ),
+  );
+}
 
 void main() {
   testWidgets('BentoHabitCard renders badges, emoji, title, and streak counter',
@@ -28,15 +42,11 @@ void main() {
     bool toggled = false;
 
     await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp(
-          home: Scaffold(
-            body: BentoHabitCard(
-              habit: habit,
-              date: today,
-              onToggle: () => toggled = true,
-            ),
-          ),
+      _buildTestableCard(
+        BentoHabitCard(
+          habit: habit,
+          date: today,
+          onToggle: () => toggled = true,
         ),
       ),
     );
@@ -74,14 +84,10 @@ void main() {
     );
 
     await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp(
-          home: Scaffold(
-            body: BentoHabitCard(
-              habit: habitCompleted,
-              date: today,
-            ),
-          ),
+      _buildTestableCard(
+        BentoHabitCard(
+          habit: habitCompleted,
+          date: today,
         ),
       ),
     );
@@ -103,14 +109,10 @@ void main() {
     );
 
     await tester.pumpWidget(
-      ProviderScope(
-        child: MaterialApp(
-          home: Scaffold(
-            body: BentoHabitCard(
-              habit: habit,
-              date: today,
-            ),
-          ),
+      _buildTestableCard(
+        BentoHabitCard(
+          habit: habit,
+          date: today,
         ),
       ),
     );

@@ -2,7 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'app_colors.dart';
 import 'app_theme_extension.dart';
-import 'dynamic_theme_model.dart';
+import '../../features/themes/data/models/dynamic_theme_model.dart';
 
 /// Pure factory for transforming any [UserThemeModel] into a complete [ThemeData]
 /// with dynamic typography, card geometry, and [AppThemeExtension].
@@ -20,11 +20,11 @@ abstract final class ThemeFactory {
     final colorScheme = ColorScheme(
       brightness: isDark ? Brightness.dark : Brightness.light,
       primary: primaryAccent,
-      onPrimary: Colors.white,
+      onPrimary: AppColors.white,
       secondary: secondaryAccent,
-      onSecondary: Colors.white,
+      onSecondary: AppColors.white,
       error: AppColors.error,
-      onError: Colors.white,
+      onError: AppColors.white,
       surface: model.cardBg,
       onSurface: model.textPrimary,
       outline: model.cardBorder,
@@ -40,8 +40,8 @@ abstract final class ThemeFactory {
 
     // Elevated surface computation (subtly lighter for dark, deeper for light)
     final surfaceElevated = isDark
-        ? Color.alphaBlend(Colors.white.withValues(alpha: 0.05), model.cardBg)
-        : Color.alphaBlend(Colors.black.withValues(alpha: 0.03), model.cardBg);
+        ? Color.alphaBlend(AppColors.white.withValues(alpha: 0.05), model.cardBg)
+        : Color.alphaBlend(AppColors.black.withValues(alpha: 0.03), model.cardBg);
 
     final appExtension = AppThemeExtension(
       cardBorder: model.cardBorder,
@@ -76,7 +76,7 @@ abstract final class ThemeFactory {
 
       // App Bar Theme
       appBarTheme: AppBarTheme(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
@@ -139,6 +139,30 @@ abstract final class ThemeFactory {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide(color: primaryAccent, width: 1.6),
+        ),
+      ),
+
+      // Floating Action Button Theme
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: primaryAccent,
+        foregroundColor: AppColors.white,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20.0),
+        ),
+      ),
+
+      // Chip Theme
+      chipTheme: ChipThemeData(
+        backgroundColor: model.cardBg,
+        selectedColor: primaryAccent,
+        labelStyle: textTheme.labelMedium?.copyWith(
+          color: model.textPrimary,
+          fontWeight: FontWeight.w600,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14.0),
+          side: BorderSide(color: model.cardBorder, width: 1.2),
         ),
       ),
 

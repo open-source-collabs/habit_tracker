@@ -4,6 +4,27 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_tracker/app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:habit_tracker/features/habits/data/storage/habit_storage.dart';
+import 'package:habit_tracker/features/habits/presentation/providers/habit_provider.dart';
+import 'package:habit_tracker/features/themes/data/models/app_payload_model.dart';
+
+class FakeHabitStorage implements HabitStorage {
+  @override
+  Future<AppPayloadModel?> loadPayload() async => null;
+
+  @override
+  Future<void> savePayload(AppPayloadModel payload) async {}
+
+  @override
+  Future<List<String>> listBackups() async => [];
+
+  @override
+  Future<AppPayloadModel?> restoreBackup(String backupName) async => null;
+
+  @override
+  Future<void> clear() async {}
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -20,8 +41,11 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      const ProviderScope(
-        child: HabitTrackerApp(),
+      ProviderScope(
+        overrides: [
+          habitStorageProvider.overrideWithValue(FakeHabitStorage()),
+        ],
+        child: const HabitTrackerApp(),
       ),
     );
     await tester.pumpAndSettle();
@@ -42,8 +66,11 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     await tester.pumpWidget(
-      const ProviderScope(
-        child: HabitTrackerApp(),
+      ProviderScope(
+        overrides: [
+          habitStorageProvider.overrideWithValue(FakeHabitStorage()),
+        ],
+        child: const HabitTrackerApp(),
       ),
     );
     await tester.pumpAndSettle();

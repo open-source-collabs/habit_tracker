@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_colors.dart';
 
 /// Flutter [ThemeExtension] enabling dynamic access to card borders,
 /// elevated surfaces, vibrant habit palettes, and active-state glowing shadows.
@@ -50,6 +51,39 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
           ? [cardGlowShadow(accentColor)]
           : const [],
     );
+  }
+
+  /// Builds a rounded chip decoration for filter pills or selection items
+  BoxDecoration chipDecoration({
+    required Color backgroundColor,
+    Color? borderColor,
+    bool isSelected = false,
+    double borderRadius = 14.0,
+    double borderWidth = 1.2,
+  }) {
+    return BoxDecoration(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(borderRadius),
+      border: Border.all(
+        color: borderColor ?? cardBorder,
+        width: borderWidth,
+      ),
+    );
+  }
+
+  /// Computes a pastel container surface for chips and cards
+  Color pastelSurface(
+    Color accent, {
+    bool isDark = false,
+    double opacity = 0.12,
+  }) {
+    if (isDark) {
+      return Color.alphaBlend(
+        accent.withValues(alpha: opacity + 0.04),
+        surfaceElevated,
+      );
+    }
+    return Color.alphaBlend(accent.withValues(alpha: opacity), AppColors.white);
   }
 
   @override

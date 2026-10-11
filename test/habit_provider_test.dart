@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:habit_tracker/core/theme/dynamic_theme_model.dart';
-import 'package:habit_tracker/data/models/app_payload_model.dart';
-import 'package:habit_tracker/data/models/habit_model.dart';
-import 'package:habit_tracker/data/storage/habit_storage.dart';
-import 'package:habit_tracker/presentation/providers/habit_provider.dart';
+import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
+import 'package:habit_tracker/features/habits/data/storage/habit_storage.dart';
+import 'package:habit_tracker/features/habits/presentation/providers/habit_provider.dart';
+import 'package:habit_tracker/features/themes/data/models/app_payload_model.dart';
+import 'package:habit_tracker/features/themes/data/models/dynamic_theme_model.dart';
 
 class InMemoryHabitStorage implements HabitStorage {
   AppPayloadModel? storedPayload;

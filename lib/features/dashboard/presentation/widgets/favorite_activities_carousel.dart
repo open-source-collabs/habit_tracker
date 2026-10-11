@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
-import '../../../themes/presentation/providers/theme_provider.dart';
 
 /// "Favorite activities" pastel-tinted wellness card carousel directly from Reference Image 1.
 class FavoriteActivitiesCarousel extends ConsumerWidget {
@@ -21,62 +22,60 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
       title: 'Mind Detox',
       stat: '13h logged',
       icon: Icons.psychology_alt_rounded,
-      accentColor: Color(0xFF8B5CF6), // Neon Lavender
+      accentColor: AppColors.neonLavender,
       routineGroup: 'Focus',
     ),
     (
       title: 'Gratitude Notes',
       stat: '34 entries',
       icon: Icons.wb_sunny_rounded,
-      accentColor: Color(0xFF06B6D4), // Cyan Glow
+      accentColor: AppColors.cyanGlow,
       routineGroup: 'Evening',
     ),
     (
       title: 'Conscious Breath',
       stat: '34 sessions',
       icon: Icons.spa_rounded,
-      accentColor: Color(0xFF10B981), // Emerald Mint
+      accentColor: AppColors.emeraldMint,
       routineGroup: 'Morning',
     ),
     (
       title: 'Strength Training',
       stat: '18 workouts',
       icon: Icons.fitness_center_rounded,
-      accentColor: Color(0xFFFF6B55), // Sunset Coral
+      accentColor: AppColors.sunsetCoral,
       routineGroup: 'Fitness',
     ),
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeState = ref.watch(themeProvider);
-    final activeTheme = themeState.activeTheme;
     final activeFilter = ref.watch(activeRoutineFilterProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
+          padding: EdgeInsets.symmetric(horizontal: 4.w),
           child: Text(
             'Favorite activities',
-            style: TextStyle(
-              fontFamily: activeTheme.fontFamily,
-              fontSize: 16,
+            style: context.textTheme.titleMedium?.copyWith(
+              fontSize: 16.sp,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.2,
-              color: activeTheme.textPrimary,
+              color: context.textPrimaryColor,
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12.h),
         SizedBox(
-          height: 110,
+          height: 118.h.clamp(110.0, 130.0),
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
             itemCount: _activities.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (context, index) =>
+                SizedBox(width: 12.w.clamp(8.0, 16.0)),
             itemBuilder: (context, index) {
               final act = _activities[index];
               final isSelected = activeFilter.toLowerCase() == act.routineGroup.toLowerCase();
@@ -84,7 +83,7 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
               // In light theme: soft pastel watercolor tint; in dark theme: ambient blended surface
               final bgColor = AppColors.pastelSurface(
                 act.accentColor,
-                isDark: activeTheme.isDark,
+                isDark: context.isDarkMode,
                 opacity: 0.16,
               );
 
@@ -97,11 +96,11 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 220),
                   curve: Curves.easeOutCubic,
-                  width: 130,
-                  padding: const EdgeInsets.all(14),
+                  width: 130.w.clamp(120.0, 150.0),
+                  padding: EdgeInsets.all(14.r.clamp(10.0, 16.0)),
                   decoration: BoxDecoration(
                     color: bgColor,
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(22.r.clamp(16.0, 24.0)),
                     border: Border.all(
                       color: isSelected
                           ? act.accentColor
@@ -112,8 +111,8 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                         ? [
                             BoxShadow(
                               color: act.accentColor.withValues(alpha: 0.35),
-                              blurRadius: 14,
-                              offset: const Offset(0, 4),
+                              blurRadius: 14.r,
+                              offset: Offset(0, 4.h),
                             ),
                           ]
                         : null,
@@ -130,13 +129,10 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                               act.title,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: activeTheme.fontFamily,
-                                fontSize: 13,
+                              style: context.textTheme.titleSmall?.copyWith(
+                                fontSize: 13.sp.clamp(11.0, 14.0),
                                 fontWeight: FontWeight.w700,
-                                color: activeTheme.isDark
-                                    ? Colors.white
-                                    : const Color(0xFF11252E),
+                                color: context.textPrimaryColor,
                               ),
                             ),
                           ),
@@ -145,25 +141,28 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            act.stat,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: activeTheme.isDark
-                                  ? Colors.white70
-                                  : const Color(0xFF5C6E76),
+                          Expanded(
+                            child: Text(
+                              act.stat,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: context.textTheme.labelSmall?.copyWith(
+                                fontSize: 10.sp.clamp(9.0, 12.0),
+                                fontWeight: FontWeight.w600,
+                                color: context.textSecondaryColor,
+                              ),
                             ),
                           ),
+                          SizedBox(width: 4.w.clamp(2.0, 6.0)),
                           Container(
-                            padding: const EdgeInsets.all(6),
+                            padding: EdgeInsets.all(6.r),
                             decoration: BoxDecoration(
                               color: act.accentColor.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               act.icon,
-                              size: 16,
+                              size: 16.sp.clamp(14.0, 18.0),
                               color: act.accentColor,
                             ),
                           ),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:habit_tracker/core/theme/app_colors.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
-import '../../../themes/presentation/providers/theme_provider.dart';
 import '../../data/models/habit_model.dart';
 import '../providers/habit_provider.dart';
 
@@ -113,14 +115,10 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
 
   @override
   Widget build(BuildContext context) {
-    final themeState = ref.watch(themeProvider);
-    final activeTheme = themeState.activeTheme;
-    final themeData = Theme.of(context);
-
-    final accents = activeTheme.accentPalette;
+    final accents = context.accentPalette;
     final accentColor = accents.isNotEmpty
         ? accents[widget.habit.accentIndex % accents.length]
-        : themeData.colorScheme.primary;
+        : context.primaryAccent;
 
     final isCompleted = widget.habit.isCompletedOn(widget.date);
     final currentStreak = widget.habit.calculateCurrentStreak(asOf: widget.date);
@@ -138,30 +136,30 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(20.r.clamp(16.0, 24.0)),
             decoration: BoxDecoration(
-              color: activeTheme.cardBg,
-              borderRadius: BorderRadius.circular(24),
+              color: context.cardBackgroundColor,
+              borderRadius: BorderRadius.circular(24.r.clamp(16.0, 24.0)),
               border: Border.all(
                 color: isCompleted
                     ? accentColor
-                    : activeTheme.cardBorder,
+                    : context.cardBorderColor,
                 width: 1.2,
               ),
               boxShadow: isCompleted
                   ? [
                       BoxShadow(
                         color: accentColor.withValues(alpha: 0.35),
-                        blurRadius: 20,
+                        blurRadius: 20.r,
                         spreadRadius: 0,
-                        offset: const Offset(0, 4),
+                        offset: Offset(0, 4.h),
                       ),
                     ]
                   : [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: activeTheme.isDark ? 0.3 : 0.04),
-                        blurRadius: 12,
-                        offset: const Offset(0, 2),
+                        color: context.shadowColor,
+                        blurRadius: 12.r,
+                        offset: Offset(0, 2.h),
                       ),
                     ],
             ),
@@ -180,23 +178,23 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 220),
                       curve: Curves.easeOutCubic,
-                      width: 44,
-                      height: 44,
+                      width: 44.r.clamp(38.0, 48.0),
+                      height: 44.r.clamp(38.0, 48.0),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isCompleted ? accentColor : Colors.transparent,
+                        color: isCompleted ? accentColor : AppColors.transparent,
                         border: Border.all(
                           color: isCompleted
                               ? accentColor
-                              : activeTheme.cardBorder.withValues(alpha: 0.8),
-                          width: 2,
+                              : context.cardBorderColor.withValues(alpha: 0.8),
+                          width: 2.0,
                         ),
                         boxShadow: isCompleted
                             ? [
                                 BoxShadow(
                                   color: accentColor.withValues(alpha: 0.45),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
+                                  blurRadius: 10.r,
+                                  offset: Offset(0, 2.h),
                                 ),
                               ]
                             : null,
@@ -207,23 +205,23 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                           transitionBuilder: (child, anim) =>
                               ScaleTransition(scale: anim, child: child),
                           child: isCompleted
-                              ? const Icon(
+                              ? Icon(
                                   Icons.check_rounded,
-                                  key: ValueKey('checked'),
-                                  color: Colors.white,
-                                  size: 24,
+                                  key: const ValueKey('checked'),
+                                  color: AppColors.white,
+                                  size: 24.sp,
                                 )
                               : Text(
                                   widget.habit.displayEmoji,
                                   key: const ValueKey('unchecked'),
-                                  style: const TextStyle(fontSize: 20),
+                                  style: TextStyle(fontSize: 20.sp),
                                 ),
                         ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16.w.clamp(12.0, 18.0)),
 
                 // Title, Subtitle, and Badges
                 Expanded(
@@ -235,14 +233,13 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                           Expanded(
                             child: Text(
                               widget.habit.title,
-                              style: themeData.textTheme.titleMedium?.copyWith(
-                                fontFamily: activeTheme.fontFamily,
+                              style: context.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.w700,
-                                color: activeTheme.textPrimary,
+                                color: context.textPrimaryColor,
                                 decoration: isCompleted
                                     ? TextDecoration.lineThrough
                                     : null,
-                                decorationColor: activeTheme.textPrimary
+                                decorationColor: context.textPrimaryColor
                                     .withValues(alpha: 0.4),
                               ),
                             ),
@@ -251,15 +248,14 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                             PopupMenuButton<String>(
                               icon: Icon(
                                 Icons.more_vert,
-                                size: 18,
-                                color: activeTheme.textPrimary
-                                    .withValues(alpha: 0.4),
+                                size: 18.sp,
+                                color: context.textMutedColor,
                               ),
-                              color: activeTheme.cardBg,
+                              color: context.cardBackgroundColor,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(16.r),
                                 side: BorderSide(
-                                  color: activeTheme.cardBorder,
+                                  color: context.cardBorderColor,
                                   width: 1.2,
                                 ),
                               ),
@@ -271,34 +267,33 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                                   widget.onDelete!();
                                 }
                               },
-                              itemBuilder: (context) => [
+                              itemBuilder: (menuContext) => [
                                 if (widget.onEdit != null)
                                   PopupMenuItem(
                                     value: 'edit',
                                     child: Row(
                                       children: [
                                         Icon(Icons.edit_outlined,
-                                            size: 16,
-                                            color: activeTheme.textPrimary),
-                                        const SizedBox(width: 8),
+                                            size: 16.sp,
+                                            color: context.textPrimaryColor),
+                                        SizedBox(width: 8.w),
                                         Text('Edit',
-                                            style: TextStyle(
-                                                color:
-                                                    activeTheme.textPrimary)),
+                                            style: context.textTheme.bodyMedium?.copyWith(
+                                                color: context.textPrimaryColor)),
                                       ],
                                     ),
                                   ),
                                 if (widget.onDelete != null)
-                                  const PopupMenuItem(
+                                  PopupMenuItem(
                                     value: 'delete',
                                     child: Row(
                                       children: [
                                         Icon(Icons.delete_outline,
-                                            size: 16, color: Colors.redAccent),
-                                        SizedBox(width: 8),
+                                            size: 16.sp, color: context.colorScheme.error),
+                                        SizedBox(width: 8.w),
                                         Text('Delete',
-                                            style: TextStyle(
-                                                color: Colors.redAccent)),
+                                            style: context.textTheme.bodyMedium?.copyWith(
+                                                color: context.colorScheme.error)),
                                       ],
                                     ),
                                   ),
@@ -307,63 +302,57 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                         ],
                       ),
                       if (widget.habit.subtitle.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4.h),
                         Text(
                           widget.habit.subtitle,
-                          style: themeData.textTheme.bodyMedium?.copyWith(
-                            fontFamily: activeTheme.fontFamily,
-                            color: activeTheme.textPrimary
-                                .withValues(alpha: 0.65),
+                          style: context.textTheme.bodyMedium?.copyWith(
+                            color: context.textSecondaryColor,
                           ),
                         ),
                       ],
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12.h),
 
                       // Bento Micro-Pills (Routine, Frequency, Streak)
                       Wrap(
-                        spacing: 8,
-                        runSpacing: 6,
+                        spacing: 8.w,
+                        runSpacing: 6.h,
                         children: [
                           // Routine Group Pill
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 10.w, vertical: 4.h),
                             decoration: BoxDecoration(
-                              color: activeTheme.isDark
-                                  ? Colors.white.withValues(alpha: 0.08)
-                                  : Colors.black.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(10),
+                              color: context.isDarkMode
+                                  ? context.surfaceElevatedColor
+                                  : context.cardBorderColor.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(10.r),
                             ),
                             child: Text(
                               widget.habit.routineGroup,
-                              style: TextStyle(
-                                fontFamily: activeTheme.fontFamily,
-                                fontSize: 11,
+                              style: context.textTheme.labelSmall?.copyWith(
+                                fontSize: 11.sp,
                                 fontWeight: FontWeight.w600,
-                                color: activeTheme.textPrimary
-                                    .withValues(alpha: 0.8),
+                                color: context.textPrimaryColor,
                               ),
                             ),
                           ),
 
                           // Frequency Pill
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 10.w, vertical: 4.h),
                             decoration: BoxDecoration(
-                              color: activeTheme.isDark
-                                  ? Colors.white.withValues(alpha: 0.08)
-                                  : Colors.black.withValues(alpha: 0.05),
-                              borderRadius: BorderRadius.circular(10),
+                              color: context.isDarkMode
+                                  ? context.surfaceElevatedColor
+                                  : context.cardBorderColor.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(10.r),
                             ),
                             child: Text(
                               _formatFrequency(widget.habit.frequency),
-                              style: TextStyle(
-                                fontFamily: activeTheme.fontFamily,
-                                fontSize: 11,
+                              style: context.textTheme.labelSmall?.copyWith(
+                                fontSize: 11.sp,
                                 fontWeight: FontWeight.w600,
-                                color: activeTheme.textPrimary
-                                    .withValues(alpha: 0.8),
+                                color: context.textPrimaryColor,
                               ),
                             ),
                           ),
@@ -371,11 +360,11 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                           // Streak Fire Badge
                           if (currentStreak > 0)
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 10.w, vertical: 4.h),
                               decoration: BoxDecoration(
                                 color: accentColor.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(10.r),
                                 border: Border.all(
                                   color: accentColor.withValues(alpha: 0.3),
                                   width: 1,
@@ -386,15 +375,14 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                                 children: [
                                   Icon(
                                     Icons.local_fire_department_rounded,
-                                    size: 14,
+                                    size: 14.sp,
                                     color: accentColor,
                                   ),
-                                  const SizedBox(width: 4),
+                                  SizedBox(width: 4.w),
                                   Text(
                                     '$currentStreak days',
-                                    style: TextStyle(
-                                      fontFamily: activeTheme.fontFamily,
-                                      fontSize: 11,
+                                    style: context.textTheme.labelSmall?.copyWith(
+                                      fontSize: 11.sp,
                                       fontWeight: FontWeight.w800,
                                       color: accentColor,
                                     ),

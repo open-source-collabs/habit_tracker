@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:habit_tracker/core/theme/app_colors.dart';
+import 'package:habit_tracker/core/theme/app_text_styles.dart';
 
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../../habits/data/models/habit_model.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
 import '../../../habits/presentation/widgets/habit_card.dart';
@@ -37,31 +42,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget build(BuildContext context) {
     final themeState = ref.watch(themeProvider);
     final activeTheme = themeState.activeTheme;
-    final themeData = Theme.of(context);
     final selectedDate = ref.watch(selectedDateProvider);
     final habitsAsync = ref.watch(habitListProvider);
     final filteredHabits = ref.watch(filteredHabitsProvider);
     final routineGroups = ref.watch(routineGroupsProvider);
     final activeFilter = ref.watch(activeRoutineFilterProvider);
-    final accents = activeTheme.accentPalette;
-    final primaryAccent = accents.isNotEmpty
-        ? accents.first
-        : themeData.colorScheme.primary;
+    final primaryAccent = context.primaryAccent;
 
     return Scaffold(
-      backgroundColor: activeTheme.scaffoldBg,
-      appBar: _buildAppBar(context, activeTheme, themeData),
+      backgroundColor: context.scaffoldBackgroundColor,
+      appBar: _buildAppBar(context, activeTheme),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddHabitDialog(context, activeTheme),
         backgroundColor: primaryAccent,
-        foregroundColor: Colors.white,
+        foregroundColor: context.onPrimaryColor,
         elevation: 4,
-        icon: const Icon(Icons.add_rounded, size: 22),
+        icon: Icon(Icons.add_rounded, size: 22.sp.clamp(20.0, 24.0)),
         label: Text(
           'New Habit',
-          style: TextStyle(
-            fontFamily: activeTheme.fontFamily,
+          style: context.textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w700,
+            color: context.onPrimaryColor,
             letterSpacing: 0.5,
           ),
         ),
@@ -74,7 +75,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             return habitsAsync.when(
               loading: () => Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(32),
+                  padding: EdgeInsets.all(32.r),
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(primaryAccent),
                   ),
@@ -82,12 +83,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
               error: (err, _) => Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.all(24.r),
                   child: Text(
                     'Failed to load habits: $err',
-                    style: TextStyle(
-                      fontFamily: activeTheme.fontFamily,
-                      color: activeTheme.textPrimary,
+                    style: context.textTheme.bodyMedium?.copyWith(
+                      color: context.textPrimaryColor,
                     ),
                   ),
                 ),
@@ -124,66 +124,66 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   PreferredSizeWidget _buildAppBar(
     BuildContext context,
     UserThemeModel activeTheme,
-    ThemeData themeData,
   ) {
-    final accents = activeTheme.accentPalette;
-    final primaryAccent = accents.isNotEmpty
-        ? accents.first
-        : themeData.colorScheme.primary;
+    final primaryAccent = context.primaryAccent;
 
     return AppBar(
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                '${_getGreeting()}, Frede',
-                style: TextStyle(
-                  fontFamily: activeTheme.fontFamily,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.4,
-                  color: activeTheme.textPrimary,
+              Flexible(
+                child: Text(
+                  '${_getGreeting()}, Frede',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: context.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20.sp,
+                    letterSpacing: -0.4,
+                    color: context.textPrimaryColor,
+                  ),
                 ),
               ),
-              const SizedBox(width: 6),
-              const Text('👋', style: TextStyle(fontSize: 18)),
+              SizedBox(width: 6.w),
+              Text('👋', style: TextStyle(fontSize: 18.sp)),
             ],
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: 2.h),
           Text(
             'Dusk & Dawn Tracker',
-            style: TextStyle(
-              fontFamily: activeTheme.fontFamily,
-              fontSize: 12,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: context.textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w600,
-              color: activeTheme.textPrimary.withValues(alpha: 0.5),
+              fontSize: 12.sp,
+              color: context.textMutedColor,
             ),
           ),
         ],
       ),
       actions: [
         Padding(
-          padding: const EdgeInsets.only(right: 16),
+          padding: EdgeInsets.only(right: 16.w),
           child: FilledButton.tonalIcon(
-            icon: Icon(Icons.palette_outlined, size: 16, color: primaryAccent),
+            icon: Icon(Icons.palette_outlined, size: 16.sp, color: primaryAccent),
             label: Text(
               'Theme Studio',
-              style: TextStyle(
-                fontFamily: activeTheme.fontFamily,
-                fontSize: 12,
+              style: context.textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: activeTheme.textPrimary,
+                fontSize: 12.sp,
+                color: context.textPrimaryColor,
               ),
             ),
             style: FilledButton.styleFrom(
-              backgroundColor: activeTheme.cardBg,
+              backgroundColor: context.cardBackgroundColor,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: activeTheme.cardBorder, width: 1.2),
+                borderRadius: BorderRadius.circular(16.r),
+                side: BorderSide(color: context.cardBorderColor, width: 1.2),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
             ),
             onPressed: () => ThemeStudioSheet.show(context),
           ),
@@ -201,57 +201,56 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     required DateTime selectedDate,
   }) {
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
       children: [
         // 7-Day Interactive Calendar Strip
         CalendarStrip(
           onAddTap: () => _showAddHabitDialog(context, activeTheme),
         ),
-        const SizedBox(height: 18),
+        SizedBox(height: 18.h),
 
         // Consistency score weekly chart
         const ConsistencyChart(),
-        const SizedBox(height: 18),
+        SizedBox(height: 18.h),
 
         // Favorite activities carousel
         const FavoriteActivitiesCarousel(),
-        const SizedBox(height: 20),
+        SizedBox(height: 20.h),
 
         // Progress Overview Stats Card
         const BentoStatsCard(),
-        const SizedBox(height: 22),
+        SizedBox(height: 22.h),
 
         // Routine Category Filter Chips
-        _buildFilterChips(activeTheme, routineGroups, activeFilter),
-        const SizedBox(height: 16),
+        _buildFilterChips(context, routineGroups, activeFilter),
+        SizedBox(height: 16.h),
 
         // Section Title
         Text(
           'ACTIVE HABITS',
-          style: TextStyle(
-            fontFamily: activeTheme.fontFamily,
-            fontSize: 11,
+          style: context.textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
-            color: activeTheme.textPrimary.withValues(alpha: 0.5),
+            fontSize: 11.sp,
+            color: context.textMutedColor,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12.h),
 
         // Habits List
         if (filteredHabits.isEmpty)
-          _buildEmptyState(activeTheme)
+          _buildEmptyState(context)
         else
           ...filteredHabits.map((habit) {
             return Padding(
-              padding: const EdgeInsets.only(bottom: 14),
+              padding: EdgeInsets.only(bottom: 14.h),
               child: BentoHabitCard(
                 habit: habit,
                 date: selectedDate,
               ),
             );
           }),
-        const SizedBox(height: 72),
+        SizedBox(height: 72.h),
       ],
     );
   }
@@ -271,19 +270,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         // Left Column: Consistency Chart, Favorite Activities, Progress Overview
         Expanded(
           flex: 5,
-          child: ListView(
-            padding: const EdgeInsets.all(24),
-            children: [
-              CalendarStrip(
-                onAddTap: () => _showAddHabitDialog(context, activeTheme),
-              ),
-              const SizedBox(height: 20),
-              const ConsistencyChart(),
-              const SizedBox(height: 20),
-              const FavoriteActivitiesCarousel(),
-              const SizedBox(height: 20),
-              const BentoStatsCard(),
-            ],
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(24.r.clamp(16.0, 24.0)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                CalendarStrip(
+                  onAddTap: () => _showAddHabitDialog(context, activeTheme),
+                ),
+                SizedBox(height: 20.h.clamp(14.0, 22.0)),
+                const ConsistencyChart(),
+                SizedBox(height: 20.h.clamp(14.0, 22.0)),
+                const FavoriteActivitiesCarousel(),
+                SizedBox(height: 20.h.clamp(14.0, 22.0)),
+                const BentoStatsCard(),
+                SizedBox(height: 20.h.clamp(14.0, 22.0)),
+                _buildStreakChampionTile(context),
+              ],
+            ),
           ),
         ),
 
@@ -291,34 +295,33 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         Expanded(
           flex: 6,
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(24.r.clamp(16.0, 24.0)),
             children: [
-              _buildFilterChips(activeTheme, routineGroups, activeFilter),
-              const SizedBox(height: 16),
+              _buildFilterChips(context, routineGroups, activeFilter),
+              SizedBox(height: 16.h.clamp(12.0, 18.0)),
               Text(
                 'ACTIVE HABITS',
-                style: TextStyle(
-                  fontFamily: activeTheme.fontFamily,
-                  fontSize: 11,
+                style: context.textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
-                  color: activeTheme.textPrimary.withValues(alpha: 0.5),
+                  fontSize: 11.sp.clamp(10.0, 12.0),
+                  color: context.textMutedColor,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12.h.clamp(8.0, 14.0)),
               if (filteredHabits.isEmpty)
-                _buildEmptyState(activeTheme)
+                _buildEmptyState(context)
               else
                 ...filteredHabits.map((habit) {
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
+                    padding: EdgeInsets.only(bottom: 14.h.clamp(10.0, 16.0)),
                     child: BentoHabitCard(
                       habit: habit,
                       date: selectedDate,
                     ),
                   );
                 }),
-              const SizedBox(height: 80),
+              SizedBox(height: 80.h.clamp(60.0, 90.0)),
             ],
           ),
         ),
@@ -327,7 +330,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Widget _buildFilterChips(
-    UserThemeModel activeTheme,
+    BuildContext context,
     List<String> routineGroups,
     String activeFilter,
   ) {
@@ -336,13 +339,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Row(
         children: routineGroups.map((group) {
           final isSelected = activeFilter.toLowerCase() == group.toLowerCase();
-          final accents = activeTheme.accentPalette;
-          final primaryAccent = accents.isNotEmpty
-              ? accents.first
-              : Theme.of(context).colorScheme.primary;
+          final primaryAccent = context.primaryAccent;
 
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: EdgeInsets.only(right: 8.w),
             child: ChoiceChip(
               label: Text(group),
               selected: isSelected,
@@ -351,19 +351,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ref.read(activeRoutineFilterProvider.notifier).state = group;
               },
               selectedColor: primaryAccent,
-              backgroundColor: activeTheme.cardBg,
-              labelStyle: TextStyle(
-                fontFamily: activeTheme.fontFamily,
-                color: isSelected ? Colors.white : activeTheme.textPrimary,
+              backgroundColor: context.cardBackgroundColor,
+              labelStyle: context.textTheme.labelMedium?.copyWith(
+                color: isSelected ? context.onPrimaryColor : context.textPrimaryColor,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 12,
+                fontSize: 12.sp,
               ),
               side: BorderSide(
-                color: isSelected ? primaryAccent : activeTheme.cardBorder,
+                color: isSelected ? primaryAccent : context.cardBorderColor,
                 width: 1.2,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(14.r),
               ),
             ),
           );
@@ -372,25 +371,92 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildEmptyState(UserThemeModel activeTheme) {
+  Widget _buildStreakChampionTile(BuildContext context) {
+    final stats = ref.watch(dailyHabitStatsProvider);
+    final accents = context.accentPalette;
+    final accent = accents.length > 2
+        ? accents[2]
+        : (accents.isNotEmpty ? accents.first : context.primaryAccent);
+
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(20.r.clamp(16.0, 22.0)),
       decoration: BoxDecoration(
-        color: activeTheme.cardBg,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: activeTheme.cardBorder, width: 1.2),
+        color: context.cardBackgroundColor,
+        borderRadius: BorderRadius.circular(24.r.clamp(16.0, 24.0)),
+        border: Border.all(color: context.cardBorderColor, width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: context.shadowColor,
+            blurRadius: 10.r,
+            offset: Offset(0, 2.h),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(12.r),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.emoji_events_rounded,
+              color: accent,
+              size: 28.sp.clamp(24.0, 30.0),
+            ),
+          ),
+          SizedBox(width: 16.w.clamp(12.0, 18.0)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'STREAK CHAMPION',
+                  style: context.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.1,
+                    fontSize: 11.sp.clamp(10.0, 12.0),
+                    color: context.textMutedColor,
+                  ),
+                ),
+                SizedBox(height: 4.h.clamp(2.0, 6.0)),
+                Text(
+                  stats.longestActiveStreak > 0
+                      ? '${stats.longestActiveStreak} Days Streak Master'
+                      : 'Keep going to build your championship streak!',
+                  style: context.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13.sp.clamp(12.0, 15.0),
+                    color: context.textPrimaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(32.r),
+      decoration: BoxDecoration(
+        color: context.cardBackgroundColor,
+        borderRadius: BorderRadius.circular(24.r.clamp(16.0, 24.0)),
+        border: Border.all(color: context.cardBorderColor, width: 1.2),
       ),
       child: Center(
         child: Column(
           children: [
-            Text('🎯', style: TextStyle(fontSize: 32)),
-            const SizedBox(height: 10),
+            Text('🎯', style: TextStyle(fontSize: 32.sp.clamp(26.0, 36.0))),
+            SizedBox(height: 10.h),
             Text(
               'No habits in this routine',
-              style: TextStyle(
-                fontFamily: activeTheme.fontFamily,
+              style: context.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: activeTheme.textPrimary,
+                color: context.textPrimaryColor,
               ),
             ),
           ],
@@ -403,167 +469,121 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     AppHaptics.mediumImpact();
     final titleController = TextEditingController();
     final subtitleController = TextEditingController();
-    final routineController = TextEditingController(text: 'General');
+    String selectedRoutine = 'General';
     int selectedAccent = 0;
 
-    showDialog(
+    final routineItems = const [
+      AppDropdownItem(value: 'General', label: 'General Routine', icon: Text('🎯')),
+      AppDropdownItem(value: 'Morning', label: 'Morning Routine', icon: Text('☀️')),
+      AppDropdownItem(value: 'Focus', label: 'Deep Focus', icon: Text('⚡')),
+      AppDropdownItem(value: 'Health', label: 'Health & Hydration', icon: Text('💧')),
+      AppDropdownItem(value: 'Evening', label: 'Evening Calm', icon: Text('🌙')),
+      AppDropdownItem(value: 'Fitness', label: 'Fitness & Gym', icon: Text('💪')),
+    ];
+
+    showAppDialog(
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return AlertDialog(
-              backgroundColor: activeTheme.cardBg,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-                side: BorderSide(color: activeTheme.cardBorder, width: 1.2),
+            return AppDialog(
+              title: 'New Habit',
+              message: 'Establish a new intentional routine to track daily.',
+              icon: Icon(
+                Icons.add_task_rounded,
+                size: 24.sp,
+                color: context.primaryAccent,
               ),
-              title: Text(
-                'New Habit',
-                style: TextStyle(
-                  fontFamily: activeTheme.fontFamily,
-                  fontWeight: FontWeight.w700,
-                  color: activeTheme.textPrimary,
-                ),
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: titleController,
-                      style: TextStyle(
-                        fontFamily: activeTheme.fontFamily,
-                        color: activeTheme.textPrimary,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Habit Title',
-                        hintText: 'e.g. Morning Breathwork',
-                        labelStyle: TextStyle(
-                          color: activeTheme.textPrimary.withValues(alpha: 0.6),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: subtitleController,
-                      style: TextStyle(
-                        fontFamily: activeTheme.fontFamily,
-                        color: activeTheme.textPrimary,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Subtitle / Notes',
-                        hintText: 'e.g. 15 minutes outdoors',
-                        labelStyle: TextStyle(
-                          color: activeTheme.textPrimary.withValues(alpha: 0.6),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: routineController,
-                      style: TextStyle(
-                        fontFamily: activeTheme.fontFamily,
-                        color: activeTheme.textPrimary,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Routine Group',
-                        hintText: 'e.g. Morning, Evening, Focus',
-                        labelStyle: TextStyle(
-                          color: activeTheme.textPrimary.withValues(alpha: 0.6),
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Accent Color Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: List.generate(
-                        activeTheme.accentPalette.length,
-                        (idx) {
-                          final color = activeTheme.accentPalette[idx];
-                          final isSelected = selectedAccent == idx;
-                          return GestureDetector(
-                            onTap: () {
-                              AppHaptics.selectionClick();
-                              setDialogState(() => selectedAccent = idx);
-                            },
-                            child: Container(
-                              width: 32,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                                border: isSelected
-                                    ? Border.all(color: Colors.white, width: 2.5)
-                                    : null,
-                                boxShadow: isSelected
-                                    ? [
-                                        BoxShadow(
-                                          color: color.withValues(alpha: 0.5),
-                                          blurRadius: 8,
-                                        ),
-                                      ]
-                                    : null,
-                              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AppTextField(
+                    controller: titleController,
+                    labelText: 'HABIT TITLE',
+                    hintText: 'e.g. Morning Breathwork',
+                    showClearButton: true,
+                    autofocus: true,
+                  ),
+                  SizedBox(height: 14.h),
+                  AppTextField(
+                    controller: subtitleController,
+                    labelText: 'SUBTITLE / NOTES',
+                    hintText: 'e.g. 15 minutes outdoors',
+                  ),
+                  SizedBox(height: 14.h),
+                  AppDropdown<String>(
+                    labelText: 'ROUTINE CATEGORY',
+                    value: selectedRoutine,
+                    items: routineItems,
+                    onChanged: (val) {
+                      setDialogState(() => selectedRoutine = val);
+                    },
+                  ),
+                  SizedBox(height: 16.h),
+                  Text(
+                    'ACCENT COLOR',
+                    style: AppTextStyles.labelSmall(context),
+                  ),
+                  SizedBox(height: 8.h),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: List.generate(
+                      context.accentPalette.length,
+                      (idx) {
+                        final color = context.accentPalette[idx];
+                        final isSelected = selectedAccent == idx;
+                        return GestureDetector(
+                          onTap: () {
+                            AppHaptics.selectionClick();
+                            setDialogState(() => selectedAccent = idx);
+                          },
+                          child: Container(
+                            width: 32.r,
+                            height: 32.r,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                              border: isSelected
+                                  ? Border.all(color: AppColors.white, width: 2.5)
+                                  : null,
+                              boxShadow: isSelected
+                                  ? [
+                                      BoxShadow(
+                                        color: color.withValues(alpha: 0.5),
+                                        blurRadius: 8.r,
+                                      ),
+                                    ]
+                                  : null,
                             ),
-                          );
-                        },
-                      ),
+                          ),
+                        );
+                      },
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: Text(
-                    'Cancel',
-                    style: TextStyle(
-                      color: activeTheme.textPrimary.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ),
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: activeTheme.accentPalette.isNotEmpty
-                        ? activeTheme.accentPalette[selectedAccent % activeTheme.accentPalette.length]
-                        : Theme.of(context).colorScheme.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  onPressed: () {
-                    final title = titleController.text.trim();
-                    if (title.isEmpty) return;
+              confirmText: 'Add Habit',
+              cancelText: 'Cancel',
+              onConfirm: () {
+                final title = titleController.text.trim();
+                if (title.isEmpty) return;
 
-                    final newHabit = HabitModel(
-                      id: 'habit_${DateTime.now().millisecondsSinceEpoch}',
-                      title: title,
-                      subtitle: subtitleController.text.trim(),
-                      frequency: const HabitFrequency.daily(),
-                      routineGroup: routineController.text.trim().isEmpty
-                          ? 'General'
-                          : routineController.text.trim(),
-                      accentIndex: selectedAccent,
-                      createdAt: DateTime.now(),
-                    );
+                final newHabit = HabitModel(
+                  id: 'habit_${DateTime.now().millisecondsSinceEpoch}',
+                  title: title,
+                  subtitle: subtitleController.text.trim(),
+                  frequency: const HabitFrequency.daily(),
+                  routineGroup: selectedRoutine,
+                  accentIndex: selectedAccent,
+                  createdAt: DateTime.now(),
+                );
 
-                    ref.read(habitListProvider.notifier).createHabit(newHabit);
-                    Navigator.of(dialogContext).pop();
-                    AppHaptics.heavyImpact();
-                  },
-                  child: const Text('Add Habit'),
-                ),
-              ],
+                ref.read(habitListProvider.notifier).createHabit(newHabit);
+                Navigator.of(dialogContext).pop();
+                AppHaptics.heavyImpact();
+              },
+              onCancel: () => Navigator.of(dialogContext).pop(),
             );
           },
         );

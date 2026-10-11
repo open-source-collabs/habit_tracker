@@ -2,13 +2,13 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:habit_tracker/core/theme/dynamic_theme_model.dart';
-import 'package:habit_tracker/data/models/app_payload_model.dart';
-import 'package:habit_tracker/data/models/habit_model.dart';
-import 'package:habit_tracker/data/storage/habit_storage.dart';
-import 'package:habit_tracker/data/storage/habit_storage_factory.dart';
-import 'package:habit_tracker/data/storage/io_habit_storage.dart';
-import 'package:habit_tracker/data/storage/web_habit_storage.dart';
+import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
+import 'package:habit_tracker/features/habits/data/storage/habit_storage.dart';
+import 'package:habit_tracker/features/habits/data/storage/habit_storage_factory.dart';
+import 'package:habit_tracker/features/habits/data/storage/io_habit_storage.dart';
+import 'package:habit_tracker/features/habits/data/storage/web_habit_storage.dart';
+import 'package:habit_tracker/features/themes/data/models/app_payload_model.dart';
+import 'package:habit_tracker/features/themes/data/models/dynamic_theme_model.dart';
 
 void main() {
   group('HabitModel & Frequency Specifications', () {
