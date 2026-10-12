@@ -51,7 +51,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Dusk & Dawn Tracker'), findsOneWidget);
-    expect(find.text('Theme Studio'), findsOneWidget);
+    expect(find.text('Themes'), findsOneWidget);
+    expect(find.text('Sync'), findsOneWidget);
     expect(find.text('ACTIVE HABITS'), findsOneWidget);
     expect(find.text('PROGRESS OVERVIEW'), findsOneWidget);
     expect(find.text('New Habit'), findsOneWidget);
@@ -76,7 +77,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Dusk & Dawn Tracker'), findsOneWidget);
-    expect(find.text('Theme Studio'), findsOneWidget);
+    expect(find.text('Themes'), findsOneWidget);
+    expect(find.text('Sync'), findsOneWidget);
     expect(find.text('ACTIVE HABITS'), findsOneWidget);
     expect(find.text('PROGRESS OVERVIEW'), findsOneWidget);
     // On desktop, the Bento Streak Champion tile is rendered

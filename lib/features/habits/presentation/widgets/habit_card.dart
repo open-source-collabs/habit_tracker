@@ -7,6 +7,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../data/models/habit_model.dart';
 import '../providers/habit_provider.dart';
+import 'habit_extensions.dart';
+import '../../../../presentation/widgets/heatmap_grid.dart';
 
 /// Tactile Bento Habit Card adapting dynamically to the active Riverpod theme.
 /// Features a 0.96 spring press-down animation, glowing completion shadow,
@@ -115,10 +117,8 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
 
   @override
   Widget build(BuildContext context) {
-    final accents = context.accentPalette;
-    final accentColor = accents.isNotEmpty
-        ? accents[widget.habit.accentIndex % accents.length]
-        : context.primaryAccent;
+    final accentColor = widget.habit.resolveColor(context);
+    final showHeatmap = ref.watch(habitHeatmapExpandedProvider(widget.habit.id));
 
     final isCompleted = widget.habit.isCompletedOn(widget.date);
     final currentStreak = widget.habit.calculateCurrentStreak(asOf: widget.date);
@@ -136,10 +136,13 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOutCubic,
-            padding: EdgeInsets.all(20.r.clamp(16.0, 24.0)),
+            padding: EdgeInsets.symmetric(
+              horizontal: 14.r.clamp(12.0, 18.0),
+              vertical: 12.r.clamp(10.0, 16.0),
+            ),
             decoration: BoxDecoration(
               color: context.cardBackgroundColor,
-              borderRadius: BorderRadius.circular(24.r.clamp(16.0, 24.0)),
+              borderRadius: BorderRadius.circular(20.r.clamp(16.0, 22.0)),
               border: Border.all(
                 color: isCompleted
                     ? accentColor
@@ -150,22 +153,26 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                   ? [
                       BoxShadow(
                         color: accentColor.withValues(alpha: 0.35),
-                        blurRadius: 20.r,
+                        blurRadius: 16.r,
                         spreadRadius: 0,
-                        offset: Offset(0, 4.h),
+                        offset: Offset(0, 3.h),
                       ),
                     ]
                   : [
                       BoxShadow(
                         color: context.shadowColor,
-                        blurRadius: 12.r,
+                        blurRadius: 8.r,
                         offset: Offset(0, 2.h),
                       ),
                     ],
             ),
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                 // Spring Check-off Circle
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
@@ -178,8 +185,8 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 220),
                       curve: Curves.easeOutCubic,
-                      width: 44.r.clamp(38.0, 48.0),
-                      height: 44.r.clamp(38.0, 48.0),
+                      width: 40.r.clamp(36.0, 44.0),
+                      height: 40.r.clamp(36.0, 44.0),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: isCompleted ? accentColor : AppColors.transparent,
@@ -193,7 +200,7 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                             ? [
                                 BoxShadow(
                                   color: accentColor.withValues(alpha: 0.45),
-                                  blurRadius: 10.r,
+                                  blurRadius: 8.r,
                                   offset: Offset(0, 2.h),
                                 ),
                               ]
@@ -209,19 +216,27 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                                   Icons.check_rounded,
                                   key: const ValueKey('checked'),
                                   color: AppColors.white,
-                                  size: 24.sp,
+                                  size: 22.sp,
                                 )
-                              : Text(
-                                  widget.habit.displayEmoji,
-                                  key: const ValueKey('unchecked'),
-                                  style: TextStyle(fontSize: 20.sp),
-                                ),
+                              : (widget.habit.iconCode != null &&
+                                      HabitIconRegistry.getIcon(widget.habit.iconCode) != null)
+                                  ? Icon(
+                                      HabitIconRegistry.getIcon(widget.habit.iconCode)!,
+                                      key: const ValueKey('unchecked_icon'),
+                                      color: accentColor,
+                                      size: 20.sp,
+                                    )
+                                  : Text(
+                                      widget.habit.displayEmoji,
+                                      key: const ValueKey('unchecked'),
+                                      style: TextStyle(fontSize: 18.sp),
+                                    ),
                         ),
                       ),
                     ),
                   ),
                 ),
-                SizedBox(width: 16.w.clamp(12.0, 18.0)),
+                SizedBox(width: 12.w.clamp(10.0, 16.0)),
 
                 // Title, Subtitle, and Badges
                 Expanded(
@@ -302,35 +317,36 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                         ],
                       ),
                       if (widget.habit.subtitle.isNotEmpty) ...[
-                        SizedBox(height: 4.h),
+                        SizedBox(height: 2.h),
                         Text(
                           widget.habit.subtitle,
                           style: context.textTheme.bodyMedium?.copyWith(
                             color: context.textSecondaryColor,
+                            fontSize: 12.sp,
                           ),
                         ),
                       ],
-                      SizedBox(height: 12.h),
+                      SizedBox(height: 8.h),
 
                       // Bento Micro-Pills (Routine, Frequency, Streak)
                       Wrap(
-                        spacing: 8.w,
-                        runSpacing: 6.h,
+                        spacing: 6.w,
+                        runSpacing: 4.h,
                         children: [
                           // Routine Group Pill
                           Container(
                             padding: EdgeInsets.symmetric(
-                                horizontal: 10.w, vertical: 4.h),
+                                horizontal: 8.w, vertical: 3.h),
                             decoration: BoxDecoration(
                               color: context.isDarkMode
                                   ? context.surfaceElevatedColor
                                   : context.cardBorderColor.withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(10.r),
+                              borderRadius: BorderRadius.circular(8.r),
                             ),
                             child: Text(
                               widget.habit.routineGroup,
                               style: context.textTheme.labelSmall?.copyWith(
-                                fontSize: 11.sp,
+                                fontSize: 10.sp,
                                 fontWeight: FontWeight.w600,
                                 color: context.textPrimaryColor,
                               ),
@@ -340,17 +356,17 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                           // Frequency Pill
                           Container(
                             padding: EdgeInsets.symmetric(
-                                horizontal: 10.w, vertical: 4.h),
+                                horizontal: 8.w, vertical: 3.h),
                             decoration: BoxDecoration(
                               color: context.isDarkMode
                                   ? context.surfaceElevatedColor
                                   : context.cardBorderColor.withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(10.r),
+                              borderRadius: BorderRadius.circular(8.r),
                             ),
                             child: Text(
                               _formatFrequency(widget.habit.frequency),
                               style: context.textTheme.labelSmall?.copyWith(
-                                fontSize: 11.sp,
+                                fontSize: 10.sp,
                                 fontWeight: FontWeight.w600,
                                 color: context.textPrimaryColor,
                               ),
@@ -361,10 +377,10 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                           if (currentStreak > 0)
                             Container(
                               padding: EdgeInsets.symmetric(
-                                  horizontal: 10.w, vertical: 4.h),
+                                  horizontal: 8.w, vertical: 3.h),
                               decoration: BoxDecoration(
                                 color: accentColor.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(10.r),
+                                borderRadius: BorderRadius.circular(8.r),
                                 border: Border.all(
                                   color: accentColor.withValues(alpha: 0.3),
                                   width: 1,
@@ -375,14 +391,14 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                                 children: [
                                   Icon(
                                     Icons.local_fire_department_rounded,
-                                    size: 14.sp,
+                                    size: 13.sp,
                                     color: accentColor,
                                   ),
-                                  SizedBox(width: 4.w),
+                                  SizedBox(width: 3.w),
                                   Text(
                                     '$currentStreak days',
                                     style: context.textTheme.labelSmall?.copyWith(
-                                      fontSize: 11.sp,
+                                      fontSize: 10.sp,
                                       fontWeight: FontWeight.w800,
                                       color: accentColor,
                                     ),
@@ -390,6 +406,59 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                                 ],
                               ),
                             ),
+
+                          // Heatmap Toggle Pill
+                          GestureDetector(
+                            onTap: () {
+                              AppHaptics.selectionClick();
+                              ref
+                                  .read(habitHeatmapExpandedProvider(
+                                          widget.habit.id)
+                                      .notifier)
+                                  .state = !showHeatmap;
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 7.w, vertical: 3.h),
+                              decoration: BoxDecoration(
+                                color: showHeatmap
+                                    ? accentColor.withValues(alpha: 0.18)
+                                    : (context.isDarkMode
+                                        ? context.surfaceElevatedColor
+                                        : context.cardBorderColor.withValues(alpha: 0.4)),
+                                borderRadius: BorderRadius.circular(8.r),
+                                border: Border.all(
+                                  color: showHeatmap
+                                      ? accentColor
+                                      : AppColors.transparent,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_view_week_rounded,
+                                    size: 11.sp,
+                                    color: showHeatmap
+                                        ? accentColor
+                                        : context.textMutedColor,
+                                  ),
+                                  SizedBox(width: 3.w),
+                                  Text(
+                                    'Heatmap',
+                                    style: context.textTheme.labelSmall?.copyWith(
+                                      fontSize: 10.sp,
+                                      fontWeight: FontWeight.w600,
+                                      color: showHeatmap
+                                          ? accentColor
+                                          : context.textSecondaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -397,6 +466,20 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                 ),
               ],
             ),
+
+            // Expandable Heatmap Grid
+            if (showHeatmap) ...[
+              SizedBox(height: 14.h),
+              HeatmapGrid(
+                checkIns: widget.habit.checkIns,
+                activeColor: accentColor,
+                initialRangeDays: 60,
+                showHeader: false,
+                showRangeSelector: true,
+              ),
+            ],
+          ],
+        ),
           ),
         ),
       ),

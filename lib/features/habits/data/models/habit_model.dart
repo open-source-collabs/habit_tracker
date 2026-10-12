@@ -110,6 +110,15 @@ class HabitModel {
   /// Optional custom emoji or visual glyph.
   final String? emoji;
 
+  /// Optional custom color 32-bit ARGB value (overrides [accentIndex] if provided).
+  final int? customColorValue;
+
+  /// Optional Material Icon identifier (e.g. 'fitness_center', 'water_drop').
+  final String? iconCode;
+
+  /// Optional scheduled daily reminder time string (e.g. '08:30').
+  final String? reminderTime;
+
   /// Audit timestamp for the latest check-in or property modification.
   final DateTime? lastModifiedAt;
 
@@ -124,6 +133,9 @@ class HabitModel {
     this.isArchived = false,
     this.checkIns = const {},
     this.emoji,
+    this.customColorValue,
+    this.iconCode,
+    this.reminderTime,
     this.lastModifiedAt,
   });
 
@@ -418,6 +430,9 @@ class HabitModel {
     bool? isArchived,
     Map<String, bool>? checkIns,
     String? emoji,
+    int? customColorValue,
+    String? iconCode,
+    String? reminderTime,
     DateTime? lastModifiedAt,
   }) {
     return HabitModel(
@@ -433,6 +448,9 @@ class HabitModel {
           ? Map.unmodifiable(checkIns)
           : this.checkIns,
       emoji: emoji ?? this.emoji,
+      customColorValue: customColorValue ?? this.customColorValue,
+      iconCode: iconCode ?? this.iconCode,
+      reminderTime: reminderTime ?? this.reminderTime,
       lastModifiedAt: lastModifiedAt ?? this.lastModifiedAt,
     );
   }
@@ -449,6 +467,9 @@ class HabitModel {
       'isArchived': isArchived,
       'checkIns': checkIns,
       if (emoji != null) 'emoji': emoji,
+      if (customColorValue != null) 'customColorValue': customColorValue,
+      if (iconCode != null) 'iconCode': iconCode,
+      if (reminderTime != null) 'reminderTime': reminderTime,
       if (lastModifiedAt != null) 'lastModifiedAt': lastModifiedAt!.toIso8601String(),
     };
   }
@@ -477,6 +498,9 @@ class HabitModel {
       isArchived: json['isArchived'] as bool? ?? false,
       checkIns: checkInsMap,
       emoji: json['emoji'] as String?,
+      customColorValue: (json['customColorValue'] as num?)?.toInt(),
+      iconCode: json['iconCode'] as String?,
+      reminderTime: json['reminderTime'] as String?,
       lastModifiedAt: json['lastModifiedAt'] != null
           ? DateTime.parse(json['lastModifiedAt'] as String)
           : null,
@@ -497,6 +521,9 @@ class HabitModel {
           createdAt == other.createdAt &&
           isArchived == other.isArchived &&
           emoji == other.emoji &&
+          customColorValue == other.customColorValue &&
+          iconCode == other.iconCode &&
+          reminderTime == other.reminderTime &&
           mapEquals(checkIns, other.checkIns);
 
   @override
@@ -510,6 +537,9 @@ class HabitModel {
         createdAt,
         isArchived,
         emoji,
+        customColorValue,
+        iconCode,
+        reminderTime,
         Object.hashAll(checkIns.keys),
       );
 }

@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:habit_tracker/core/theme/theme_factory.dart';
-import 'package:habit_tracker/features/habits/presentation/providers/habit_provider.dart';
 import 'package:habit_tracker/features/habits/presentation/widgets/add_habit_sheet.dart';
 import 'package:habit_tracker/features/themes/data/models/dynamic_theme_model.dart';
 

@@ -16,6 +16,7 @@ class UserThemeModel {
   final String textSecondaryHex;
   final List<String> accentPaletteHex;
   final bool isBuiltIn;
+  final DateTime? lastModifiedAt;
 
   const UserThemeModel({
     required this.id,
@@ -28,6 +29,7 @@ class UserThemeModel {
     this.textSecondaryHex = '#94A3B8',
     required this.accentPaletteHex,
     this.isBuiltIn = false,
+    this.lastModifiedAt,
   });
 
   // --- Convenience Color Getters ---
@@ -75,6 +77,7 @@ class UserThemeModel {
     String? textSecondaryHex,
     List<String>? accentPaletteHex,
     bool? isBuiltIn,
+    DateTime? lastModifiedAt,
   }) {
     return UserThemeModel(
       id: id ?? this.id,
@@ -89,6 +92,7 @@ class UserThemeModel {
           ? List.unmodifiable(accentPaletteHex)
           : this.accentPaletteHex,
       isBuiltIn: isBuiltIn ?? this.isBuiltIn,
+      lastModifiedAt: lastModifiedAt ?? this.lastModifiedAt,
     );
   }
 
@@ -111,6 +115,7 @@ class UserThemeModel {
       'accentGradients': accentPaletteHex,
       'accentPaletteHex': accentPaletteHex,
       'isBuiltIn': isBuiltIn,
+      if (lastModifiedAt != null) 'lastModifiedAt': lastModifiedAt!.toIso8601String(),
     };
   }
 
@@ -139,6 +144,9 @@ class UserThemeModel {
       textSecondaryHex: (json['textSecondaryHex'] ?? json['textSecondary']) as String? ?? '#94A3B8',
       accentPaletteHex: accents,
       isBuiltIn: json['isBuiltIn'] as bool? ?? false,
+      lastModifiedAt: json['lastModifiedAt'] != null
+          ? DateTime.parse(json['lastModifiedAt'] as String)
+          : null,
     );
   }
 
@@ -249,6 +257,7 @@ class UserThemeModel {
           textPrimaryHex == other.textPrimaryHex &&
           textSecondaryHex == other.textSecondaryHex &&
           isBuiltIn == other.isBuiltIn &&
+          lastModifiedAt == other.lastModifiedAt &&
           listEquals(accentPaletteHex, other.accentPaletteHex);
 
   @override
@@ -262,6 +271,7 @@ class UserThemeModel {
         textPrimaryHex,
         textSecondaryHex,
         isBuiltIn,
+        lastModifiedAt,
         Object.hashAll(accentPaletteHex),
       );
 }

@@ -30,17 +30,17 @@ class CalendarStrip extends ConsumerWidget {
 
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: 16.w.clamp(12.0, 18.0),
-        vertical: 14.h.clamp(10.0, 16.0),
+        horizontal: 12.w.clamp(10.0, 16.0),
+        vertical: 8.h.clamp(6.0, 10.0),
       ),
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(24.r.clamp(16.0, 24.0)),
+        borderRadius: BorderRadius.circular(20.r.clamp(16.0, 22.0)),
         border: Border.all(color: context.cardBorderColor, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: context.shadowColor,
-            blurRadius: 10.r,
+            blurRadius: 8.r,
             offset: Offset(0, 2.h),
           ),
         ],
@@ -67,15 +67,15 @@ class CalendarStrip extends ConsumerWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOutCubic,
-                width: 38.w.clamp(32.0, 42.0),
-                padding: EdgeInsets.symmetric(vertical: 8.h),
+                width: 34.w.clamp(30.0, 38.0),
+                padding: EdgeInsets.symmetric(vertical: 6.h),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? primaryAccent
                       : (isToday
                             ? primaryAccent.withValues(alpha: 0.12)
                             : AppColors.transparent),
-                  borderRadius: BorderRadius.circular(16.r),
+                  borderRadius: BorderRadius.circular(14.r),
                   border: isToday && !isSelected
                       ? Border.all(
                           color: primaryAccent.withValues(alpha: 0.4),
@@ -96,11 +96,11 @@ class CalendarStrip extends ConsumerWidget {
                             : context.textMutedColor,
                       ),
                     ),
-                    SizedBox(height: 4.h),
+                    SizedBox(height: 2.h),
                     Text(
                       '${date.day}',
                       style: context.textTheme.titleMedium?.copyWith(
-                        fontSize: 14.sp,
+                        fontSize: 13.sp,
                         fontWeight: isSelected || isToday
                             ? FontWeight.w800
                             : FontWeight.w600,
@@ -121,8 +121,8 @@ class CalendarStrip extends ConsumerWidget {
                 onAddTap!();
               },
               child: Container(
-                width: 36.r,
-                height: 36.r,
+                width: 32.r,
+                height: 32.r,
                 decoration: BoxDecoration(
                   color: primaryAccent.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
@@ -130,7 +130,7 @@ class CalendarStrip extends ConsumerWidget {
                 child: Icon(
                   Icons.add_rounded,
                   color: primaryAccent,
-                  size: 20.sp,
+                  size: 18.sp,
                 ),
               ),
             ),

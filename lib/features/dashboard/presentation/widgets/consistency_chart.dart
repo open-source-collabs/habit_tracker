@@ -51,15 +51,15 @@ class ConsistencyChart extends ConsumerWidget {
     final avgPercent = (avgRate * 100).round();
 
     return Container(
-      padding: EdgeInsets.all(20.r.clamp(16.0, 24.0)),
+      padding: EdgeInsets.all(14.r.clamp(12.0, 18.0)),
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(24.r.clamp(16.0, 24.0)),
+        borderRadius: BorderRadius.circular(20.r.clamp(16.0, 22.0)),
         border: Border.all(color: context.cardBorderColor, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: context.shadowColor,
-            blurRadius: 10.r,
+            blurRadius: 8.r,
             offset: Offset(0, 2.h),
           ),
         ],
@@ -77,7 +77,7 @@ class ConsistencyChart extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.titleMedium?.copyWith(
-                    fontSize: 18.sp.clamp(16.0, 20.0),
+                    fontSize: 16.sp.clamp(15.0, 18.0),
                     fontWeight: FontWeight.w700,
                     letterSpacing: -0.3,
                     color: context.textPrimaryColor,
@@ -87,19 +87,19 @@ class ConsistencyChart extends ConsumerWidget {
               SizedBox(width: 8.w.clamp(6.0, 10.0)),
               Container(
                 padding: EdgeInsets.symmetric(
-                  horizontal: 10.w.clamp(8.0, 12.0),
-                  vertical: 4.h.clamp(3.0, 6.0),
+                  horizontal: 8.w.clamp(6.0, 10.0),
+                  vertical: 3.h.clamp(2.0, 5.0),
                 ),
                 decoration: BoxDecoration(
                   color: context.isDarkMode
                       ? context.surfaceElevatedColor
                       : context.cardBorderColor.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(12.r),
+                  borderRadius: BorderRadius.circular(10.r),
                 ),
                 child: Text(
                   'Avg. $avgPercent%',
                   style: context.textTheme.labelSmall?.copyWith(
-                    fontSize: 11.sp.clamp(10.0, 12.0),
+                    fontSize: 10.sp.clamp(9.0, 11.0),
                     fontWeight: FontWeight.w700,
                     color: context.textPrimaryColor,
                   ),
@@ -107,11 +107,11 @@ class ConsistencyChart extends ConsumerWidget {
               ),
             ],
           ),
-          SizedBox(height: 24.h.clamp(16.0, 28.0)),
+          SizedBox(height: 10.h.clamp(8.0, 14.0)),
 
           // Bar Chart
           SizedBox(
-            height: 120.h.clamp(100.0, 130.0),
+            height: 78.h.clamp(70.0, 86.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -126,29 +126,29 @@ class ConsistencyChart extends ConsumerWidget {
                       if (isHighlight) ...[
                         Container(
                           padding: EdgeInsets.symmetric(
-                            horizontal: 6.w.clamp(4.0, 8.0),
-                            vertical: 2.h.clamp(2.0, 4.0),
+                            horizontal: 5.w.clamp(3.0, 7.0),
+                            vertical: 1.5.h.clamp(1.0, 3.0),
                           ),
                           decoration: BoxDecoration(
                             color: primaryAccent,
-                            borderRadius: BorderRadius.circular(8.r),
+                            borderRadius: BorderRadius.circular(6.r),
                           ),
                           child: Text(
                             '${(bar.rate * 100).round()}%',
                             style: TextStyle(
-                              fontSize: 9.sp.clamp(8.0, 11.0),
+                              fontSize: 8.5.sp.clamp(7.5, 10.0),
                               fontWeight: FontWeight.w800,
                               color: AppColors.white,
                             ),
                           ),
                         ),
-                        SizedBox(height: 4.h.clamp(2.0, 6.0)),
+                        SizedBox(height: 3.h.clamp(2.0, 4.0)),
                       ],
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeOutCubic,
-                        width: 28.w.clamp(18.0, 30.0),
-                        height: (70.h * heightFactor).clamp(16.0, 90.0),
+                        width: 22.w.clamp(16.0, 26.0),
+                        height: (44.h * heightFactor).clamp(12.0, 50.0),
                         decoration: BoxDecoration(
                           color: isHighlight
                               ? primaryAccent
@@ -157,25 +157,25 @@ class ConsistencyChart extends ConsumerWidget {
                                     : context.cardBorderColor.withValues(
                                         alpha: 0.7,
                                       )),
-                          borderRadius: BorderRadius.circular(10.r),
+                          borderRadius: BorderRadius.circular(8.r),
                         ),
                       ),
-                      SizedBox(height: 8.h.clamp(4.0, 10.0)),
+                      SizedBox(height: 4.h.clamp(2.0, 6.0)),
                       Container(
                         padding: EdgeInsets.symmetric(
                           horizontal: 4.w.clamp(2.0, 6.0),
-                          vertical: 2.h.clamp(1.0, 4.0),
+                          vertical: 1.5.h.clamp(1.0, 3.0),
                         ),
                         decoration: BoxDecoration(
                           color: isHighlight
                               ? primaryAccent.withValues(alpha: 0.15)
                               : AppColors.transparent,
-                          borderRadius: BorderRadius.circular(6.r),
+                          borderRadius: BorderRadius.circular(5.r),
                         ),
                         child: Text(
                           bar.label,
                           style: context.textTheme.labelSmall?.copyWith(
-                            fontSize: 11.sp.clamp(9.0, 12.0),
+                            fontSize: 10.sp.clamp(8.5, 11.0),
                             fontWeight: isHighlight
                                 ? FontWeight.w700
                                 : FontWeight.w500,

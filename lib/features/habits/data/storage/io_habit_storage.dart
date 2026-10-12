@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../themes/data/models/app_payload_model.dart';
 import 'habit_storage.dart';
@@ -40,26 +41,36 @@ class IoHabitStorage implements HabitStorage {
   }
 
   Future<Directory> _resolveDefaultDirectory() async {
-    String basePath = './habit_tracker_data';
-
-    if (Platform.isWindows) {
-      final appData =
-          Platform.environment['APPDATA'] ?? Platform.environment['USERPROFILE'];
-      if (appData != null) {
-        basePath = '$appData/HabitTracker';
+    try {
+      final docDir = await getApplicationDocumentsDirectory();
+      final target = Directory('${docDir.path}/habit_tracker_data');
+      if (!await target.exists()) {
+        await target.create(recursive: true);
       }
-    } else if (Platform.isLinux || Platform.isMacOS) {
-      final home = Platform.environment['HOME'];
-      if (home != null) {
-        basePath = '$home/.habit_tracker';
-      }
-    }
+      return target;
+    } catch (_) {
+      // Graceful fallback for test or mock environments
+      String basePath = './habit_tracker_data';
 
-    final dir = Directory(basePath);
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
+      if (Platform.isWindows) {
+        final appData =
+            Platform.environment['APPDATA'] ?? Platform.environment['USERPROFILE'];
+        if (appData != null) {
+          basePath = '$appData/HabitTracker';
+        }
+      } else if (Platform.isLinux || Platform.isMacOS) {
+        final home = Platform.environment['HOME'];
+        if (home != null) {
+          basePath = '$home/.habit_tracker';
+        }
+      }
+
+      final dir = Directory(basePath);
+      if (!await dir.exists()) {
+        await dir.create(recursive: true);
+      }
+      return dir;
     }
-    return dir;
   }
 
   @override

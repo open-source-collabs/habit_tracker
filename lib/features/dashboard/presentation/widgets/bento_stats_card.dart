@@ -15,15 +15,15 @@ class BentoStatsCard extends ConsumerWidget {
     final primaryAccent = context.primaryAccent;
 
     return Container(
-      padding: EdgeInsets.all(20.r.clamp(16.0, 24.0)),
+      padding: EdgeInsets.all(12.r.clamp(10.0, 16.0)),
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(24.r.clamp(16.0, 24.0)),
+        borderRadius: BorderRadius.circular(18.r.clamp(14.0, 20.0)),
         border: Border.all(color: context.cardBorderColor, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: context.shadowColor,
-            blurRadius: 10.r,
+            blurRadius: 8.r,
             offset: Offset(0, 2.h),
           ),
         ],
@@ -42,7 +42,7 @@ class BentoStatsCard extends ConsumerWidget {
                   style: context.textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.1,
-                    fontSize: 11.sp.clamp(10.0, 13.0),
+                    fontSize: 10.5.sp.clamp(9.5, 12.0),
                     color: context.textMutedColor,
                   ),
                 ),
@@ -52,29 +52,29 @@ class BentoStatsCard extends ConsumerWidget {
                 '${stats.completedCount}/${stats.totalScheduled} Complete',
                 style: context.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
-                  fontSize: 12.sp.clamp(11.0, 14.0),
+                  fontSize: 11.5.sp.clamp(10.5, 13.0),
                   color: context.textPrimaryColor,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 8.h),
           ClipRRect(
-            borderRadius: BorderRadius.circular(8.r),
+            borderRadius: BorderRadius.circular(6.r),
             child: LinearProgressIndicator(
               value: stats.totalScheduled > 0 ? stats.completionRate : 0.0,
-              minHeight: 8.h.clamp(6.0, 10.0),
+              minHeight: 6.h.clamp(5.0, 8.0),
               backgroundColor: context.cardBorderColor.withValues(alpha: 0.6),
               valueColor: AlwaysStoppedAnimation<Color>(primaryAccent),
             ),
           ),
           if (stats.longestActiveStreak > 0) ...[
-            SizedBox(height: 12.h),
+            SizedBox(height: 6.h),
             Row(
               children: [
                 Icon(
                   Icons.local_fire_department_rounded,
-                  size: 15.sp,
+                  size: 14.sp,
                   color: primaryAccent,
                 ),
                 SizedBox(width: 4.w),
@@ -85,7 +85,7 @@ class BentoStatsCard extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                     style: context.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w600,
-                      fontSize: 11.sp,
+                      fontSize: 10.5.sp,
                       color: context.textSecondaryColor,
                     ),
                   ),

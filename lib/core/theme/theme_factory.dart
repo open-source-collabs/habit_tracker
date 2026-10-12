@@ -93,7 +93,7 @@ abstract final class ThemeFactory {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24.0),
-          side: BorderSide(color: model.cardBorder, width: 1.2),
+          side: BorderSide.none,
         ),
       ),
       bottomSheetTheme: BottomSheetThemeData(

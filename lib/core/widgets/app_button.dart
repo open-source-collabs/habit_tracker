@@ -96,33 +96,33 @@ class _AppButtonState extends State<AppButton>
   double get _height {
     switch (widget.size) {
       case AppButtonSize.sm:
-        return 36.h;
+        return 32.h.clamp(28.0, 36.0);
       case AppButtonSize.md:
-        return 46.h;
+        return 42.h.clamp(38.0, 46.0);
       case AppButtonSize.lg:
-        return 54.h;
+        return 48.h.clamp(44.0, 52.0);
     }
   }
 
   EdgeInsetsGeometry get _padding {
     switch (widget.size) {
       case AppButtonSize.sm:
-        return EdgeInsets.symmetric(horizontal: 14.w);
+        return EdgeInsets.symmetric(horizontal: 12.w.clamp(10.0, 14.0));
       case AppButtonSize.md:
-        return EdgeInsets.symmetric(horizontal: 20.w);
+        return EdgeInsets.symmetric(horizontal: 16.w.clamp(12.0, 20.0));
       case AppButtonSize.lg:
-        return EdgeInsets.symmetric(horizontal: 26.w);
+        return EdgeInsets.symmetric(horizontal: 22.w.clamp(18.0, 26.0));
     }
   }
 
   double get _borderRadius {
     switch (widget.size) {
       case AppButtonSize.sm:
-        return 12.r;
+        return 10.r.clamp(8.0, 12.0);
       case AppButtonSize.md:
-        return 16.r;
+        return 14.r.clamp(12.0, 16.0);
       case AppButtonSize.lg:
-        return 18.r;
+        return 16.r.clamp(14.0, 18.0);
     }
   }
 

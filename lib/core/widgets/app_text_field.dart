@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/app_theme.dart';
 import '../utils/haptics.dart';
+import 'app_text_field_provider.dart';
 
-/// Professional text input field adopting active theme typography, surface colors,
-/// and border geometry. Features a soft glowing accent halo when focused.
-class AppTextField extends StatefulWidget {
+/// Professional, zero-hardcoding text input field adhering to the Bento design system.
+///
+/// Features:
+/// - Smooth animated focus transitions with tactile glow halo
+/// - Clean single-border architecture eliminating any duplicate outline leakage
+/// - Dynamic Riverpod theme adaptation with custom accent override support
+/// - Built-in clear button and password visibility toggle with tactile haptics
+/// - Robust controller and FocusNode lifecycle management (including didUpdateWidget)
+/// - Comprehensive customization: inputFormatters, textCapitalization, padding, styles
+class AppTextField extends ConsumerStatefulWidget {
   final TextEditingController? controller;
   final String? initialValue;
   final String? labelText;
@@ -22,8 +32,10 @@ class AppTextField extends StatefulWidget {
   final bool isPassword;
   final TextInputType keyboardType;
   final TextInputAction? textInputAction;
+  final TextCapitalization textCapitalization;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
+  final VoidCallback? onEditingComplete;
   final VoidCallback? onTap;
   final int maxLines;
   final int minLines;
@@ -33,6 +45,13 @@ class AppTextField extends StatefulWidget {
   final bool autofocus;
   final Color? accentColor;
   final FocusNode? focusNode;
+  final TextStyle? style;
+  final TextStyle? hintStyle;
+  final TextStyle? labelStyle;
+  final EdgeInsetsGeometry? contentPadding;
+  final double? borderRadius;
+  final List<TextInputFormatter>? inputFormatters;
+  final TextAlign textAlign;
 
   const AppTextField({
     super.key,
@@ -49,8 +68,10 @@ class AppTextField extends StatefulWidget {
     this.isPassword = false,
     this.keyboardType = TextInputType.text,
     this.textInputAction,
+    this.textCapitalization = TextCapitalization.none,
     this.onChanged,
     this.onSubmitted,
+    this.onEditingComplete,
     this.onTap,
     this.maxLines = 1,
     this.minLines = 1,
@@ -60,72 +81,154 @@ class AppTextField extends StatefulWidget {
     this.autofocus = false,
     this.accentColor,
     this.focusNode,
+    this.style,
+    this.hintStyle,
+    this.labelStyle,
+    this.contentPadding,
+    this.borderRadius,
+    this.inputFormatters,
+    this.textAlign = TextAlign.start,
   });
 
   @override
-  State<AppTextField> createState() => _AppTextFieldState();
+  ConsumerState<AppTextField> createState() => _AppTextFieldState();
 }
 
-class _AppTextFieldState extends State<AppTextField> {
-  late TextEditingController _effectiveController;
-  late FocusNode _effectiveFocusNode;
-  bool _isFocused = false;
-  late bool _obscureText;
-  bool _showClear = false;
+class _AppTextFieldState extends ConsumerState<AppTextField> {
+  TextEditingController? _internalController;
+  FocusNode? _internalFocusNode;
+
+  TextEditingController get _effectiveController =>
+      widget.controller ?? _internalController!;
+
+  FocusNode get _effectiveFocusNode =>
+      widget.focusNode ?? _internalFocusNode!;
+
+  late final AppTextFieldParams _params = AppTextFieldParams(
+    id: 'textfield_${identityHashCode(this)}',
+    initialObscure: widget.isPassword || widget.obscureText,
+    initialShowClear: (widget.controller?.text ?? widget.initialValue ?? '').isNotEmpty,
+  );
 
   @override
   void initState() {
     super.initState();
-    _effectiveController =
-        widget.controller ?? TextEditingController(text: widget.initialValue);
-    _effectiveFocusNode = widget.focusNode ?? FocusNode();
-
-    _obscureText = widget.isPassword || widget.obscureText;
-    _showClear = _effectiveController.text.isNotEmpty;
+    if (widget.controller == null) {
+      _internalController =
+          TextEditingController(text: widget.initialValue);
+    }
+    if (widget.focusNode == null) {
+      _internalFocusNode = FocusNode();
+    }
 
     _effectiveFocusNode.addListener(_handleFocusChanged);
     _effectiveController.addListener(_handleTextChange);
   }
 
   @override
+  void didUpdateWidget(AppTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // Handle controller updates cleanly without leaking listeners
+    if (widget.controller != oldWidget.controller) {
+      oldWidget.controller?.removeListener(_handleTextChange);
+      _internalController?.removeListener(_handleTextChange);
+
+      if (widget.controller == null) {
+        _internalController = TextEditingController(
+          text: oldWidget.controller?.text ?? widget.initialValue,
+        );
+        _internalController!.addListener(_handleTextChange);
+      } else {
+        _internalController?.dispose();
+        _internalController = null;
+        widget.controller!.addListener(_handleTextChange);
+      }
+      ref
+          .read(appTextFieldUiProvider(_params).notifier)
+          .setShowClear(_effectiveController.text.isNotEmpty);
+    }
+
+    // Handle focus node updates cleanly
+    if (widget.focusNode != oldWidget.focusNode) {
+      oldWidget.focusNode?.removeListener(_handleFocusChanged);
+      _internalFocusNode?.removeListener(_handleFocusChanged);
+
+      if (widget.focusNode == null) {
+        _internalFocusNode = FocusNode();
+        _internalFocusNode!.addListener(_handleFocusChanged);
+      } else {
+        _internalFocusNode?.dispose();
+        _internalFocusNode = null;
+        widget.focusNode!.addListener(_handleFocusChanged);
+      }
+      ref
+          .read(appTextFieldUiProvider(_params).notifier)
+          .setFocused(_effectiveFocusNode.hasFocus);
+    }
+
+    // Handle password / obscurity changes
+    if (widget.isPassword != oldWidget.isPassword ||
+        widget.obscureText != oldWidget.obscureText) {
+      ref
+          .read(appTextFieldUiProvider(_params).notifier)
+          .setObscure(widget.isPassword || widget.obscureText);
+    }
+  }
+
+  @override
   void dispose() {
     _effectiveFocusNode.removeListener(_handleFocusChanged);
     _effectiveController.removeListener(_handleTextChange);
-    if (widget.focusNode == null) _effectiveFocusNode.dispose();
-    if (widget.controller == null) _effectiveController.dispose();
+    _internalFocusNode?.dispose();
+    _internalController?.dispose();
     super.dispose();
   }
 
   void _handleFocusChanged() {
-    if (_effectiveFocusNode.hasFocus != _isFocused) {
+    final currentFocused = ref.read(appTextFieldUiProvider(_params)).isFocused;
+    if (_effectiveFocusNode.hasFocus != currentFocused) {
       if (_effectiveFocusNode.hasFocus) {
         AppHaptics.selectionClick();
       }
-      setState(() {
-        _isFocused = _effectiveFocusNode.hasFocus;
-      });
+      ref
+          .read(appTextFieldUiProvider(_params).notifier)
+          .setFocused(_effectiveFocusNode.hasFocus);
     }
   }
 
   void _handleTextChange() {
     final hasText = _effectiveController.text.isNotEmpty;
-    if (hasText != _showClear) {
-      setState(() {
-        _showClear = hasText;
-      });
+    final currentShow = ref.read(appTextFieldUiProvider(_params)).showClear;
+    if (hasText != currentShow) {
+      ref
+          .read(appTextFieldUiProvider(_params).notifier)
+          .setShowClear(hasText);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final uiState = ref.watch(appTextFieldUiProvider(_params));
+    final isFocused = uiState.isFocused;
+    final obscureText = uiState.obscureText;
+    final showClear = uiState.showClear;
+
     final accent = widget.accentColor ?? context.primaryAccent;
     final hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
+    final radius = widget.borderRadius ?? 14.r.clamp(12.0, 16.0);
 
-    final Color borderColor = hasError
-        ? AppColors.error
-        : _isFocused
-            ? accent
-            : context.cardBorderColor;
+    final Color borderColor = !widget.enabled
+        ? context.cardBorderColor.withValues(alpha: 0.5)
+        : hasError
+            ? AppColors.error
+            : isFocused
+                ? accent
+                : context.cardBorderColor;
+
+    final Color backgroundColor = widget.enabled
+        ? context.cardBackgroundColor
+        : context.cardBackgroundColor.withValues(alpha: 0.6);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,28 +237,30 @@ class _AppTextFieldState extends State<AppTextField> {
         if (widget.labelText != null) ...[
           Text(
             widget.labelText!,
-            style: AppTextStyles.labelSmall(
-              context,
-              color: hasError
-                  ? AppColors.error
-                  : _isFocused
-                      ? accent
-                      : context.textMutedColor,
-            ),
+            style: widget.labelStyle ??
+                AppTextStyles.labelSmall(
+                  context,
+                  color: hasError
+                      ? AppColors.error
+                      : isFocused
+                          ? accent
+                          : context.textMutedColor,
+                ),
           ),
-          SizedBox(height: 6.h),
+          SizedBox(height: 5.h),
         ],
+        // Single outer container governing geometry, surface, and focus halo
         AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutCubic,
           decoration: BoxDecoration(
-            color: context.cardBackgroundColor,
-            borderRadius: BorderRadius.circular(16.r),
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(radius),
             border: Border.all(
               color: borderColor,
-              width: _isFocused ? 1.6 : 1.2,
+              width: isFocused ? 1.6 : 1.2,
             ),
-            boxShadow: _isFocused
+            boxShadow: isFocused && widget.enabled
                 ? [
                     BoxShadow(
                       color: (hasError ? AppColors.error : accent)
@@ -166,65 +271,96 @@ class _AppTextFieldState extends State<AppTextField> {
                   ]
                 : const [],
           ),
-          child: TextField(
-            controller: _effectiveController,
-            focusNode: _effectiveFocusNode,
-            obscureText: _obscureText,
-            keyboardType: widget.keyboardType,
-            textInputAction: widget.textInputAction,
-            onChanged: widget.onChanged,
-            onSubmitted: widget.onSubmitted,
-            onTap: widget.onTap,
-            maxLines: widget.isPassword ? 1 : widget.maxLines,
-            minLines: widget.minLines,
-            maxLength: widget.maxLength,
-            enabled: widget.enabled,
-            readOnly: widget.readOnly,
-            autofocus: widget.autofocus,
-            style: AppTextStyles.bodyMedium(
-              context,
-              color: context.textPrimaryColor,
+          child: Theme(
+            // Scope local InputDecorationTheme so global theme OutlineInputBorders
+            // cannot bleed inside and create duplicate borders or fills.
+            data: Theme.of(context).copyWith(
+              inputDecorationTheme: const InputDecorationTheme(
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                filled: false,
+              ),
             ),
-            cursorColor: accent,
-            decoration: InputDecoration(
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 16.w,
-                vertical: 14.h,
-              ),
-              hintText: widget.hintText,
-              hintStyle: AppTextStyles.bodyMedium(
-                context,
-                color: context.textMutedColor,
-              ),
-              prefixIcon: widget.prefixIcon != null
-                  ? Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w),
+            child: TextField(
+              controller: _effectiveController,
+              focusNode: _effectiveFocusNode,
+              obscureText: obscureText,
+              keyboardType: widget.keyboardType,
+              textInputAction: widget.textInputAction,
+              textCapitalization: widget.textCapitalization,
+              inputFormatters: widget.inputFormatters,
+              textAlign: widget.textAlign,
+              onChanged: widget.onChanged,
+              onSubmitted: widget.onSubmitted,
+              onEditingComplete: widget.onEditingComplete,
+              onTap: widget.onTap,
+              maxLines: widget.isPassword ? 1 : widget.maxLines,
+              minLines: widget.minLines,
+              maxLength: widget.maxLength,
+              enabled: widget.enabled,
+              readOnly: widget.readOnly,
+              autofocus: widget.autofocus,
+              style: widget.style ??
+                  AppTextStyles.bodyMedium(
+                    context,
+                    color: widget.enabled
+                        ? context.textPrimaryColor
+                        : context.textMutedColor,
+                  ),
+              cursorColor: accent,
+              decoration: InputDecoration(
+                isDense: true,
+                filled: false,
+                fillColor: AppColors.transparent,
+                contentPadding: widget.contentPadding ??
+                    EdgeInsets.symmetric(
+                      horizontal: 14.w.clamp(12.0, 16.0),
+                      vertical: 11.h.clamp(9.0, 13.0),
+                    ),
+                hintText: widget.hintText,
+                hintStyle: widget.hintStyle ??
+                    AppTextStyles.bodyMedium(
+                      context,
+                      color: context.textMutedColor,
+                    ),
+                prefixIcon: widget.prefixIcon != null
+                    ? Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 10.w),
                       child: widget.prefixIcon,
                     )
-                  : null,
-              prefixIconConstraints: BoxConstraints(
-                minWidth: 44.w,
-                minHeight: 24.h,
+                    : null,
+                prefixIconConstraints: BoxConstraints(
+                  minWidth: 40.w.clamp(36.0, 44.0),
+                  minHeight: 20.h,
+                ),
+                suffixIcon: _buildSuffixIcon(
+                  accent,
+                  isFocused: isFocused,
+                  obscureText: obscureText,
+                  showClear: showClear,
+                ),
+                suffixIconConstraints: BoxConstraints(
+                  minWidth: 40.w.clamp(36.0, 44.0),
+                  minHeight: 20.h,
+                ),
+                // Explicitly nullify all internal borders to prevent duplicate outline
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                counterText: '',
               ),
-              suffixIcon: _buildSuffixIcon(accent),
-              suffixIconConstraints: BoxConstraints(
-                minWidth: 44.w,
-                minHeight: 24.h,
-              ),
-              filled: false,
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              errorBorder: InputBorder.none,
-              focusedErrorBorder: InputBorder.none,
-              disabledBorder: InputBorder.none,
-              counterText: '',
             ),
           ),
         ),
         if (hasError) ...[
-          SizedBox(height: 6.h),
+          SizedBox(height: 4.h),
           Text(
             widget.errorText!,
             style: AppTextStyles.bodySmall(
@@ -233,7 +369,7 @@ class _AppTextFieldState extends State<AppTextField> {
             ),
           ),
         ] else if (widget.helperText != null) ...[
-          SizedBox(height: 6.h),
+          SizedBox(height: 4.h),
           Text(
             widget.helperText!,
             style: AppTextStyles.bodySmall(
@@ -246,53 +382,71 @@ class _AppTextFieldState extends State<AppTextField> {
     );
   }
 
-  Widget? _buildSuffixIcon(Color accent) {
+  Widget? _buildSuffixIcon(
+    Color accent, {
+    required bool isFocused,
+    required bool obscureText,
+    required bool showClear,
+  }) {
+    final List<Widget> icons = [];
+
+    // Clear button with haptics
+    if (widget.showClearButton && showClear && widget.enabled && !widget.readOnly) {
+      icons.add(
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            AppHaptics.selectionClick();
+            _effectiveController.clear();
+            widget.onChanged?.call('');
+          },
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.w),
+            child: Icon(
+              Icons.cancel_rounded,
+              size: 18.sp,
+              color: context.textMutedColor,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Password visibility toggle with haptics
     if (widget.isPassword) {
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          AppHaptics.selectionClick();
-          setState(() => _obscureText = !_obscureText);
-        },
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12.w),
-          child: Icon(
-            _obscureText
-                ? Icons.visibility_off_outlined
-                : Icons.visibility_outlined,
-            size: 18.sp,
-            color: _isFocused ? accent : context.textMutedColor,
+      icons.add(
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () {
+            AppHaptics.selectionClick();
+            ref.read(appTextFieldUiProvider(_params).notifier).toggleObscure();
+          },
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8.w),
+            child: Icon(
+              obscureText
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
+              size: 18.sp,
+              color: isFocused ? accent : context.textMutedColor,
+            ),
           ),
+        ),
+      );
+    } else if (widget.suffixIcon != null) {
+      icons.add(
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8.w),
+          child: widget.suffixIcon!,
         ),
       );
     }
 
-    if (widget.showClearButton && _showClear) {
-      return GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () {
-          AppHaptics.selectionClick();
-          _effectiveController.clear();
-          widget.onChanged?.call('');
-        },
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 12.w),
-          child: Icon(
-            Icons.cancel_rounded,
-            size: 18.sp,
-            color: context.textMutedColor,
-          ),
-        ),
-      );
-    }
-
-    if (widget.suffixIcon != null) {
-      return Padding(
-        padding: EdgeInsets.symmetric(horizontal: 12.w),
-        child: widget.suffixIcon,
-      );
-    }
-
-    return null;
+    if (icons.isEmpty) return null;
+    if (icons.length == 1) return icons.first;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: icons,
+    );
   }
 }

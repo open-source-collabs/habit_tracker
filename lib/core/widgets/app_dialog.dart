@@ -47,23 +47,26 @@ class AppDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: AppColors.transparent,
       elevation: 0,
-      insetPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 24.h),
+      shadowColor: AppColors.transparent,
+      surfaceTintColor: AppColors.transparent,
+      shape: const RoundedRectangleBorder(side: BorderSide.none),
+      insetPadding: EdgeInsets.symmetric(horizontal: 20.w.clamp(16.0, 24.0), vertical: 20.h.clamp(16.0, 24.0)),
       child: Center(
         child: Container(
           constraints: BoxConstraints(
             maxWidth: 420.w.clamp(320.0, 460.0),
             maxHeight: MediaQuery.of(context).size.height * 0.88,
           ),
-          padding: EdgeInsets.all(24.r),
+          padding: EdgeInsets.all(16.r.clamp(14.0, 20.0)),
           decoration: BoxDecoration(
             color: context.cardBackgroundColor,
-            borderRadius: BorderRadius.circular(28.r),
+            borderRadius: BorderRadius.circular(20.r.clamp(16.0, 24.0)),
             border: Border.all(color: context.cardBorderColor, width: 1.2),
             boxShadow: [
               BoxShadow(
                 color: context.shadowColor,
-                blurRadius: 24.r,
-                offset: Offset(0, 8.h),
+                blurRadius: 20.r,
+                offset: Offset(0, 6.h),
               ),
             ],
           ),
@@ -75,8 +78,8 @@ class AppDialog extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Container(
-                    width: 48.r,
-                    height: 48.r,
+                    width: 40.r,
+                    height: 40.r,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: effectiveIconBg,
@@ -85,14 +88,14 @@ class AppDialog extends StatelessWidget {
                     child: icon,
                   ),
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 10.h),
               ],
               Text(
                 title,
                 style: AppTextStyles.titleLarge(context),
               ),
               if (message != null) ...[
-                SizedBox(height: 8.h),
+                SizedBox(height: 4.h),
                 Text(
                   message!,
                   style: AppTextStyles.bodyMedium(
@@ -102,7 +105,7 @@ class AppDialog extends StatelessWidget {
                 ),
               ],
               if (content != null) ...[
-                SizedBox(height: 16.h),
+                SizedBox(height: 10.h),
                 Flexible(
                   child: SingleChildScrollView(
                     physics: const ClampingScrollPhysics(),
@@ -110,7 +113,7 @@ class AppDialog extends StatelessWidget {
                   ),
                 ),
               ],
-              SizedBox(height: 24.h),
+              SizedBox(height: 14.h),
               Wrap(
                 alignment: WrapAlignment.end,
                 crossAxisAlignment: WrapCrossAlignment.center,
@@ -162,14 +165,33 @@ Future<T?> showAppDialog<T>({
   required Widget Function(BuildContext) builder,
   bool barrierDismissible = true,
 }) {
-  return showDialog<T>(
+  return showGeneralDialog<T>(
     context: context,
     barrierDismissible: barrierDismissible,
     barrierColor: context.barrierColor,
-    builder: (ctx) => BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-      child: builder(ctx),
-    ),
+    barrierLabel: 'Dismiss',
+    transitionDuration: const Duration(milliseconds: 250),
+    pageBuilder: (ctx, anim1, anim2) => builder(ctx),
+    transitionBuilder: (ctx, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: 5.0 * curved.value,
+          sigmaY: 5.0 * curved.value,
+        ),
+        child: FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.94, end: 1.0).animate(curved),
+            child: child,
+          ),
+        ),
+      );
+    },
   );
 }
 

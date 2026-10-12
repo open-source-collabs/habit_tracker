@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:habit_tracker/core/widgets_kit/habit_widget_sync_service.dart';
 import '../../../themes/data/models/app_payload_model.dart';
 import '../../../themes/presentation/providers/theme_provider.dart';
 import '../../data/models/habit_model.dart';
@@ -22,27 +23,47 @@ final selectedDateProvider = StateProvider<DateTime>((ref) {
 /// Active routine category filter ('All', 'Morning', 'Focus', 'Health', 'Evening', etc.)
 final activeRoutineFilterProvider = StateProvider<String>((ref) => 'All');
 
+/// Tracks heatmap expansion toggle state per habit ID.
+final habitHeatmapExpandedProvider = StateProvider.family<bool, String>((ref, habitId) => false);
+
 /// Notifier managing habit state with 0ms optimistic updates and asynchronous persistence.
 class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
   @override
   Future<List<HabitModel>> build() async {
     final storage = ref.watch(habitStorageProvider);
 
+    List<HabitModel> loadedHabits;
     try {
       final payload = await storage.loadPayload();
       if (payload != null) {
-        return payload.habits;
+        loadedHabits = payload.habits;
+      } else {
+        loadedHabits = _generateStarterHabits();
       }
     } catch (e) {
       debugPrint('HabitListNotifier: Error reading from storage: $e');
+      loadedHabits = _generateStarterHabits();
     }
 
-    return _generateStarterHabits();
+    // Schedule initial home screen widget sync
+    Future.microtask(() {
+      try {
+        final syncService = ref.read(habitWidgetSyncServiceProvider);
+        final themeState = ref.read(themeProvider);
+        syncService.syncHabits(
+          habits: loadedHabits,
+          activeTheme: themeState.activeTheme,
+        );
+      } catch (_) {}
+    });
+
+    return loadedHabits;
   }
 
   /// Optimistically toggles habit check-in status for [date] with 0ms latency
   /// and writes to local storage asynchronously in the background.
-  Future<void> toggleHabit(String habitId, DateTime date) async {
+  Future<void> toggleHabit(String habitId, 
+  DateTime date) async {
     final currentList = state.value ?? [];
     final habitIndex = currentList.indexWhere((h) => h.id == habitId);
     if (habitIndex == -1) return;
@@ -90,6 +111,12 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
     await _persistHabits(updatedList);
   }
 
+  /// Restores and persists an imported collection of habits atomically.
+  Future<void> restoreHabits(List<HabitModel> habits) async {
+    state = AsyncData(habits);
+    await _persistHabits(habits);
+  }
+
   /// Persists current habits alongside the user's active theme in atomic [AppPayloadModel].
   Future<void> _persistHabits(List<HabitModel> habits) async {
     try {
@@ -106,6 +133,19 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
       );
 
       await storage.savePayload(payload);
+
+      // Push updated state to native home screen widgets via widgets_kit
+      try {
+        final syncService = ref.read(habitWidgetSyncServiceProvider);
+        unawaited(
+          syncService.syncHabits(
+            habits: habits,
+            activeTheme: themeState.activeTheme,
+          ),
+        );
+      } catch (e) {
+        debugPrint('HabitListNotifier: Error syncing widgets_kit: $e');
+      }
     } catch (e) {
       debugPrint('HabitListNotifier: Failed to persist habits: $e');
     }

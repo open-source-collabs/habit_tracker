@@ -5,8 +5,10 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/theme_factory.dart';
 import '../../../../core/utils/haptics.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../data/models/dynamic_theme_model.dart';
 import '../providers/theme_provider.dart';
+import '../providers/theme_studio_provider.dart';
 import '../widgets/color_picker_dialog.dart';
 
 /// Interactive bottom sheet for creating, customizing, duplicating, and saving themes.
@@ -29,7 +31,8 @@ class ThemeStudioSheet extends ConsumerStatefulWidget {
 }
 
 class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
-  late UserThemeModel _workingTheme;
+  UserThemeModel get _workingTheme =>
+      ref.watch(themeStudioWorkingThemeNotifierProvider);
   late TextEditingController _nameController;
 
   static const List<String> _fontRegistry = [
@@ -41,7 +44,6 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
   void initState() {
     super.initState();
     final active = ref.read(themeProvider).activeTheme;
-    _workingTheme = active;
     _nameController = TextEditingController(text: active.name);
   }
 
@@ -53,18 +55,16 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
 
   void _onSelectTheme(UserThemeModel theme) {
     AppHaptics.selectionClick();
-    setState(() {
-      _workingTheme = theme;
-      _nameController.text = theme.name;
-    });
+    ref
+        .read(themeStudioWorkingThemeNotifierProvider.notifier)
+        .setWorkingTheme(theme);
+    _nameController.text = theme.name;
     ref.read(themeProvider.notifier).setActiveTheme(theme.id);
   }
 
   void _updateFont(String font) {
     AppHaptics.selectionClick();
-    setState(() {
-      _workingTheme = _workingTheme.copyWith(fontFamily: font);
-    });
+    ref.read(themeStudioWorkingThemeNotifierProvider.notifier).updateFont(font);
   }
 
   Future<void> _pickColor({
@@ -78,9 +78,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
       initialColor: currentColor,
     );
     if (picked != null) {
-      setState(() {
-        onSelected(picked);
-      });
+      onSelected(picked);
     }
   }
 
@@ -102,7 +100,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
             'Theme "${updatedTheme.name}" saved & applied!',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
-              color: AppColors.white,
+              color: Theme.of(context).colorScheme.onPrimary,
             ),
           ),
           backgroundColor: updatedTheme.accentPalette.isNotEmpty
@@ -119,10 +117,10 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
     AppHaptics.mediumImpact();
     final duplicated =
         await ref.read(themeProvider.notifier).duplicateTheme(_workingTheme);
-    setState(() {
-      _workingTheme = duplicated;
-      _nameController.text = duplicated.name;
-    });
+    ref
+        .read(themeStudioWorkingThemeNotifierProvider.notifier)
+        .setWorkingTheme(duplicated);
+    _nameController.text = duplicated.name;
   }
 
   Future<void> _deleteTheme() async {
@@ -131,10 +129,10 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
     final idToDelete = _workingTheme.id;
     await ref.read(themeProvider.notifier).deleteTheme(idToDelete);
     final nextActive = ref.read(themeProvider).activeTheme;
-    setState(() {
-      _workingTheme = nextActive;
-      _nameController.text = nextActive.name;
-    });
+    ref
+        .read(themeStudioWorkingThemeNotifierProvider.notifier)
+        .setWorkingTheme(nextActive);
+    _nameController.text = nextActive.name;
   }
 
   void _createNewTheme() {
@@ -145,10 +143,10 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
       name: 'My New Theme',
       isBuiltIn: false,
     );
-    setState(() {
-      _workingTheme = newTheme;
-      _nameController.text = newTheme.name;
-    });
+    ref
+        .read(themeStudioWorkingThemeNotifierProvider.notifier)
+        .setWorkingTheme(newTheme);
+    _nameController.text = newTheme.name;
   }
 
   @override
@@ -228,35 +226,35 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
               Expanded(
                 child: ListView(
                   controller: scrollController,
-                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w.clamp(14.0, 20.0), vertical: 6.h),
                   children: [
                     // Theme Selector Chips & New Button
                     _buildThemeChipsBar(themeState),
-                    SizedBox(height: 20.h),
+                    SizedBox(height: 10.h),
 
                     // LIVE PREVIEW CARD
                     _buildLivePreviewCard(previewThemeData, activeAccent),
-                    SizedBox(height: 24.h),
+                    SizedBox(height: 12.h),
 
                     // Theme Name Field
                     _buildThemeNameField(previewThemeData),
-                    SizedBox(height: 20.h),
+                    SizedBox(height: 10.h),
 
                     // OFFLINE FONT SELECTOR
                     _buildFontSelector(previewThemeData),
-                    SizedBox(height: 24.h),
+                    SizedBox(height: 12.h),
 
                     // SURFACES & BORDER PALETTE
                     _buildSurfacesPalette(previewThemeData),
-                    SizedBox(height: 24.h),
+                    SizedBox(height: 12.h),
 
                     // CUSTOM HABIT ACCENT PALETTE
                     _buildHabitAccentsSection(previewThemeData),
-                    SizedBox(height: 32.h),
+                    SizedBox(height: 14.h),
 
                     // ACTION BUTTONS
                     _buildActionButtons(activeAccent),
-                    SizedBox(height: 40.h),
+                    SizedBox(height: 24.h),
                   ],
                 ),
               ),
@@ -362,10 +360,10 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
         SizedBox(height: 10.h),
 
         Container(
-          padding: EdgeInsets.all(20.r),
+          padding: EdgeInsets.all(14.r.clamp(12.0, 16.0)),
           decoration: BoxDecoration(
             color: _workingTheme.cardBg,
-            borderRadius: BorderRadius.circular(24.r),
+            borderRadius: BorderRadius.circular(18.r.clamp(14.0, 20.0)),
             border: Border.all(
               color: activeAccent,
               width: 1.2,
@@ -373,9 +371,9 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
             boxShadow: [
               BoxShadow(
                 color: activeAccent.withValues(alpha: 0.35),
-                blurRadius: 20.r,
+                blurRadius: 16.r,
                 spreadRadius: 0,
-                offset: Offset(0, 4.h),
+                offset: Offset(0, 3.h),
               ),
             ],
           ),
@@ -412,39 +410,41 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                     ),
                   ),
                   Container(
-                    width: 36.r,
-                    height: 36.r,
+                    width: 32.r,
+                    height: 32.r,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: activeAccent,
                       boxShadow: [
                         BoxShadow(
                           color: activeAccent.withValues(alpha: 0.4),
-                          blurRadius: 8.r,
+                          blurRadius: 6.r,
                         ),
                       ],
                     ),
-                    child: Icon(Icons.check, color: AppColors.white, size: 20.sp),
+                    child: Icon(Icons.check, color: previewTheme.colorScheme.onPrimary, size: 18.sp),
                   ),
                 ],
               ),
-              SizedBox(height: 14.h),
+              SizedBox(height: 8.h),
               Text(
                 'Morning Mindfulness & Flow',
                 style: previewTheme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.3,
                   color: _workingTheme.textPrimary,
+                  fontSize: 18.sp.clamp(16.0, 20.0),
                 ),
               ),
-              SizedBox(height: 6.h),
+              SizedBox(height: 4.h),
               Text(
                 '20 mins • Completed today at 7:30 AM',
                 style: previewTheme.textTheme.bodyMedium?.copyWith(
                   color: _workingTheme.textPrimary.withValues(alpha: 0.7),
+                  fontSize: 12.sp.clamp(11.0, 13.0),
                 ),
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 10.h),
               Row(
                 children: _workingTheme.accentPalette.map((color) {
                   return Container(
@@ -466,29 +466,20 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
   }
 
   Widget _buildThemeNameField(ThemeData previewTheme) {
-    return TextField(
+    return AppTextField(
       controller: _nameController,
+      labelText: 'Theme Name',
+      accentColor: previewTheme.colorScheme.primary,
       style: TextStyle(
         fontFamily: _workingTheme.fontFamily,
         color: _workingTheme.textPrimary,
         fontWeight: FontWeight.w600,
       ),
-      decoration: InputDecoration(
-        labelText: 'Theme Name',
-        labelStyle: TextStyle(
-          color: _workingTheme.textPrimary.withValues(alpha: 0.6),
-        ),
-        filled: true,
-        fillColor: _workingTheme.cardBg,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16.r),
-          borderSide: BorderSide(color: _workingTheme.cardBorder, width: 1.2),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16.r),
-          borderSide: BorderSide(color: _workingTheme.cardBorder, width: 1.2),
-        ),
-      ),
+      onChanged: (val) {
+        ref
+            .read(themeStudioWorkingThemeNotifierProvider.notifier)
+            .updateTheme((current) => current.copyWith(name: val));
+      },
     );
   }
 
@@ -602,9 +593,9 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
           onTap: () => _pickColor(
             title: 'Scaffold Background',
             currentColor: _workingTheme.scaffoldBg,
-            onSelected: (col) => _workingTheme = _workingTheme.copyWith(
-              scaffoldBgHex: AppColors.colorToHex(col),
-            ),
+            onSelected: (col) => ref
+                .read(themeStudioWorkingThemeNotifierProvider.notifier)
+                .updateScaffoldBg(col),
           ),
         ),
         SizedBox(height: 8.h),
@@ -615,9 +606,9 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
           onTap: () => _pickColor(
             title: 'Card Surface',
             currentColor: _workingTheme.cardBg,
-            onSelected: (col) => _workingTheme = _workingTheme.copyWith(
-              cardBgHex: AppColors.colorToHex(col),
-            ),
+            onSelected: (col) => ref
+                .read(themeStudioWorkingThemeNotifierProvider.notifier)
+                .updateCardBg(col),
           ),
         ),
         SizedBox(height: 8.h),
@@ -628,9 +619,9 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
           onTap: () => _pickColor(
             title: 'Card Border Tint',
             currentColor: _workingTheme.cardBorder,
-            onSelected: (col) => _workingTheme = _workingTheme.copyWith(
-              cardBorderHex: AppColors.colorToHex(col),
-            ),
+            onSelected: (col) => ref
+                .read(themeStudioWorkingThemeNotifierProvider.notifier)
+                .updateCardBorder(col),
           ),
         ),
         SizedBox(height: 8.h),
@@ -641,9 +632,9 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
           onTap: () => _pickColor(
             title: 'Text Primary',
             currentColor: _workingTheme.textPrimary,
-            onSelected: (col) => _workingTheme = _workingTheme.copyWith(
-              textPrimaryHex: AppColors.colorToHex(col),
-            ),
+            onSelected: (col) => ref
+                .read(themeStudioWorkingThemeNotifierProvider.notifier)
+                .updateTextPrimary(col),
           ),
         ),
       ],
@@ -735,13 +726,9 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
             TextButton(
               onPressed: () {
                 AppHaptics.lightImpact();
-                setState(() {
-                  _workingTheme = _workingTheme.copyWith(
-                    accentPaletteHex: AppColors.habitPalette
-                        .map(AppColors.colorToHex)
-                        .toList(),
-                  );
-                });
+                ref
+                    .read(themeStudioWorkingThemeNotifierProvider.notifier)
+                    .resetPalette();
               },
               child: Text(
                 'Reset to Preset',
@@ -767,12 +754,9 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                 title: 'Accent Color #${index + 1}',
                 currentColor: color,
                 onSelected: (newColor) {
-                  final updatedHexList =
-                      List<String>.from(_workingTheme.accentPaletteHex);
-                  updatedHexList[index] = AppColors.colorToHex(newColor);
-                  _workingTheme = _workingTheme.copyWith(
-                    accentPaletteHex: updatedHexList,
-                  );
+                  ref
+                      .read(themeStudioWorkingThemeNotifierProvider.notifier)
+                      .updatePaletteColor(index, newColor);
                 },
               ),
               borderRadius: BorderRadius.circular(14.r),
@@ -809,21 +793,21 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
       children: [
         SizedBox(
           width: double.infinity,
-          height: 48.h,
+          height: 42.h.clamp(38.0, 46.0),
           child: FilledButton.icon(
             icon: const Icon(Icons.palette),
             label: Text(
               'Save & Apply Theme',
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: AppColors.white,
+                color: Theme.of(context).colorScheme.onPrimary,
               ),
             ),
             style: FilledButton.styleFrom(
               backgroundColor: activeAccent,
-              foregroundColor: AppColors.white,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.r),
+                borderRadius: BorderRadius.circular(14.r),
               ),
             ),
             onPressed: _saveTheme,

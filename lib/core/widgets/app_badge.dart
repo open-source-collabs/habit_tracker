@@ -40,7 +40,7 @@ class AppBadge extends StatelessWidget {
               );
 
     final textColor = isSelected
-        ? AppColors.white
+        ? context.onPrimaryColor
         : isOutlined
             ? effectiveColor
             : effectiveColor;
@@ -53,10 +53,13 @@ class AppBadge extends StatelessWidget {
 
     Widget badge = AnimatedContainer(
       duration: const Duration(milliseconds: 180),
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+      padding: EdgeInsets.symmetric(
+        horizontal: 8.w.clamp(6.0, 12.0),
+        vertical: 3.h.clamp(2.0, 5.0),
+      ),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(10.r),
+        borderRadius: BorderRadius.circular(8.r),
         border: border,
         boxShadow: isSelected
             ? [
@@ -74,15 +77,20 @@ class AppBadge extends StatelessWidget {
         children: [
           if (icon != null) ...[
             icon!,
-            SizedBox(width: 5.w),
+            SizedBox(width: 5.w.clamp(3.0, 6.0)),
           ],
-          Text(
-            label,
-            style: AppTextStyles.labelSmall(
-              context,
-              color: textColor,
-              uppercase: false,
-            ).copyWith(fontWeight: FontWeight.w700),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: AppTextStyles.labelSmall(
+                  context,
+                  color: textColor,
+                  uppercase: false,
+                ).copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
           ),
         ],
       ),

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
+import '../../../../core/widgets/widgets.dart';
+import '../providers/color_picker_provider.dart';
 
 /// Interactive modal for selecting colors via Hue/Saturation/Lightness sliders,
 /// direct Hex input, and curated quick-select palettes.
-class ColorPickerDialog extends StatefulWidget {
+class ColorPickerDialog extends ConsumerStatefulWidget {
   final Color initialColor;
   final String title;
 
@@ -32,11 +35,10 @@ class ColorPickerDialog extends StatefulWidget {
   }
 
   @override
-  State<ColorPickerDialog> createState() => _ColorPickerDialogState();
+  ConsumerState<ColorPickerDialog> createState() => _ColorPickerDialogState();
 }
 
-class _ColorPickerDialogState extends State<ColorPickerDialog> {
-  late HSLColor _hslColor;
+class _ColorPickerDialogState extends ConsumerState<ColorPickerDialog> {
   late TextEditingController _hexController;
 
   static const List<Color> _curatedSwatches = [
@@ -59,7 +61,6 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
   @override
   void initState() {
     super.initState();
-    _hslColor = HSLColor.fromColor(widget.initialColor);
     _hexController = TextEditingController(
       text: AppColors.colorToHex(widget.initialColor),
     );
@@ -72,39 +73,36 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
   }
 
   void _updateHsl(HSLColor newHsl) {
-    setState(() {
-      _hslColor = newHsl;
-      _hexController.text = AppColors.colorToHex(_hslColor.toColor());
-    });
+    ref.read(colorPickerProvider(widget.initialColor).notifier).updateHsl(newHsl);
+    _hexController.text = AppColors.colorToHex(newHsl.toColor());
     AppHaptics.selectionClick();
   }
 
   void _onHexSubmitted(String hex) {
-    final parsed = AppColors.hexToColor(hex, fallback: _hslColor.toColor());
-    setState(() {
-      _hslColor = HSLColor.fromColor(parsed);
-      _hexController.text = AppColors.colorToHex(parsed);
-    });
+    ref.read(colorPickerProvider(widget.initialColor).notifier).updateFromHex(hex);
+    final current = ref.read(colorPickerProvider(widget.initialColor)).toColor();
+    _hexController.text = AppColors.colorToHex(current);
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentColor = _hslColor.toColor();
+    final hslColor = ref.watch(colorPickerProvider(widget.initialColor));
+    final currentColor = hslColor.toColor();
 
     return Dialog(
       backgroundColor: context.cardBackgroundColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24.r),
+        borderRadius: BorderRadius.circular(20.r.clamp(16.0, 22.0)),
         side: BorderSide(
           color: context.cardBorderColor,
           width: 1.2,
         ),
       ),
-      insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
+      insetPadding: EdgeInsets.symmetric(horizontal: 20.w.clamp(16.0, 24.0), vertical: 20.h.clamp(16.0, 24.0)),
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: 400.w.clamp(320.0, 440.0)),
         child: Padding(
-          padding: EdgeInsets.all(24.r),
+          padding: EdgeInsets.all(16.r.clamp(14.0, 18.0)),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -116,7 +114,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                   Text(
                     widget.title,
                     style: context.textTheme.titleMedium?.copyWith(
-                      fontSize: 18.sp,
+                      fontSize: 16.sp.clamp(15.0, 18.0),
                       fontWeight: FontWeight.w700,
                       color: context.textPrimaryColor,
                       letterSpacing: -0.3,
@@ -129,17 +127,17 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                   ),
                 ],
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 10.h),
 
               // Preview Box & Hex Field
               Row(
                 children: [
                   Container(
-                    width: 56.r,
-                    height: 56.r,
+                    width: 48.r.clamp(40.0, 52.0),
+                    height: 48.r.clamp(40.0, 52.0),
                     decoration: BoxDecoration(
                       color: currentColor,
-                      borderRadius: BorderRadius.circular(16.r),
+                      borderRadius: BorderRadius.circular(12.r),
                       border: Border.all(
                         color: context.cardBorderColor,
                         width: 1.5,
@@ -147,40 +145,33 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                       boxShadow: [
                         BoxShadow(
                           color: currentColor.withValues(alpha: 0.35),
-                          blurRadius: 12.r,
-                          offset: Offset(0, 4.h),
+                          blurRadius: 10.r,
+                          offset: Offset(0, 3.h),
                         ),
                       ],
                     ),
                   ),
-                  SizedBox(width: 16.w),
+                  SizedBox(width: 12.w),
                   Expanded(
-                    child: TextField(
+                    child: AppTextField(
                       controller: _hexController,
+                      labelText: 'Hex Code',
+                      hintText: '#RRGGBB',
+                      borderRadius: 12.r,
                       style: context.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: context.textPrimaryColor,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Hex Code',
-                        hintText: '#RRGGBB',
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(
-                            horizontal: 14.w, vertical: 12.h),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.r),
-                        ),
                       ),
                       onSubmitted: _onHexSubmitted,
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 20.h),
+              SizedBox(height: 10.h),
 
               // Hue Slider
               Text(
-                'Hue (${_hslColor.hue.round()}°)',
+                'Hue (${hslColor.hue.round()}°)',
                 style: context.textTheme.labelMedium?.copyWith(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
@@ -194,17 +185,17 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                       RoundSliderThumbShape(enabledThumbRadius: 9.r),
                 ),
                 child: Slider(
-                  value: _hslColor.hue,
+                  value: hslColor.hue,
                   min: 0,
                   max: 360,
                   activeColor: currentColor,
-                  onChanged: (val) => _updateHsl(_hslColor.withHue(val)),
+                  onChanged: (val) => _updateHsl(hslColor.withHue(val)),
                 ),
               ),
 
               // Saturation Slider
               Text(
-                'Saturation (${(_hslColor.saturation * 100).round()}%)',
+                'Saturation (${(hslColor.saturation * 100).round()}%)',
                 style: context.textTheme.labelMedium?.copyWith(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
@@ -218,18 +209,18 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                       RoundSliderThumbShape(enabledThumbRadius: 9.r),
                 ),
                 child: Slider(
-                  value: _hslColor.saturation,
+                  value: hslColor.saturation,
                   min: 0,
                   max: 1,
                   activeColor: currentColor,
                   onChanged: (val) =>
-                      _updateHsl(_hslColor.withSaturation(val)),
+                      _updateHsl(hslColor.withSaturation(val)),
                 ),
               ),
 
               // Lightness Slider
               Text(
-                'Lightness (${(_hslColor.lightness * 100).round()}%)',
+                'Lightness (${(hslColor.lightness * 100).round()}%)',
                 style: context.textTheme.labelMedium?.copyWith(
                   fontSize: 12.sp,
                   fontWeight: FontWeight.w600,
@@ -243,14 +234,14 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                       RoundSliderThumbShape(enabledThumbRadius: 9.r),
                 ),
                 child: Slider(
-                  value: _hslColor.lightness,
+                  value: hslColor.lightness,
                   min: 0,
                   max: 1,
                   activeColor: currentColor,
-                  onChanged: (val) => _updateHsl(_hslColor.withLightness(val)),
+                  onChanged: (val) => _updateHsl(hslColor.withLightness(val)),
                 ),
               ),
-              SizedBox(height: 12.h),
+              SizedBox(height: 8.h),
 
               // Quick Swatches
               Text(
@@ -261,21 +252,24 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                   color: context.textSecondaryColor,
                 ),
               ),
-              SizedBox(height: 8.h),
+              SizedBox(height: 6.h),
               Wrap(
-                spacing: 8.w,
-                runSpacing: 8.h,
+                spacing: 6.w,
+                runSpacing: 6.h,
                 children: _curatedSwatches.map((color) {
                   final isSelected = currentColor.toARGB32() == color.toARGB32();
                   return InkWell(
                     onTap: () {
-                      _updateHsl(HSLColor.fromColor(color));
+                      ref
+                          .read(colorPickerProvider(widget.initialColor).notifier)
+                          .updateColor(color);
+                      _hexController.text = AppColors.colorToHex(color);
                       AppHaptics.lightImpact();
                     },
                     borderRadius: BorderRadius.circular(10.r),
                     child: Container(
-                      width: 28.r,
-                      height: 28.r,
+                      width: 24.r,
+                      height: 24.r,
                       decoration: BoxDecoration(
                         color: color,
                         borderRadius: BorderRadius.circular(8.r),
@@ -290,7 +284,7 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                   );
                 }).toList(),
               ),
-              SizedBox(height: 24.h),
+              SizedBox(height: 12.h),
 
               // Confirm / Cancel Buttons
               Row(
@@ -309,14 +303,14 @@ class _ColorPickerDialogState extends State<ColorPickerDialog> {
                   FilledButton(
                     style: FilledButton.styleFrom(
                       backgroundColor: currentColor,
-                      foregroundColor: _hslColor.lightness > 0.6
-                          ? AppColors.black87
-                          : AppColors.white,
+                      foregroundColor: hslColor.lightness > 0.6
+                          ? context.textPrimaryColor
+                          : context.onPrimaryColor,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14.r),
+                        borderRadius: BorderRadius.circular(12.r),
                       ),
                       padding: EdgeInsets.symmetric(
-                          horizontal: 20.w, vertical: 12.h),
+                          horizontal: 16.w, vertical: 10.h),
                     ),
                     onPressed: () {
                       AppHaptics.lightImpact();

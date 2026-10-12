@@ -8,6 +8,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../data/models/habit_model.dart';
+import '../providers/add_habit_form_provider.dart';
 import '../providers/habit_provider.dart';
 
 /// Professional, responsive creation sheet/dialog for adding new habits.
@@ -48,11 +49,6 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
   final _titleController = TextEditingController();
   final _subtitleController = TextEditingController();
 
-  String _selectedRoutine = 'General';
-  int _selectedAccent = 0;
-  String? _titleError;
-  int _selectedFrequencyIndex = 0; // 0: Daily, 1: Weekdays, 2: 3x/week, 3: 5x/week
-
   static const _routineItems = [
     AppDropdownItem(value: 'General', label: 'General Routine', icon: Text('🎯')),
     AppDropdownItem(value: 'Morning', label: 'Morning Routine', icon: Text('☀️')),
@@ -76,8 +72,8 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
     super.dispose();
   }
 
-  HabitFrequency _buildSelectedFrequency() {
-    switch (_selectedFrequencyIndex) {
+  HabitFrequency _buildSelectedFrequency(int frequencyIndex) {
+    switch (frequencyIndex) {
       case 1:
         return const HabitFrequency.specificWeekdays([
           DateTime.monday,
@@ -118,19 +114,22 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
       AppHaptics.heavyImpact();
-      setState(() => _titleError = 'Please enter a habit title');
+      ref
+          .read(addHabitFormProvider.notifier)
+          .setTitleError('Please enter a habit title');
       return;
     }
 
+    final formState = ref.read(addHabitFormProvider);
     final newHabit = HabitModel(
       id: 'habit_${DateTime.now().millisecondsSinceEpoch}',
       title: title,
       subtitle: _subtitleController.text.trim(),
-      frequency: _buildSelectedFrequency(),
-      routineGroup: _selectedRoutine,
-      accentIndex: _selectedAccent,
+      frequency: _buildSelectedFrequency(formState.selectedFrequencyIndex),
+      routineGroup: formState.selectedRoutine,
+      accentIndex: formState.selectedAccent,
       createdAt: DateTime.now(),
-      emoji: _getCategoryEmoji(_selectedRoutine),
+      emoji: _getCategoryEmoji(formState.selectedRoutine),
     );
 
     ref.read(habitListProvider.notifier).createHabit(newHabit);
@@ -177,7 +176,7 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
               child: _buildFormFields(context),
             ),
           ),
-          SizedBox(height: 20.h),
+          SizedBox(height: 12.h),
           Row(
             children: [
               Expanded(
@@ -188,7 +187,7 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: 10.w),
               Expanded(
                 flex: 2,
                 child: AppButton(
@@ -209,6 +208,7 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
 
   Widget _buildFormFields(BuildContext context) {
     final palette = context.accentPalette;
+    final formState = ref.watch(addHabitFormProvider);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -218,22 +218,22 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
           controller: _titleController,
           labelText: 'HABIT TITLE',
           hintText: 'e.g. Morning Breathwork',
-          errorText: _titleError,
+          errorText: formState.titleError,
           showClearButton: true,
           autofocus: true,
           prefixIcon: Icon(
             Icons.edit_note_rounded,
             size: 20.sp,
-            color: _titleError != null ? AppColors.error : context.primaryAccent,
+            color: formState.titleError != null ? AppColors.error : context.primaryAccent,
           ),
           onChanged: (val) {
-            if (_titleError != null && val.trim().isNotEmpty) {
-              setState(() => _titleError = null);
+            if (formState.titleError != null && val.trim().isNotEmpty) {
+              ref.read(addHabitFormProvider.notifier).clearError();
             }
           },
           onSubmitted: (_) => _handleSubmit(),
         ),
-        SizedBox(height: 14.h),
+        SizedBox(height: 10.h),
         AppTextField(
           controller: _subtitleController,
           labelText: 'SUBTITLE / NOTES',
@@ -244,40 +244,41 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
             color: context.textMutedColor,
           ),
         ),
-        SizedBox(height: 14.h),
+        SizedBox(height: 10.h),
         AppDropdown<String>(
           labelText: 'ROUTINE CATEGORY',
-          value: _selectedRoutine,
+          value: formState.selectedRoutine,
           items: _routineItems,
           onChanged: (val) {
-            setState(() => _selectedRoutine = val);
+            ref.read(addHabitFormProvider.notifier).setRoutine(val);
           },
         ),
-        SizedBox(height: 16.h),
+        SizedBox(height: 10.h),
         Text(
           'SCHEDULE FREQUENCY',
           style: AppTextStyles.labelSmall(context),
         ),
-        SizedBox(height: 8.h),
-        _buildFrequencyChips(context),
-        SizedBox(height: 16.h),
+        SizedBox(height: 6.h),
+        _buildFrequencyChips(context, formState),
+        SizedBox(height: 10.h),
         Text(
           'ACCENT COLOR',
           style: AppTextStyles.labelSmall(context),
         ),
-        SizedBox(height: 10.h),
-        _buildAccentColorPicker(context, palette),
+        SizedBox(height: 6.h),
+        _buildAccentColorPicker(context, palette, formState),
       ],
     );
   }
 
-  Widget _buildFrequencyChips(BuildContext context) {
+  Widget _buildFrequencyChips(
+      BuildContext context, AddHabitFormState formState) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
       child: Row(
         children: List.generate(_frequencyOptions.length, (idx) {
-          final isSelected = _selectedFrequencyIndex == idx;
+          final isSelected = formState.selectedFrequencyIndex == idx;
           final option = _frequencyOptions[idx];
 
           return Padding(
@@ -285,12 +286,12 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
             child: GestureDetector(
               onTap: () {
                 AppHaptics.selectionClick();
-                setState(() => _selectedFrequencyIndex = idx);
+                ref.read(addHabitFormProvider.notifier).setFrequencyIndex(idx);
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 curve: Curves.easeOutCubic,
-                padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
                 decoration: _chipDecoration(
                   context: context,
                   isSelected: isSelected,
@@ -339,14 +340,15 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
     );
   }
 
-  Widget _buildAccentColorPicker(BuildContext context, List<Color> palette) {
+  Widget _buildAccentColorPicker(
+      BuildContext context, List<Color> palette, AddHabitFormState formState) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(
         palette.length,
         (idx) {
           final color = palette[idx];
-          final isSelected = _selectedAccent == idx;
+          final isSelected = formState.selectedAccent == idx;
           final isBright = color.computeLuminance() > 0.55;
           final checkmarkColor =
               isBright ? AppColors.darkScaffold : AppColors.white;
@@ -354,7 +356,7 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
           return GestureDetector(
             onTap: () {
               AppHaptics.selectionClick();
-              setState(() => _selectedAccent = idx);
+              ref.read(addHabitFormProvider.notifier).setAccent(idx);
             },
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),

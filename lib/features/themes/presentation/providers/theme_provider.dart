@@ -104,23 +104,24 @@ class ThemeNotifier extends Notifier<UserThemeState> {
 
   /// Saves a custom theme (insert or update), activates it, and persists to local storage
   Future<void> saveCustomTheme(UserThemeModel theme) async {
-    final existingIndex = state.allThemes.indexWhere((t) => t.id == theme.id);
+    final stampedTheme = theme.copyWith(lastModifiedAt: DateTime.now());
+    final existingIndex = state.allThemes.indexWhere((t) => t.id == stampedTheme.id);
     List<UserThemeModel> updatedList;
 
     if (existingIndex >= 0) {
       updatedList = List<UserThemeModel>.from(state.allThemes);
-      updatedList[existingIndex] = theme;
+      updatedList[existingIndex] = stampedTheme;
     } else {
-      updatedList = [...state.allThemes, theme];
+      updatedList = [...state.allThemes, stampedTheme];
     }
 
     state = state.copyWith(
       allThemes: updatedList,
-      activeThemeId: theme.id,
+      activeThemeId: stampedTheme.id,
     );
 
     await _persistCustomThemes(updatedList);
-    await setActiveTheme(theme.id);
+    await setActiveTheme(stampedTheme.id);
   }
 
   /// Clones an existing theme as a new custom theme and sets it active
@@ -170,6 +171,28 @@ class ThemeNotifier extends Notifier<UserThemeState> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_prefsKeyCustomThemes, jsonString);
     } catch (_) {}
+  }
+
+  /// Restores themes and active theme from an imported payload.
+  Future<void> restoreThemes({
+    required List<UserThemeModel> themes,
+    required String activeThemeId,
+  }) async {
+    final mergedThemes = [
+      ...UserThemeModel.builtInPresets,
+      ...themes.where((t) => !t.isBuiltIn),
+    ];
+    final resolvedActiveId = mergedThemes.any((t) => t.id == activeThemeId)
+        ? activeThemeId
+        : UserThemeModel.nordicSerenity.id;
+
+    state = state.copyWith(
+      allThemes: mergedThemes,
+      activeThemeId: resolvedActiveId,
+    );
+
+    await _persistCustomThemes(mergedThemes);
+    await setActiveTheme(resolvedActiveId);
   }
 }
 

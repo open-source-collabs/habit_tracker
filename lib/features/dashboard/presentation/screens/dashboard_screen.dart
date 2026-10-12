@@ -2,25 +2,34 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../../core/routes/routes.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../../habits/data/models/habit_model.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
 import '../../../habits/presentation/widgets/habit_card.dart';
-import '../../../habits/presentation/widgets/add_habit_sheet.dart';
 import '../../../themes/data/models/dynamic_theme_model.dart';
 import '../../../themes/presentation/providers/theme_provider.dart';
-import '../../../themes/presentation/screens/theme_studio_sheet.dart';
+import '../../../../core/widgets/widgets.dart';
+import '../providers/dashboard_provider.dart';
+import '../widgets/analytics_tab_view.dart';
 import '../widgets/bento_stats_card.dart';
 import '../widgets/calendar_strip.dart';
 import '../widgets/consistency_chart.dart';
 import '../widgets/favorite_activities_carousel.dart';
+import '../widgets/sync_tab_view.dart';
+import '../widgets/themes_tab_view.dart';
 
 /// Responsive Dashboard Screen adapting dynamically to screen width.
 /// - Mobile (<768px): Single-column focused Bento feed.
 /// - Desktop/Web (≥768px): Multi-column asymmetric Bento grid.
 class DashboardScreen extends ConsumerStatefulWidget {
-  const DashboardScreen({super.key});
+  final int initialTabIndex;
+
+  const DashboardScreen({
+    super.key,
+    this.initialTabIndex = 0,
+  });
 
   @override
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
@@ -28,6 +37,19 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   static const double _kDesktopBreakpoint = 768.0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialTabIndex != 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(selectedDashboardTabProvider.notifier).state =
+              widget.initialTabIndex;
+        }
+      });
+    }
+  }
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -45,79 +67,113 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final filteredHabits = ref.watch(filteredHabitsProvider);
     final routineGroups = ref.watch(routineGroupsProvider);
     final activeFilter = ref.watch(activeRoutineFilterProvider);
+    final selectedTabIndex = ref.watch(selectedDashboardTabProvider);
     final primaryAccent = context.primaryAccent;
 
     return Scaffold(
       backgroundColor: context.scaffoldBackgroundColor,
       appBar: _buildAppBar(context, activeTheme),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showAddHabitDialog(context, activeTheme),
-        backgroundColor: primaryAccent,
-        foregroundColor: context.onPrimaryColor,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.r),
-          side: BorderSide(color: context.cardBorderColor, width: 1.2),
-        ),
-        icon: Icon(Icons.add_rounded, size: 22.sp.clamp(20.0, 24.0)),
-        label: Text(
-          'New Habit',
-          style: context.textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: context.onPrimaryColor,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final isDesktop = constraints.maxWidth >= _kDesktopBreakpoint;
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: IndexedStack(
+                index: selectedTabIndex,
+                children: [
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isDesktop =
+                          constraints.maxWidth >= _kDesktopBreakpoint;
 
-            return habitsAsync.when(
-              loading: () => Center(
-                child: Padding(
-                  padding: EdgeInsets.all(32.r),
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(primaryAccent),
+                      return habitsAsync.when(
+                        loading: () => Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(32.r),
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                primaryAccent,
+                              ),
+                            ),
+                          ),
+                        ),
+                        error: (err, _) => Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(24.r),
+                            child: Text(
+                              'Failed to load habits: $err',
+                              style: context.textTheme.bodyMedium?.copyWith(
+                                color: context.textPrimaryColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                        data: (_) {
+                          if (isDesktop) {
+                            return _buildDesktopLayout(
+                              context: context,
+                              activeTheme: activeTheme,
+                              filteredHabits: filteredHabits,
+                              routineGroups: routineGroups,
+                              activeFilter: activeFilter,
+                              selectedDate: selectedDate,
+                              maxWidth: constraints.maxWidth,
+                            );
+                          } else {
+                            return _buildMobileLayout(
+                              context: context,
+                              activeTheme: activeTheme,
+                              filteredHabits: filteredHabits,
+                              routineGroups: routineGroups,
+                              activeFilter: activeFilter,
+                              selectedDate: selectedDate,
+                            );
+                          }
+                        },
+                      );
+                    },
                   ),
-                ),
+                  const AnalyticsTabView(),
+                  const ThemesTabView(),
+                  const SyncTabView(),
+                ],
               ),
-              error: (err, _) => Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24.r),
-                  child: Text(
-                    'Failed to load habits: $err',
-                    style: context.textTheme.bodyMedium?.copyWith(
-                      color: context.textPrimaryColor,
-                    ),
-                  ),
-                ),
-              ),
-              data: (_) {
-                if (isDesktop) {
-                  return _buildDesktopLayout(
-                    context: context,
-                    activeTheme: activeTheme,
-                    filteredHabits: filteredHabits,
-                    routineGroups: routineGroups,
-                    activeFilter: activeFilter,
-                    selectedDate: selectedDate,
-                    maxWidth: constraints.maxWidth,
-                  );
-                } else {
-                  return _buildMobileLayout(
-                    context: context,
-                    activeTheme: activeTheme,
-                    filteredHabits: filteredHabits,
-                    routineGroups: routineGroups,
-                    activeFilter: activeFilter,
-                    selectedDate: selectedDate,
-                  );
-                }
+            ),
+            AppFloatingNavBar(
+              currentIndex: selectedTabIndex,
+              onTap: (index) {
+                ref.read(selectedDashboardTabProvider.notifier).state = index;
               },
-            );
-          },
+              onCenterActionPressed: () =>
+                  _showAddHabitDialog(context, activeTheme),
+              centerActionTooltip: 'New Habit',
+              items: const [
+                AppFloatingNavBarItem(
+                  icon: Icons.grid_view_outlined,
+                  activeIcon: Icons.grid_view_rounded,
+                  label: 'Today',
+                  tooltip: 'Today Dashboard',
+                ),
+                AppFloatingNavBarItem(
+                  icon: Icons.insights_outlined,
+                  activeIcon: Icons.insights_rounded,
+                  label: 'Analytics',
+                  tooltip: 'Habit Analytics & Heatmap',
+                ),
+                AppFloatingNavBarItem(
+                  icon: Icons.palette_outlined,
+                  activeIcon: Icons.palette_rounded,
+                  label: 'Themes',
+                  tooltip: 'Theme Studio',
+                ),
+                AppFloatingNavBarItem(
+                  icon: Icons.cloud_sync_outlined,
+                  activeIcon: Icons.cloud_sync_rounded,
+                  label: 'Sync',
+                  tooltip: 'Cloud Sync & Backups',
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -127,8 +183,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     BuildContext context,
     UserThemeModel activeTheme,
   ) {
-    final primaryAccent = context.primaryAccent;
-
     return AppBar(
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,31 +220,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         ],
       ),
-      actions: [
-        Padding(
-          padding: EdgeInsets.only(right: 16.w),
-          child: FilledButton.tonalIcon(
-            icon: Icon(Icons.palette_outlined, size: 16.sp, color: primaryAccent),
-            label: Text(
-              'Theme Studio',
-              style: context.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                fontSize: 12.sp,
-                color: context.textPrimaryColor,
-              ),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: context.cardBackgroundColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.r),
-                side: BorderSide(color: context.cardBorderColor, width: 1.2),
-              ),
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
-            ),
-            onPressed: () => ThemeStudioSheet.show(context),
-          ),
-        ),
-      ],
     );
   }
 
@@ -203,29 +232,29 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     required DateTime selectedDate,
   }) {
     return ListView(
-      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w.clamp(14.0, 20.0), vertical: 10.h),
       children: [
         // 7-Day Interactive Calendar Strip
         CalendarStrip(
           onAddTap: () => _showAddHabitDialog(context, activeTheme),
         ),
-        SizedBox(height: 18.h),
+        SizedBox(height: 10.h),
 
         // Consistency score weekly chart
         const ConsistencyChart(),
-        SizedBox(height: 18.h),
+        SizedBox(height: 10.h),
 
         // Favorite activities carousel
         const FavoriteActivitiesCarousel(),
-        SizedBox(height: 20.h),
+        SizedBox(height: 10.h),
 
         // Progress Overview Stats Card
         const BentoStatsCard(),
-        SizedBox(height: 22.h),
+        SizedBox(height: 10.h),
 
         // Routine Category Filter Chips
         _buildFilterChips(context, routineGroups, activeFilter),
-        SizedBox(height: 16.h),
+        SizedBox(height: 8.h),
 
         // Section Title
         Text(
@@ -233,11 +262,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           style: context.textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
-            fontSize: 11.sp,
+            fontSize: 10.5.sp.clamp(9.5, 12.0),
             color: context.textMutedColor,
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 8.h),
 
         // Habits List
         if (filteredHabits.isEmpty)
@@ -245,14 +274,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         else
           ...filteredHabits.map((habit) {
             return Padding(
-              padding: EdgeInsets.only(bottom: 14.h),
-              child: BentoHabitCard(
-                habit: habit,
-                date: selectedDate,
-              ),
+              padding: EdgeInsets.only(bottom: 10.h),
+              child: BentoHabitCard(habit: habit, date: selectedDate),
             );
           }),
-        SizedBox(height: 72.h),
+        SizedBox(height: 100.h),
       ],
     );
   }
@@ -273,21 +299,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         Expanded(
           flex: 5,
           child: SingleChildScrollView(
-            padding: EdgeInsets.all(24.r.clamp(16.0, 24.0)),
+            padding: EdgeInsets.all(18.r.clamp(14.0, 20.0)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 CalendarStrip(
                   onAddTap: () => _showAddHabitDialog(context, activeTheme),
                 ),
-                SizedBox(height: 20.h.clamp(14.0, 22.0)),
+                SizedBox(height: 12.h.clamp(10.0, 16.0)),
                 const ConsistencyChart(),
-                SizedBox(height: 20.h.clamp(14.0, 22.0)),
+                SizedBox(height: 12.h.clamp(10.0, 16.0)),
                 const FavoriteActivitiesCarousel(),
-                SizedBox(height: 20.h.clamp(14.0, 22.0)),
+                SizedBox(height: 12.h.clamp(10.0, 16.0)),
                 const BentoStatsCard(),
-                SizedBox(height: 20.h.clamp(14.0, 22.0)),
+                SizedBox(height: 12.h.clamp(10.0, 16.0)),
                 _buildStreakChampionTile(context),
+                SizedBox(height: 100.h.clamp(80.0, 110.0)),
               ],
             ),
           ),
@@ -297,33 +324,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         Expanded(
           flex: 6,
           child: ListView(
-            padding: EdgeInsets.all(24.r.clamp(16.0, 24.0)),
+            padding: EdgeInsets.all(18.r.clamp(14.0, 20.0)),
             children: [
               _buildFilterChips(context, routineGroups, activeFilter),
-              SizedBox(height: 16.h.clamp(12.0, 18.0)),
+              SizedBox(height: 10.h.clamp(8.0, 14.0)),
               Text(
                 'ACTIVE HABITS',
                 style: context.textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
-                  fontSize: 11.sp.clamp(10.0, 12.0),
+                  fontSize: 10.5.sp.clamp(9.5, 12.0),
                   color: context.textMutedColor,
                 ),
               ),
-              SizedBox(height: 12.h.clamp(8.0, 14.0)),
+              SizedBox(height: 8.h.clamp(6.0, 12.0)),
               if (filteredHabits.isEmpty)
                 _buildEmptyState(context)
               else
                 ...filteredHabits.map((habit) {
                   return Padding(
-                    padding: EdgeInsets.only(bottom: 14.h.clamp(10.0, 16.0)),
-                    child: BentoHabitCard(
-                      habit: habit,
-                      date: selectedDate,
-                    ),
+                    padding: EdgeInsets.only(bottom: 10.h.clamp(8.0, 14.0)),
+                    child: BentoHabitCard(habit: habit, date: selectedDate),
                   );
                 }),
-              SizedBox(height: 80.h.clamp(60.0, 90.0)),
+              SizedBox(height: 100.h.clamp(80.0, 110.0)),
             ],
           ),
         ),
@@ -355,7 +379,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               selectedColor: primaryAccent,
               backgroundColor: context.cardBackgroundColor,
               labelStyle: context.textTheme.labelMedium?.copyWith(
-                color: isSelected ? context.onPrimaryColor : context.textPrimaryColor,
+                color: isSelected
+                    ? context.onPrimaryColor
+                    : context.textPrimaryColor,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 fontSize: 12.sp,
               ),
@@ -381,15 +407,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         : (accents.isNotEmpty ? accents.first : context.primaryAccent);
 
     return Container(
-      padding: EdgeInsets.all(20.r.clamp(16.0, 22.0)),
+      padding: EdgeInsets.all(14.r.clamp(12.0, 16.0)),
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(24.r.clamp(16.0, 24.0)),
+        borderRadius: BorderRadius.circular(20.r.clamp(16.0, 22.0)),
         border: Border.all(color: context.cardBorderColor, width: 1.2),
         boxShadow: [
           BoxShadow(
             color: context.shadowColor,
-            blurRadius: 10.r,
+            blurRadius: 8.r,
             offset: Offset(0, 2.h),
           ),
         ],
@@ -397,7 +423,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(12.r),
+            padding: EdgeInsets.all(10.r),
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.15),
               shape: BoxShape.circle,
@@ -405,10 +431,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             child: Icon(
               Icons.emoji_events_rounded,
               color: accent,
-              size: 28.sp.clamp(24.0, 30.0),
+              size: 24.sp.clamp(20.0, 26.0),
             ),
           ),
-          SizedBox(width: 16.w.clamp(12.0, 18.0)),
+          SizedBox(width: 12.w.clamp(10.0, 16.0)),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -468,6 +494,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   void _showAddHabitDialog(BuildContext context, UserThemeModel activeTheme) {
-    AddHabitSheet.show(context);
+    AppNavigator.toCreateHabit(context);
   }
 }

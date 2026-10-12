@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:habit_tracker/core/theme/app_colors.dart';
 import 'package:habit_tracker/core/theme/app_text_styles.dart';
 
 import '../theme/app_theme.dart';
 import '../utils/haptics.dart';
+import 'app_dropdown_provider.dart';
 
 /// Item configuration for [AppDropdown].
 class AppDropdownItem<T> {
@@ -24,7 +26,7 @@ class AppDropdownItem<T> {
 /// Custom styled dropdown selector replacing generic platform spinners.
 /// Uses a tactile trigger button with rotating animated chevron and
 /// a bottom sheet selection panel matching active theme surfaces.
-class AppDropdown<T> extends StatefulWidget {
+class AppDropdown<T> extends ConsumerStatefulWidget {
   final String? labelText;
   final String hintText;
   final T? value;
@@ -47,11 +49,11 @@ class AppDropdown<T> extends StatefulWidget {
   });
 
   @override
-  State<AppDropdown<T>> createState() => _AppDropdownState<T>();
+  ConsumerState<AppDropdown<T>> createState() => _AppDropdownState<T>();
 }
 
-class _AppDropdownState<T> extends State<AppDropdown<T>> {
-  bool _isOpen = false;
+class _AppDropdownState<T> extends ConsumerState<AppDropdown<T>> {
+  late final String _dropdownId = 'dropdown_${identityHashCode(this)}';
 
   AppDropdownItem<T>? get _selectedItem {
     if (widget.value == null) return null;
@@ -65,14 +67,14 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
   void _openSelectionSheet() async {
     if (!widget.enabled || widget.onChanged == null) return;
     AppHaptics.selectionClick();
-    setState(() => _isOpen = true);
+    ref.read(appDropdownOpenProvider(_dropdownId).notifier).setOpen(true);
 
     final selected = await showModalBottomSheet<T>(
       context: context,
       backgroundColor: context.cardBackgroundColor,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22.r.clamp(16.0, 24.0))),
       ),
       builder: (sheetContext) {
         return _DropdownSelectionSheet<T>(
@@ -84,7 +86,7 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
     );
 
     if (mounted) {
-      setState(() => _isOpen = false);
+      ref.read(appDropdownOpenProvider(_dropdownId).notifier).setOpen(false);
       if (selected != null && selected != widget.value) {
         AppHaptics.selectionClick();
         widget.onChanged?.call(selected);
@@ -94,6 +96,7 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
 
   @override
   Widget build(BuildContext context) {
+    final isOpen = ref.watch(appDropdownOpenProvider(_dropdownId));
     final selected = _selectedItem;
 
     return Column(
@@ -105,10 +108,10 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
             widget.labelText!,
             style: AppTextStyles.labelSmall(
               context,
-              color: _isOpen ? context.primaryAccent : context.textMutedColor,
+              color: isOpen ? context.primaryAccent : context.textMutedColor,
             ),
           ),
-          SizedBox(height: 6.h),
+          SizedBox(height: 5.h),
         ],
         GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -116,17 +119,20 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOutCubic,
-            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 13.h),
+            padding: EdgeInsets.symmetric(
+              horizontal: 14.w.clamp(12.0, 16.0),
+              vertical: 10.h.clamp(8.0, 12.0),
+            ),
             decoration: BoxDecoration(
               color: context.cardBackgroundColor,
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(14.r.clamp(12.0, 16.0)),
               border: Border.all(
-                color: _isOpen
+                color: isOpen
                     ? context.primaryAccent
                     : context.cardBorderColor,
-                width: _isOpen ? 1.6 : 1.2,
+                width: isOpen ? 1.6 : 1.2,
               ),
-              boxShadow: _isOpen
+              boxShadow: isOpen
                   ? [
                       BoxShadow(
                         color: context.primaryAccent.withValues(alpha: 0.22),
@@ -162,13 +168,13 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
                   ),
                 ),
                 AnimatedRotation(
-                  turns: _isOpen ? 0.5 : 0.0,
+                  turns: isOpen ? 0.5 : 0.0,
                   duration: const Duration(milliseconds: 220),
                   curve: Curves.easeOutCubic,
                   child: Icon(
                     Icons.keyboard_arrow_down_rounded,
                     size: 22.sp,
-                    color: _isOpen
+                    color: isOpen
                         ? context.primaryAccent
                         : context.textMutedColor,
                   ),
@@ -260,13 +266,13 @@ class _DropdownSelectionSheet<T> extends StatelessWidget {
                       duration: const Duration(milliseconds: 160),
                       padding: EdgeInsets.symmetric(
                         horizontal: 14.w,
-                        vertical: 12.h,
+                        vertical: 8.h,
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? context.primaryAccent.withValues(alpha: 0.14)
                             : AppColors.transparent,
-                        borderRadius: BorderRadius.circular(14.r),
+                        borderRadius: BorderRadius.circular(12.r),
                         border: isSelected
                             ? Border.all(
                                 color: context.primaryAccent

@@ -33,10 +33,10 @@ class AppBottomSheet extends StatelessWidget {
           constraints: BoxConstraints(maxWidth: 600.w.clamp(400.0, 640.0)),
           padding: padding ??
               EdgeInsets.only(
-                left: 20.w,
-                right: 20.w,
-                top: 12.h,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20.h,
+                left: 16.w.clamp(14.0, 20.0),
+                right: 16.w.clamp(14.0, 20.0),
+                top: 10.h,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 14.h,
               ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -46,14 +46,14 @@ class AppBottomSheet extends StatelessWidget {
                 Center(
                   child: Container(
                     width: 40.w.clamp(36.0, 48.0),
-                    height: 4.5.h.clamp(4.0, 6.0),
+                    height: 4.h.clamp(3.0, 5.0),
                     decoration: BoxDecoration(
                       color: context.cardBorderColor,
                       borderRadius: BorderRadius.circular(3.r),
                     ),
                   ),
                 ),
-                SizedBox(height: 16.h),
+                SizedBox(height: 10.h),
               ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -68,7 +68,7 @@ class AppBottomSheet extends StatelessWidget {
                           style: AppTextStyles.headlineSmall(context),
                         ),
                         if (subtitle != null) ...[
-                          SizedBox(height: 3.h),
+                          SizedBox(height: 2.h),
                           Text(
                             subtitle!,
                             style: AppTextStyles.bodySmall(context),
@@ -80,14 +80,14 @@ class AppBottomSheet extends StatelessWidget {
                   if (showCloseButton)
                     AppIconButton(
                       icon: Icons.close_rounded,
-                      size: 34.r,
+                      size: 32.r,
                       iconSize: 18.sp,
                       border: false,
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                 ],
               ),
-              SizedBox(height: 16.h),
+              SizedBox(height: 10.h),
               Flexible(child: child),
             ],
           ),
@@ -112,7 +112,7 @@ Future<T?> showAppBottomSheet<T>({
     enableDrag: enableDrag,
     backgroundColor: context.cardBackgroundColor,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24.r.clamp(18.0, 24.0))),
     ),
     builder: builder,
   );

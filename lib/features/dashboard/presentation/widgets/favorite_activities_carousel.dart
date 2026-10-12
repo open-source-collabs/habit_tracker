@@ -56,26 +56,26 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4.w),
+          padding: EdgeInsets.symmetric(horizontal: 2.w),
           child: Text(
             'Favorite activities',
             style: context.textTheme.titleMedium?.copyWith(
-              fontSize: 16.sp,
+              fontSize: 15.sp.clamp(14.0, 16.0),
               fontWeight: FontWeight.w700,
               letterSpacing: -0.2,
               color: context.textPrimaryColor,
             ),
           ),
         ),
-        SizedBox(height: 12.h),
+        SizedBox(height: 8.h),
         SizedBox(
-          height: 118.h.clamp(110.0, 130.0),
+          height: 94.h.clamp(88.0, 102.0),
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
             itemCount: _activities.length,
             separatorBuilder: (context, index) =>
-                SizedBox(width: 12.w.clamp(8.0, 16.0)),
+                SizedBox(width: 10.w.clamp(8.0, 14.0)),
             itemBuilder: (context, index) {
               final act = _activities[index];
               final isSelected = activeFilter.toLowerCase() == act.routineGroup.toLowerCase();
@@ -96,11 +96,11 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 220),
                   curve: Curves.easeOutCubic,
-                  width: 130.w.clamp(120.0, 150.0),
-                  padding: EdgeInsets.all(14.r.clamp(10.0, 16.0)),
+                  width: 116.w.clamp(108.0, 130.0),
+                  padding: EdgeInsets.all(10.r.clamp(8.0, 12.0)),
                   decoration: BoxDecoration(
                     color: bgColor,
-                    borderRadius: BorderRadius.circular(22.r.clamp(16.0, 24.0)),
+                    borderRadius: BorderRadius.circular(18.r.clamp(14.0, 20.0)),
                     border: Border.all(
                       color: isSelected
                           ? act.accentColor
@@ -111,8 +111,8 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                         ? [
                             BoxShadow(
                               color: act.accentColor.withValues(alpha: 0.35),
-                              blurRadius: 14.r,
-                              offset: Offset(0, 4.h),
+                              blurRadius: 10.r,
+                              offset: Offset(0, 3.h),
                             ),
                           ]
                         : null,
@@ -130,7 +130,7 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: context.textTheme.titleSmall?.copyWith(
-                                fontSize: 13.sp.clamp(11.0, 14.0),
+                                fontSize: 12.sp.clamp(11.0, 13.0),
                                 fontWeight: FontWeight.w700,
                                 color: context.textPrimaryColor,
                               ),
@@ -147,7 +147,7 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: context.textTheme.labelSmall?.copyWith(
-                                fontSize: 10.sp.clamp(9.0, 12.0),
+                                fontSize: 9.5.sp.clamp(8.5, 11.0),
                                 fontWeight: FontWeight.w600,
                                 color: context.textSecondaryColor,
                               ),
@@ -155,7 +155,7 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                           ),
                           SizedBox(width: 4.w.clamp(2.0, 6.0)),
                           Container(
-                            padding: EdgeInsets.all(6.r),
+                            padding: EdgeInsets.all(5.r),
                             decoration: BoxDecoration(
                               color: act.accentColor.withValues(alpha: 0.2),
                               shape: BoxShape.circle,

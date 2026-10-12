@@ -71,7 +71,7 @@ class _AppCardState extends State<AppCard>
 
   @override
   Widget build(BuildContext context) {
-    final double radius = widget.borderRadius ?? 24.r;
+    final double radius = widget.borderRadius ?? 18.r.clamp(14.0, 20.0);
     final Color bgColor = widget.backgroundColor ?? context.cardBackgroundColor;
     final Color bColor = widget.borderColor ?? context.cardBorderColor;
 
@@ -80,16 +80,16 @@ class _AppCardState extends State<AppCard>
       shadows = [
         BoxShadow(
           color: widget.glowColor!.withValues(alpha: 0.35),
-          blurRadius: 20.r,
+          blurRadius: 18.r.clamp(14.0, 20.0),
           spreadRadius: 1,
-          offset: Offset(0, 4.h),
+          offset: Offset(0, 3.h),
         ),
       ];
     } else {
       shadows = [
         BoxShadow(
           color: context.shadowColor,
-          blurRadius: 12.r,
+          blurRadius: 10.r.clamp(8.0, 12.0),
           offset: Offset(0, 2.h),
         ),
       ];
@@ -97,7 +97,7 @@ class _AppCardState extends State<AppCard>
 
     Widget content = Container(
       margin: widget.margin,
-      padding: widget.padding ?? EdgeInsets.all(20.r),
+      padding: widget.padding ?? EdgeInsets.all(14.r.clamp(12.0, 16.0)),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(radius),
