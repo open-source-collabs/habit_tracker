@@ -62,7 +62,7 @@ class HabitWidgetSnapshotView extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Habit Tracker',
+                'Track Free',
                 style: context.textTheme.labelMedium?.copyWith(
                   color: textSecondary,
                   fontWeight: FontWeight.w700,

@@ -76,7 +76,7 @@ abstract final class SyncConfig {
     'GOOGLE_CLIENT_ID',
   );
 
-  /// iCloud container, e.g. `iCloud.com.example.trackfree`.
+  /// iCloud container, e.g. `iCloud.co.trackfree.solforge`.
   static const String iCloudContainerId = String.fromEnvironment(
     'ICLOUD_CONTAINER_ID',
   );

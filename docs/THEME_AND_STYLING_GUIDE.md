@@ -1,7 +1,7 @@
 # Dynamic Theme & Styling Architecture Guide
 
 ## Overview
-The Habit Tracker application utilizes a state-of-the-art dynamic theming system built on Material 3, Riverpod, and custom `ThemeExtension` tokens. It guarantees that **zero hardcoded colors or raw TextStyles** exist anywhere in the presentation layer.
+The Track Free app utilizes a state-of-the-art dynamic theming system built on Material 3, Riverpod, and custom `ThemeExtension` tokens. It guarantees that **zero hardcoded colors or raw TextStyles** exist anywhere in the presentation layer.
 
 ---
 

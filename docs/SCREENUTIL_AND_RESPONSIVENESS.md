@@ -1,7 +1,7 @@
 # ScreenUtil & Responsive Layout Guide
 
 ## 1. Overview
-The Habit Tracker application supports seamless execution across mobile devices (iOS/Android), tablets, desktop platforms (macOS/Windows/Linux), and web browsers.
+The Track Free app supports seamless execution across mobile devices (iOS/Android), tablets, desktop platforms (macOS/Windows/Linux), and web browsers.
 
 To achieve this, the codebase combines:
 1. `flutter_screenutil` for proportional scaling on mobile viewports.

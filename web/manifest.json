@@ -1,6 +1,6 @@
 {
-    "name": "habit_tracker",
-    "short_name": "habit_tracker",
+    "name": "Track Free",
+    "short_name": "Track Free",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

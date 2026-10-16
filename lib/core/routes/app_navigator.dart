@@ -4,7 +4,7 @@ import '../../features/habits/data/models/habit_model.dart';
 import 'app_router.dart';
 import 'app_routes.dart';
 
-/// Type-safe programmatic navigation helper facade for Habit Tracker.
+/// Type-safe programmatic navigation helper facade for Track Free.
 abstract final class AppNavigator {
   /// Global navigator key accessing the root NavigatorState.
   static GlobalKey<NavigatorState> get navigatorKey => AppRouter.navigatorKey;

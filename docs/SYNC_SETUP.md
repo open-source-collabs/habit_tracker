@@ -22,12 +22,12 @@ The code lives in `lib/features/sync/`.
 
 The synced file is `habit_tracker_sync.json`, schema v2 (see `AppPayloadModel`).
 
-## 0. Prerequisite: a real app identifier
+## 0. The app identifier
 
-Both providers tie credentials to the app ID. Replace the template IDs first:
+Both providers tie credentials to the app ID, which is **`co.trackfree.solforge`** on every platform:
 
-- **Android:** `namespace` and `applicationId` in `android/app/build.gradle.kts` (currently `com.example.habit_tracker`).
-- **iOS/macOS:** `PRODUCT_BUNDLE_IDENTIFIER` in Xcode (currently `com.example.habitTracker`).
+- **Android:** `namespace` and `applicationId` in `android/app/build.gradle.kts`. Use this package name for the Android OAuth client.
+- **iOS/macOS:** `PRODUCT_BUNDLE_IDENTIFIER` in the Xcode projects. Register this App ID in the Apple Developer portal.
 
 ## 1. Google Drive (Android, also iOS/macOS)
 
@@ -46,7 +46,7 @@ Both providers tie credentials to the app ID. Replace the template IDs first:
 ## 2. iCloud (iOS, macOS)
 
 1. In the Apple Developer portal:
-   - Create an **iCloud container**, e.g. `iCloud.com.yourcompany.trackfree`.
+   - Create an **iCloud container**, e.g. `iCloud.co.trackfree.solforge`.
    - Enable iCloud on the App ID and assign the container to it.
 2. In Xcode:
    - Open Runner, then **Signing & Capabilities**, and add **iCloud**.
@@ -54,7 +54,7 @@ Both providers tie credentials to the app ID. Replace the template IDs first:
    - Do the same for macOS if you ship it.
 3. Build with the container ID:
    ```sh
-   flutter run --dart-define=ICLOUD_CONTAINER_ID=iCloud.com.yourcompany.trackfree
+   flutter run --dart-define=ICLOUD_CONTAINER_ID=iCloud.co.trackfree.solforge
    ```
 
 ## 3. Verify on real devices

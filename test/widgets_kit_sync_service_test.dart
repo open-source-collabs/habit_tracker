@@ -188,7 +188,7 @@ void main() {
           ),
         );
 
-        expect(find.text('Habit Tracker'), findsOneWidget);
+        expect(find.text('Track Free'), findsOneWidget);
         expect(find.text('1 / 2'), findsOneWidget);
         expect(find.textContaining('completed today (50%)'), findsOneWidget);
         expect(find.byType(LinearProgressIndicator), findsOneWidget);

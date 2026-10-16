@@ -140,7 +140,7 @@ class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsMod
   Future<void> sendTestNotification() async {
     await _service.showInstantNotification(
       id: DigestNotificationIds.testNotification,
-      title: 'Habit Tracker Test Alert 🔔',
+      title: 'Track Free Test Alert 🔔',
       body: 'Offline alarms are active and delivering perfectly on your device!',
       payload: 'test_notification',
     );
@@ -148,7 +148,7 @@ class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsMod
     // Record in history log
     final record = NotificationAlertRecord(
       id: 'test_${DateTime.now().millisecondsSinceEpoch}',
-      title: 'Habit Tracker Test Alert 🔔',
+      title: 'Track Free Test Alert 🔔',
       body: 'Verified local offline notifications.',
       timestamp: DateTime.now(),
       type: 'test',

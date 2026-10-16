@@ -16,7 +16,7 @@ final habitWidgetSyncServiceProvider = Provider<HabitWidgetSyncService>((ref) {
 class HabitWidgetSyncService {
   static const String defaultAndroidProviderName = 'HabitWidgetProvider';
   static const String defaultQualifiedAndroidName =
-      'com.example.habit_tracker.HabitWidgetProvider';
+      'co.trackfree.solforge.HabitWidgetProvider';
   static const String defaultIOSWidgetKind = 'HabitWidget';
 
   /// Key constants persisted in shared widget preferences.

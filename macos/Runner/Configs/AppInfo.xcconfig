@@ -8,7 +8,7 @@
 PRODUCT_NAME = habit_tracker
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.habitTracker
+PRODUCT_BUNDLE_IDENTIFIER = co.trackfree.solforge
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 Track Free. All rights reserved.

@@ -54,11 +54,11 @@ class NotificationService {
         requestSoundPermission: false,
       );
       const linuxSettings = LinuxInitializationSettings(
-        defaultActionName: 'Open Habit Tracker',
+        defaultActionName: 'Open Track Free',
       );
       const windowsSettings = WindowsInitializationSettings(
-        appName: 'Habit Tracker',
-        appUserModelId: 'HabitTracker.App',
+        appName: 'Track Free',
+        appUserModelId: 'co.trackfree.solforge',
         guid: '6b0f7c1e-4a8e-4d55-9a3b-2f1e9c7d5a10',
       );
 

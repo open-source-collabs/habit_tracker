@@ -1,4 +1,4 @@
-package com.example.habit_tracker
+package co.trackfree.solforge
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
