@@ -8,9 +8,12 @@ import 'theme_provider.dart';
 /// Auto-disposing notifier managing the active theme draft inside Theme Studio.
 class ThemeStudioWorkingThemeNotifier
     extends AutoDisposeNotifier<UserThemeModel> {
+  /// Seeds the draft from the active theme once. Read (not watched) so that
+  /// switching or saving themes doesn't discard edits in progress; the sheet
+  /// updates the draft explicitly via [setWorkingTheme].
   @override
   UserThemeModel build() {
-    return ref.watch(themeProvider).activeTheme;
+    return ref.read(themeProvider).activeTheme;
   }
 
   void setWorkingTheme(UserThemeModel theme) {

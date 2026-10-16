@@ -8,6 +8,16 @@ import 'dynamic_theme_model.dart';
 /// and dynamic habit tracking entities.
 @immutable
 class AppPayloadModel {
+  /// Schema version written by this build. Bump it when the JSON shape
+  /// changes and register a step in [_migrations] that upgrades the previous
+  /// version's JSON.
+  static const int currentSchemaVersion = 1;
+
+  /// Upgrade steps keyed by the version they upgrade *from*:
+  /// `_migrations[n]` turns version-n JSON into version-(n+1) JSON.
+  static final Map<int, Map<String, dynamic> Function(Map<String, dynamic>)>
+      _migrations = {};
+
   final int version;
   final String lastModifiedBy;
   final DateTime lastModifiedAt;
@@ -30,10 +40,10 @@ class AppPayloadModel {
     String? activeThemeId,
   }) {
     return AppPayloadModel(
-      version: 1,
+      version: currentSchemaVersion,
       lastModifiedBy: lastModifiedBy,
       lastModifiedAt: DateTime.now(),
-      activeThemeId: activeThemeId ?? UserThemeModel.obsidianTwilight.id,
+      activeThemeId: activeThemeId ?? UserThemeModel.defaultTheme.id,
       userThemes: UserThemeModel.builtInPresets,
       habits: const [],
     );
@@ -72,7 +82,31 @@ class AppPayloadModel {
     };
   }
 
-  factory AppPayloadModel.fromJson(Map<String, dynamic> json) {
+  /// Upgrades [json] from its stored schema version to [currentSchemaVersion].
+  ///
+  /// Throws [UnsupportedPayloadVersionException] for data written by a newer
+  /// build, so an older build never silently drops fields it doesn't know.
+  static Map<String, dynamic> migrate(Map<String, dynamic> json) {
+    var version = (json['version'] as num?)?.toInt() ?? 1;
+    if (version > currentSchemaVersion) {
+      throw UnsupportedPayloadVersionException(version);
+    }
+
+    var migrated = json;
+    while (version < currentSchemaVersion) {
+      final step = _migrations[version];
+      if (step == null) {
+        throw StateError('No payload migration registered from v$version');
+      }
+      migrated = step(migrated);
+      version++;
+    }
+    return {...migrated, 'version': currentSchemaVersion};
+  }
+
+  factory AppPayloadModel.fromJson(Map<String, dynamic> rawJson) {
+    final json = migrate(rawJson);
+
     final rawThemes = json['userThemes'] as List<dynamic>? ?? const [];
     final themes = rawThemes
         .map((e) => UserThemeModel.fromJson(e as Map<String, dynamic>))
@@ -84,13 +118,13 @@ class AppPayloadModel {
         .toList();
 
     return AppPayloadModel(
-      version: (json['version'] as num?)?.toInt() ?? 1,
+      version: json['version'] as int,
       lastModifiedBy: json['lastModifiedBy'] as String? ?? 'unknown',
       lastModifiedAt: json['lastModifiedAt'] != null
           ? DateTime.parse(json['lastModifiedAt'] as String)
           : DateTime.now(),
       activeThemeId:
-          json['activeThemeId'] as String? ?? UserThemeModel.nordicSerenity.id,
+          json['activeThemeId'] as String? ?? UserThemeModel.defaultTheme.id,
       userThemes: themes,
       habits: habits,
     );
@@ -130,4 +164,16 @@ class AppPayloadModel {
         Object.hashAll(userThemes),
         Object.hashAll(habits),
       );
+}
+
+/// Thrown when stored data was written by a newer build than this one.
+class UnsupportedPayloadVersionException implements Exception {
+  final int version;
+
+  const UnsupportedPayloadVersionException(this.version);
+
+  @override
+  String toString() =>
+      'UnsupportedPayloadVersionException: data is schema v$version, '
+      'this build supports up to v${AppPayloadModel.currentSchemaVersion}';
 }

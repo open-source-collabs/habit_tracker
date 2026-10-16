@@ -434,6 +434,10 @@ class HabitModel {
     String? iconCode,
     String? reminderTime,
     DateTime? lastModifiedAt,
+    bool clearEmoji = false,
+    bool clearCustomColor = false,
+    bool clearIconCode = false,
+    bool clearReminderTime = false,
   }) {
     return HabitModel(
       id: id ?? this.id,
@@ -447,10 +451,12 @@ class HabitModel {
       checkIns: checkIns != null
           ? Map.unmodifiable(checkIns)
           : this.checkIns,
-      emoji: emoji ?? this.emoji,
-      customColorValue: customColorValue ?? this.customColorValue,
-      iconCode: iconCode ?? this.iconCode,
-      reminderTime: reminderTime ?? this.reminderTime,
+      emoji: clearEmoji ? null : (emoji ?? this.emoji),
+      customColorValue:
+          clearCustomColor ? null : (customColorValue ?? this.customColorValue),
+      iconCode: clearIconCode ? null : (iconCode ?? this.iconCode),
+      reminderTime:
+          clearReminderTime ? null : (reminderTime ?? this.reminderTime),
       lastModifiedAt: lastModifiedAt ?? this.lastModifiedAt,
     );
   }
@@ -540,6 +546,10 @@ class HabitModel {
         customColorValue,
         iconCode,
         reminderTime,
-        Object.hashAll(checkIns.keys),
+        // Order-independent so equal maps (see mapEquals in ==) always hash
+        // the same regardless of insertion order.
+        Object.hashAllUnordered(
+          checkIns.entries.map((e) => Object.hash(e.key, e.value)),
+        ),
       );
 }

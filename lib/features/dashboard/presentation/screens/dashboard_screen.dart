@@ -7,6 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../../habits/data/models/habit_model.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
+import '../../../habits/presentation/widgets/data_load_error_view.dart';
 import '../../../habits/presentation/widgets/habit_card.dart';
 import '../../../themes/data/models/dynamic_theme_model.dart';
 import '../../../themes/presentation/providers/theme_provider.dart';
@@ -96,17 +97,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             ),
                           ),
                         ),
-                        error: (err, _) => Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(24.r),
-                            child: Text(
-                              'Failed to load habits: $err',
-                              style: context.textTheme.bodyMedium?.copyWith(
-                                color: context.textPrimaryColor,
-                              ),
-                            ),
-                          ),
-                        ),
+                        error: (err, _) => DataLoadErrorView(error: err),
                         data: (_) {
                           if (isDesktop) {
                             return _buildDesktopLayout(

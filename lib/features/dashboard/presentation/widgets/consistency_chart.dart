@@ -14,19 +14,20 @@ class ConsistencyChart extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final primaryAccent = context.primaryAccent;
 
-    final habits = ref.watch(habitListProvider).value ?? const [];
+    final habits = ref.watch(habitListProvider).valueOrNull ?? const [];
     final selectedDate = ref.watch(selectedDateProvider);
 
-    const weekLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thr', 'Fri', 'Sat'];
+    // Monday-start, matching the weekly streak logic in HabitModel.
+    const weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    // Calculate completions for the current week (Sun..Sat)
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    // Sunday of the week
-    final sunday = today.subtract(Duration(days: today.weekday % 7));
+    // Show the week containing the selected date.
+    final monday =
+        selectedDate.subtract(Duration(days: selectedDate.weekday - 1));
 
     final weekData = List.generate(7, (i) {
-      final day = sunday.add(Duration(days: i));
+      final day = DateTime(monday.year, monday.month, monday.day + i);
       final scheduled = habits
           .where((h) => !h.isArchived && h.frequency.isScheduledFor(day))
           .toList();
@@ -47,7 +48,12 @@ class ConsistencyChart extends ConsumerWidget {
       );
     });
 
-    final avgRate = weekData.map((e) => e.rate).reduce((a, b) => a + b) / 7;
+    // Future days haven't happened yet, so they don't count against the score.
+    final elapsedDays = weekData.where((e) => !e.date.isAfter(today));
+    final avgRate = elapsedDays.isEmpty
+        ? 0.0
+        : elapsedDays.map((e) => e.rate).reduce((a, b) => a + b) /
+            elapsedDays.length;
     final avgPercent = (avgRate * 100).round();
 
     return Container(
@@ -135,10 +141,10 @@ class ConsistencyChart extends ConsumerWidget {
                           ),
                           child: Text(
                             '${(bar.rate * 100).round()}%',
-                            style: TextStyle(
+                            style: context.textTheme.labelSmall?.copyWith(
                               fontSize: 8.5.sp.clamp(7.5, 10.0),
                               fontWeight: FontWeight.w800,
-                              color: AppColors.white,
+                              color: context.onPrimaryColor,
                             ),
                           ),
                         ),

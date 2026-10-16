@@ -7,7 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
 
-/// 7-day horizontal interactive calendar strip inspired by Reference Image 1 & 2.
+/// 7-day horizontal interactive calendar strip (the past week through today).
 class CalendarStrip extends ConsumerWidget {
   final VoidCallback? onAddTap;
 
@@ -21,9 +21,10 @@ class CalendarStrip extends ConsumerWidget {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
-    // Compute the 7-day window centered or ending on today
+    // The 7 days ending today. Future dates are never offered because they
+    // can't be checked off.
     final days = List.generate(7, (i) {
-      return today.subtract(Duration(days: 3 - i));
+      return today.subtract(Duration(days: 6 - i));
     });
 
     const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];

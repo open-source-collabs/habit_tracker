@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -7,7 +9,28 @@ import 'package:habit_tracker/core/theme/theme_factory.dart';
 import 'package:habit_tracker/core/utils/haptics.dart';
 import 'package:habit_tracker/features/themes/data/models/dynamic_theme_model.dart';
 import 'package:habit_tracker/features/themes/presentation/providers/theme_provider.dart';
+import 'package:habit_tracker/core/data/app_data_repository.dart';
+import 'package:habit_tracker/features/habits/data/storage/habit_storage.dart';
+import 'package:habit_tracker/features/habits/data/storage/web_habit_storage.dart';
+import 'package:habit_tracker/features/themes/data/storage/legacy_theme_preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+/// Keeps theme persistence off the real disk.
+Override _inMemoryStorage([HabitStorage? storage]) =>
+    habitStorageProvider.overrideWithValue(
+      storage ?? WebHabitStorage(InMemoryWebStore()),
+    );
+
+const _neonCyber = UserThemeModel(
+  id: 'custom_neon',
+  name: 'Neon Cyber',
+  fontFamily: 'Inter',
+  scaffoldBgHex: '#0A0A0F',
+  cardBgHex: '#12121A',
+  cardBorderHex: '#222233',
+  textPrimaryHex: '#FFFFFF',
+  accentPaletteHex: ['#8B5CF6'],
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -121,7 +144,7 @@ void main() {
 
   group('ThemeNotifier State & Operations', () {
     test('initializes with builtInPresets and Obsidian Twilight active', () {
-      final container = ProviderContainer();
+      final container = ProviderContainer(overrides: [_inMemoryStorage()]);
       addTearDown(container.dispose);
 
       final state = container.read(themeProvider);
@@ -132,7 +155,7 @@ void main() {
     });
 
     test('saves, duplicates, and deletes custom themes protecting built-ins', () async {
-      final container = ProviderContainer();
+      final container = ProviderContainer(overrides: [_inMemoryStorage()]);
       addTearDown(container.dispose);
 
       final notifier = container.read(themeProvider.notifier);
@@ -176,5 +199,72 @@ void main() {
         isFalse,
       );
     });
+
+    test('saving an edited built-in preset creates a new custom theme', () async {
+      final container = ProviderContainer(overrides: [_inMemoryStorage()]);
+      addTearDown(container.dispose);
+
+      final edited = UserThemeModel.obsidianTwilight.copyWith(name: 'My Twilight');
+      final saved =
+          await container.read(themeProvider.notifier).saveCustomTheme(edited);
+
+      expect(saved.id, isNot(UserThemeModel.obsidianTwilight.id));
+      expect(saved.isBuiltIn, isFalse);
+
+      final state = container.read(themeProvider);
+      final ids = state.allThemes.map((t) => t.id).toList();
+      expect(ids.toSet().length, ids.length, reason: 'theme ids must be unique');
+      expect(
+        state.allThemes.firstWhere((t) => t.id == UserThemeModel.obsidianTwilight.id),
+        UserThemeModel.obsidianTwilight,
+      );
+      expect(state.activeThemeId, saved.id);
+    });
+
+    test('themes persist in the app payload and reload in a new session', () async {
+      final storage = WebHabitStorage(InMemoryWebStore());
+
+      final first = ProviderContainer(overrides: [_inMemoryStorage(storage)]);
+      await first.read(themeProvider.notifier).saveCustomTheme(_neonCyber);
+      await first.read(appDataRepositoryProvider).flush();
+      first.dispose();
+
+      final stored = await storage.loadPayload();
+      expect(stored!.activeThemeId, 'custom_neon');
+      expect(stored.userThemes.map((t) => t.id), ['custom_neon'],
+          reason: 'built-in presets are not persisted');
+
+      final second = ProviderContainer(overrides: [_inMemoryStorage(storage)]);
+      addTearDown(second.dispose);
+      second.read(themeProvider);
+      await second.read(appDataRepositoryProvider).load();
+      await pumpEventQueue();
+
+      expect(second.read(themeProvider).activeThemeId, 'custom_neon');
+    });
+
+    test('migrates legacy SharedPreferences themes into the payload once', () async {
+      SharedPreferences.setMockInitialValues({
+        LegacyThemePreferences.customThemesKey:
+            '[${_jsonOf(_neonCyber)}]',
+        LegacyThemePreferences.activeThemeKey: 'custom_neon',
+      });
+      final storage = WebHabitStorage(InMemoryWebStore());
+
+      final container = ProviderContainer(overrides: [_inMemoryStorage(storage)]);
+      addTearDown(container.dispose);
+      container.read(themeProvider);
+      await pumpEventQueue();
+      await container.read(appDataRepositoryProvider).flush();
+
+      expect(container.read(themeProvider).activeThemeId, 'custom_neon');
+      expect((await storage.loadPayload())!.activeThemeId, 'custom_neon');
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString(LegacyThemePreferences.customThemesKey), isNull);
+      expect(prefs.getString(LegacyThemePreferences.activeThemeKey), isNull);
+    });
   });
 }
+
+String _jsonOf(UserThemeModel theme) => jsonEncode(theme.toJson());

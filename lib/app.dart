@@ -10,25 +10,41 @@ import 'features/themes/presentation/providers/theme_provider.dart';
 
 /// Root application widget configuring screen utilities, dynamic theme switching,
 /// named route navigation, and the responsive Bento dashboard.
-class HabitTrackerApp extends ConsumerWidget {
+class HabitTrackerApp extends ConsumerStatefulWidget {
   const HabitTrackerApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HabitTrackerApp> createState() => _HabitTrackerAppState();
+}
+
+class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Subscribe once for the app's lifetime, not on every rebuild.
+    WidgetsKitInterop.initialize(ref);
+  }
+
+  @override
+  void dispose() {
+    WidgetsKitInterop.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeState = ref.watch(themeProvider);
 
     // Sync home screen widget when active theme changes
     ref.listen(themeProvider, (prev, next) {
       if (prev?.activeThemeId != next.activeThemeId) {
-        final habits = ref.read(habitListProvider).value ?? [];
+        final habits = ref.read(habitListProvider).valueOrNull ?? [];
         ref.read(habitWidgetSyncServiceProvider).syncHabits(
           habits: habits,
           activeTheme: next.activeTheme,
         );
       }
     });
-
-    WidgetsKitInterop.initialize(ref);
 
     return ScreenUtilInit(
       designSize: const Size(390, 844),

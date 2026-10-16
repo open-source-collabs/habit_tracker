@@ -3,16 +3,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:habit_tracker/core/widgets_kit/habit_widget_sync_service.dart';
-import '../../../themes/data/models/app_payload_model.dart';
+import '../../../../core/data/app_data_repository.dart';
 import '../../../themes/presentation/providers/theme_provider.dart';
 import '../../data/models/habit_model.dart';
-import '../../data/storage/habit_storage.dart';
-import '../../data/storage/habit_storage_factory.dart';
 
-/// Injects the platform-appropriate [HabitStorage] instance.
-final habitStorageProvider = Provider<HabitStorage>((ref) {
-  return HabitStorageFactory.createStorage();
-});
+export '../../../../core/data/app_data_repository.dart'
+    show appDataRepositoryProvider, habitStorageProvider;
 
 /// Currently selected date for inspecting or checking off habits (defaults to today).
 final selectedDateProvider = StateProvider<DateTime>((ref) {
@@ -27,44 +23,53 @@ final activeRoutineFilterProvider = StateProvider<String>((ref) => 'All');
 final habitHeatmapExpandedProvider = StateProvider.family<bool, String>((ref, habitId) => false);
 
 /// Notifier managing habit state with 0ms optimistic updates and asynchronous persistence.
+///
+/// If stored data cannot be read, the state becomes an [AsyncError] and every
+/// mutation is ignored until the user retries or explicitly starts fresh, so
+/// damaged data is never overwritten.
 class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
+  bool _disposed = false;
+
   @override
   Future<List<HabitModel>> build() async {
-    final storage = ref.watch(habitStorageProvider);
+    _disposed = false;
+    ref.onDispose(() => _disposed = true);
+    final repository = ref.watch(appDataRepositoryProvider);
+    final snapshot = await repository.load();
 
-    List<HabitModel> loadedHabits;
-    try {
-      final payload = await storage.loadPayload();
-      if (payload != null) {
-        loadedHabits = payload.habits;
-      } else {
-        loadedHabits = _generateStarterHabits();
-      }
-    } catch (e) {
-      debugPrint('HabitListNotifier: Error reading from storage: $e');
-      loadedHabits = _generateStarterHabits();
+    var habits = snapshot.payload.habits;
+    if (snapshot.isFirstRun) {
+      habits = _generateStarterHabits();
+      unawaited(_persist(habits));
+    } else {
+      Future.microtask(() => _syncWidgets(habits));
     }
+    return habits;
+  }
 
-    // Schedule initial home screen widget sync
-    Future.microtask(() {
-      try {
-        final syncService = ref.read(habitWidgetSyncServiceProvider);
-        final themeState = ref.read(themeProvider);
-        syncService.syncHabits(
-          habits: loadedHabits,
-          activeTheme: themeState.activeTheme,
-        );
-      } catch (_) {}
-    });
+  /// Re-attempts loading stored data after a failure.
+  void retryLoad() {
+    ref.invalidate(themeProvider);
+    ref.invalidateSelf();
+  }
 
-    return loadedHabits;
+  /// Abandons unreadable stored data and starts with an empty habit list.
+  /// Storage keeps a copy of the damaged record.
+  Future<void> discardUnreadableData() async {
+    await ref.read(appDataRepositoryProvider).discardStoredData();
+    retryLoad();
   }
 
   /// Optimistically toggles habit check-in status for [date] with 0ms latency
   /// and writes to local storage asynchronously in the background.
-  Future<void> toggleHabit(String habitId, 
-  DateTime date) async {
-    final currentList = state.value ?? [];
+  /// Dates after today are ignored.
+  Future<void> toggleHabit(String habitId, DateTime date) async {
+    final now = DateTime.now();
+    final day = DateTime(date.year, date.month, date.day);
+    if (day.isAfter(DateTime(now.year, now.month, now.day))) return;
+
+    final currentList = state.valueOrNull;
+    if (currentList == null) return;
     final habitIndex = currentList.indexWhere((h) => h.id == habitId);
     if (habitIndex == -1) return;
 
@@ -75,22 +80,24 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
     updatedList[habitIndex] = updatedHabit;
 
     state = AsyncData(updatedList);
-    await _persistHabits(updatedList);
+    await _persist(updatedList);
   }
 
   /// Creates and appends a new dynamic habit with optimistic UI update.
   Future<void> createHabit(HabitModel habit) async {
-    final currentList = state.value ?? [];
+    final currentList = state.valueOrNull;
+    if (currentList == null) return;
     final updatedHabit = habit.copyWith(lastModifiedAt: DateTime.now());
     final updatedList = [...currentList, updatedHabit];
 
     state = AsyncData(updatedList);
-    await _persistHabits(updatedList);
+    await _persist(updatedList);
   }
 
   /// Updates an existing habit's configuration or frequency.
   Future<void> updateHabit(HabitModel habit) async {
-    final currentList = state.value ?? [];
+    final currentList = state.valueOrNull;
+    if (currentList == null) return;
     final index = currentList.indexWhere((h) => h.id == habit.id);
     if (index == -1) return;
 
@@ -99,55 +106,50 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
     updatedList[index] = updatedHabit;
 
     state = AsyncData(updatedList);
-    await _persistHabits(updatedList);
+    await _persist(updatedList);
   }
 
   /// Removes a habit by [habitId] and persists the updated collection.
   Future<void> deleteHabit(String habitId) async {
-    final currentList = state.value ?? [];
+    final currentList = state.valueOrNull;
+    if (currentList == null) return;
     final updatedList = currentList.where((h) => h.id != habitId).toList();
 
     state = AsyncData(updatedList);
-    await _persistHabits(updatedList);
+    await _persist(updatedList);
   }
 
   /// Restores and persists an imported collection of habits atomically.
   Future<void> restoreHabits(List<HabitModel> habits) async {
     state = AsyncData(habits);
-    await _persistHabits(habits);
+    await _persist(habits);
   }
 
-  /// Persists current habits alongside the user's active theme in atomic [AppPayloadModel].
-  Future<void> _persistHabits(List<HabitModel> habits) async {
+  /// Writes [habits] into the app payload, then refreshes home screen widgets.
+  Future<void> _persist(List<HabitModel> habits) async {
+    final repository = ref.read(appDataRepositoryProvider);
     try {
-      final storage = ref.read(habitStorageProvider);
-      final themeState = ref.read(themeProvider);
-
-      final payload = AppPayloadModel(
-        version: 1,
-        lastModifiedBy: 'local_device',
-        lastModifiedAt: DateTime.now(),
-        activeThemeId: themeState.activeThemeId,
-        userThemes: themeState.allThemes,
-        habits: habits,
-      );
-
-      await storage.savePayload(payload);
-
-      // Push updated state to native home screen widgets via widgets_kit
-      try {
-        final syncService = ref.read(habitWidgetSyncServiceProvider);
-        unawaited(
-          syncService.syncHabits(
-            habits: habits,
-            activeTheme: themeState.activeTheme,
-          ),
-        );
-      } catch (e) {
-        debugPrint('HabitListNotifier: Error syncing widgets_kit: $e');
-      }
+      await repository.update((payload) => payload.copyWith(habits: habits));
     } catch (e) {
       debugPrint('HabitListNotifier: Failed to persist habits: $e');
+      return;
+    }
+    _syncWidgets(habits);
+  }
+
+  /// Pushes habit state to native home screen widgets via widgets_kit.
+  void _syncWidgets(List<HabitModel> habits) {
+    if (_disposed) return;
+    try {
+      final syncService = ref.read(habitWidgetSyncServiceProvider);
+      unawaited(
+        syncService.syncHabits(
+          habits: habits,
+          activeTheme: ref.read(themeProvider).activeTheme,
+        ),
+      );
+    } catch (e) {
+      debugPrint('HabitListNotifier: Error syncing widgets_kit: $e');
     }
   }
 
@@ -247,7 +249,7 @@ final filteredHabitsProvider = Provider<List<HabitModel>>((ref) {
   final habitsAsync = ref.watch(habitListProvider);
   final filter = ref.watch(activeRoutineFilterProvider);
 
-  final habits = habitsAsync.value ?? const [];
+  final habits = habitsAsync.valueOrNull ?? const [];
   if (filter == 'All') {
     return habits.where((h) => !h.isArchived).toList();
   }
@@ -275,7 +277,7 @@ class DailyHabitStats {
 
 /// Provider computing daily completion stats and active streaks.
 final dailyHabitStatsProvider = Provider<DailyHabitStats>((ref) {
-  final habits = ref.watch(habitListProvider).value ?? const [];
+  final habits = ref.watch(habitListProvider).valueOrNull ?? const [];
   final selectedDate = ref.watch(selectedDateProvider);
 
   final activeHabits = habits.where((h) => !h.isArchived).toList();
@@ -313,7 +315,7 @@ final dailyHabitStatsProvider = Provider<DailyHabitStats>((ref) {
 
 /// List of all unique routine categories present in active habits.
 final routineGroupsProvider = Provider<List<String>>((ref) {
-  final habits = ref.watch(habitListProvider).value ?? const [];
+  final habits = ref.watch(habitListProvider).valueOrNull ?? const [];
   final groups = <String>{'All'};
   for (final habit in habits) {
     if (!habit.isArchived && habit.routineGroup.trim().isNotEmpty) {

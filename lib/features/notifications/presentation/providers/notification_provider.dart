@@ -22,7 +22,7 @@ final notificationPermissionStatusProvider = FutureProvider.autoDispose<bool>((r
 
 /// Computes all user habits that currently have a scheduled reminder time.
 final scheduledHabitRemindersProvider = Provider<List<HabitModel>>((ref) {
-  final habits = ref.watch(habitListProvider).value ?? [];
+  final habits = ref.watch(habitListProvider).valueOrNull ?? [];
   return habits.where((h) => h.reminderTime != null && h.reminderTime!.isNotEmpty).toList();
 });
 
@@ -199,7 +199,7 @@ class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsMod
   }
 
   void _rescheduleAllHabits() {
-    final habits = ref.read(habitListProvider).value ?? [];
+    final habits = ref.read(habitListProvider).valueOrNull ?? [];
     for (final habit in habits) {
       if (habit.reminderTime != null && habit.reminderTime!.isNotEmpty) {
         final parts = habit.reminderTime!.split(':');

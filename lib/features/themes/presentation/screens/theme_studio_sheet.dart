@@ -84,14 +84,20 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
 
   Future<void> _saveTheme() async {
     AppHaptics.heavyImpact();
-    final updatedTheme = _workingTheme.copyWith(
+    final draft = _workingTheme.copyWith(
       name: _nameController.text.trim().isEmpty
           ? 'Custom Theme'
           : _nameController.text.trim(),
       isBuiltIn: false,
     );
 
-    await ref.read(themeProvider.notifier).saveCustomTheme(updatedTheme);
+    // Saving an edited preset yields a new custom theme with its own id;
+    // keep editing that one rather than the untouched preset.
+    final updatedTheme =
+        await ref.read(themeProvider.notifier).saveCustomTheme(draft);
+    ref
+        .read(themeStudioWorkingThemeNotifierProvider.notifier)
+        .setWorkingTheme(updatedTheme);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

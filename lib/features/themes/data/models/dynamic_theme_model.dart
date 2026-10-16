@@ -236,6 +236,9 @@ class UserThemeModel {
     isBuiltIn: true,
   );
 
+  /// The theme used on first launch and whenever a referenced theme is missing.
+  static const UserThemeModel defaultTheme = obsidianTwilight;
+
   static List<UserThemeModel> get builtInPresets => const [
         nordicSerenity,
         sunsetAurora,

@@ -52,11 +52,11 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
   }
 
   AppPayloadModel _buildCurrentPayload() {
-    final habits = ref.read(habitListProvider).value ?? [];
+    final habits = ref.read(habitListProvider).valueOrNull ?? [];
     final themeState = ref.read(themeProvider);
 
     return AppPayloadModel(
-      version: 1,
+      version: AppPayloadModel.currentSchemaVersion,
       lastModifiedBy: 'manual_portability',
       lastModifiedAt: DateTime.now(),
       activeThemeId: themeState.activeThemeId,
@@ -103,12 +103,8 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
   }) async {
     ref.read(dataPortabilityProvider.notifier).setProcessing(true);
     try {
-      final storage = ref.read(habitStorageProvider);
-
-      // Save to platform storage
-      await storage.savePayload(payloadToApply);
-
-      // Update in-memory reactive state
+      // Each notifier updates its slice and persists it through the app data
+      // repository, which serializes the writes.
       await ref
           .read(habitListProvider.notifier)
           .restoreHabits(payloadToApply.habits);

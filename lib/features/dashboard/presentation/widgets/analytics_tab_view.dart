@@ -30,10 +30,14 @@ class AnalyticsTabView extends ConsumerWidget {
       }
     }
 
-    final totalHabits = habits.length;
-    final completionPct = totalHabits > 0
-        ? ((stats.completedCount / totalHabits) * 100).round()
-        : 0;
+    // Rate for the selected day: completed out of the active habits actually
+    // scheduled that day (see dailyHabitStatsProvider).
+    final completionPct = (stats.completionRate * 100).round();
+    final selectedDate = ref.watch(selectedDateProvider);
+    final now = DateTime.now();
+    final isToday = selectedDate.year == now.year &&
+        selectedDate.month == now.month &&
+        selectedDate.day == now.day;
 
     return ListView(
       padding: EdgeInsets.symmetric(
@@ -58,9 +62,10 @@ class AnalyticsTabView extends ConsumerWidget {
           children: [
             Expanded(
               child: _MetricCard(
-                title: 'TODAY RATE',
+                title: isToday ? 'TODAY RATE' : 'DAY RATE',
                 value: '$completionPct%',
-                subtitle: '${stats.completedCount}/$totalHabits done',
+                subtitle:
+                    '${stats.completedCount}/${stats.totalScheduled} done',
                 accentColor: primaryAccent,
                 icon: Icons.percent_rounded,
               ),

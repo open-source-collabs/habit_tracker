@@ -66,35 +66,53 @@ class WebHabitStorage implements HabitStorage {
   WebHabitStorage([WebKeyValueStore? store])
       : _store = store ?? const SharedPreferencesWebStore();
 
+  static const String corruptCopyKey = 'habit_tracker_payload_corrupt';
+
   @override
   Future<AppPayloadModel?> loadPayload() async {
+    var foundData = false;
+    Object? lastError;
+
     final primaryValue = await _store.getString(primaryKey);
     if (primaryValue != null && primaryValue.trim().isNotEmpty) {
+      foundData = true;
       try {
         return AppPayloadModel.fromRawJson(primaryValue);
-      } catch (_) {
+      } catch (e) {
         // Corrupted primary payload; attempt recovery
+        lastError = e;
       }
     }
 
-    return _recoverFromBackups();
-  }
-
-  Future<AppPayloadModel?> _recoverFromBackups() async {
     final backupKeys = [backup1Key, backup2Key, backup3Key];
     for (final key in backupKeys) {
       final value = await _store.getString(key);
-      if (value != null && value.trim().isNotEmpty) {
-        try {
-          final payload = AppPayloadModel.fromRawJson(value);
-          await _store.setString(primaryKey, value);
-          return payload;
-        } catch (_) {
-          // Continue scanning older backups
-        }
+      if (value == null || value.trim().isEmpty) continue;
+      foundData = true;
+      try {
+        final payload = AppPayloadModel.fromRawJson(value);
+        await _preserveCorruptPrimary(primaryValue);
+        await _store.setString(primaryKey, value);
+        return payload;
+      } catch (e) {
+        // Continue scanning older backups
+        lastError = e;
       }
     }
+
+    if (foundData) {
+      await _preserveCorruptPrimary(primaryValue);
+      throw CorruptPayloadException(lastError);
+    }
     return null;
+  }
+
+  /// Keeps one copy of an unreadable primary record so it is never lost to
+  /// backup rotation. An existing copy is not overwritten.
+  Future<void> _preserveCorruptPrimary(String? primaryValue) async {
+    if (primaryValue == null || primaryValue.trim().isEmpty) return;
+    if (await _store.getString(corruptCopyKey) != null) return;
+    await _store.setString(corruptCopyKey, primaryValue);
   }
 
   @override
