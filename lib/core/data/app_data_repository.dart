@@ -65,7 +65,14 @@ class AppDataRepository {
 
   AppPayloadModel? _current;
   Future<AppDataSnapshot>? _loadFuture;
+  bool _loaded = false;
   bool _writesBlocked = false;
+  final StreamController<void> _localChanges =
+      StreamController<void>.broadcast();
+
+  /// Fires after each local edit is applied (not for [replace], so applying
+  /// a sync result doesn't trigger another sync).
+  Stream<void> get localChanges => _localChanges.stream;
 
   bool _hasPendingWrite = false;
   Future<void>? _activeDrain;
@@ -74,9 +81,29 @@ class AppDataRepository {
   /// The in-memory payload, or `null` before a successful [load].
   AppPayloadModel? get current => _current;
 
-  /// Loads the payload once; concurrent and later callers share the result.
-  /// A failed load is not cached, so calling [load] again retries.
-  Future<AppDataSnapshot> load() => _loadFuture ??= _load();
+  /// Loads the payload once; concurrent callers share the result. Once
+  /// loaded, later calls return the current in-memory payload (so notifiers
+  /// rebuilt after a sync see the synced data). A failed load is not cached,
+  /// so calling [load] again retries.
+  Future<AppDataSnapshot> load() {
+    final current = _current;
+    if (_loaded && current != null) {
+      return Future.value(AppDataSnapshot(payload: current, isFirstRun: false));
+    }
+    return _loadFuture ??= _load();
+  }
+
+  /// Replaces the whole payload and persists it. Notifiers should be rebuilt
+  /// afterwards to pick it up. Doesn't fire [localChanges].
+  Future<void> replace(AppPayloadModel payload) => replaceWith((_) => payload);
+
+  /// Like [update], but for applying external data such as a sync merge:
+  /// doesn't fire [localChanges], and if [transform] returns the current
+  /// payload unchanged (identical), nothing is written.
+  Future<void> replaceWith(
+    AppPayloadModel Function(AppPayloadModel current) transform,
+  ) =>
+      _track(_update(transform, notify: false));
 
   Future<AppDataSnapshot> _load() async {
     try {
@@ -84,6 +111,7 @@ class AppDataRepository {
       _current =
           stored ?? AppPayloadModel.initial(lastModifiedBy: await deviceId);
       _writesBlocked = false;
+      _loaded = true;
       return AppDataSnapshot(payload: _current!, isFirstRun: stored == null);
     } catch (_) {
       _writesBlocked = true;
@@ -98,34 +126,42 @@ class AppDataRepository {
   /// once the write (and any writes queued behind it) has finished.
   Future<void> update(
     AppPayloadModel Function(AppPayloadModel current) transform,
-  ) {
-    final pending = _update(transform);
+  ) =>
+      _track(_update(transform, notify: true));
+
+  Future<void> _track(Future<void> pending) {
     _pendingUpdates.add(pending);
     pending.whenComplete(() => _pendingUpdates.remove(pending)).ignore();
     return pending;
   }
 
   Future<void> _update(
-    AppPayloadModel Function(AppPayloadModel current) transform,
-  ) async {
+    AppPayloadModel Function(AppPayloadModel current) transform, {
+    required bool notify,
+  }) async {
     await load();
     if (_writesBlocked) {
       throw StateError('Writes are blocked until stored data is recovered');
     }
     final modifiedBy = await deviceId;
 
-    _current = transform(_current!).copyWith(
+    final next = transform(_current!);
+    if (identical(next, _current)) return;
+    _current = next.copyWith(
       version: AppPayloadModel.currentSchemaVersion,
       lastModifiedBy: modifiedBy,
       lastModifiedAt: DateTime.now(),
     );
-    return _scheduleWrite();
+    final write = _scheduleWrite();
+    if (notify) _localChanges.add(null);
+    return write;
   }
 
   /// Abandons unreadable stored data and starts from an empty payload.
   /// Storage keeps its own copy of the damaged record (see [HabitStorage]).
   Future<void> discardStoredData() async {
     _writesBlocked = false;
+    _loaded = true;
     _current = AppPayloadModel.initial(lastModifiedBy: await deviceId);
     _loadFuture = Future.value(
       AppDataSnapshot(payload: _current!, isFirstRun: false),

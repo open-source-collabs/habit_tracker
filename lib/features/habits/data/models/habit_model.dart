@@ -1,11 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 /// Frequency types supported by the habit tracking engine.
-enum HabitFrequencyType {
-  daily,
-  specificWeekdays,
-  timesPerWeek,
-}
+enum HabitFrequencyType { daily, specificWeekdays, timesPerWeek }
 
 /// Immutable frequency configuration for a habit.
 @immutable
@@ -25,16 +21,18 @@ class HabitFrequency {
   });
 
   const HabitFrequency.daily()
-      : type = HabitFrequencyType.daily,
-        daysOfWeek = const [],
-        targetTimesPerWeek = 7;
+    : type = HabitFrequencyType.daily,
+      daysOfWeek = const [],
+      targetTimesPerWeek = 7;
 
-  const HabitFrequency.specificWeekdays(this.daysOfWeek, [this.targetTimesPerWeek = 0])
-      : type = HabitFrequencyType.specificWeekdays;
+  const HabitFrequency.specificWeekdays(
+    this.daysOfWeek, [
+    this.targetTimesPerWeek = 0,
+  ]) : type = HabitFrequencyType.specificWeekdays;
 
   const HabitFrequency.timesPerWeek(this.targetTimesPerWeek)
-      : type = HabitFrequencyType.timesPerWeek,
-        daysOfWeek = const [];
+    : type = HabitFrequencyType.timesPerWeek,
+      daysOfWeek = const [];
 
   /// Checks if this habit is scheduled to be performed on a given [date].
   bool isScheduledFor(DateTime date) {
@@ -84,11 +82,8 @@ class HabitFrequency {
           targetTimesPerWeek == other.targetTimesPerWeek;
 
   @override
-  int get hashCode => Object.hash(
-        type,
-        Object.hashAll(daysOfWeek),
-        targetTimesPerWeek,
-      );
+  int get hashCode =>
+      Object.hash(type, Object.hashAll(daysOfWeek), targetTimesPerWeek);
 }
 
 /// Dynamic habit model supporting flexible frequencies, custom groupings,
@@ -106,6 +101,11 @@ class HabitModel {
 
   /// Date-keyed completion map: "YYYY-MM-DD" -> true
   final Map<String, bool> checkIns;
+
+  /// When each day's check-in state last changed: "YYYY-MM-DD" -> epoch ms
+  /// (UTC). Kept for un-checked days too, so sync can tell "un-checked on
+  /// this device later" apart from "never checked here" and propagate it.
+  final Map<String, int> checkInChangedAt;
 
   /// Optional custom emoji or visual glyph.
   final String? emoji;
@@ -132,6 +132,7 @@ class HabitModel {
     required this.createdAt,
     this.isArchived = false,
     this.checkIns = const {},
+    this.checkInChangedAt = const {},
     this.emoji,
     this.customColorValue,
     this.iconCode,
@@ -162,8 +163,10 @@ class HabitModel {
     return checkIns[formatDate(date)] == true;
   }
 
-  /// Returns a copy of this habit with completion toggled for [date].
-  HabitModel toggleCheckIn(DateTime date) {
+  /// Returns a copy of this habit with completion toggled for [date], and the
+  /// change time recorded in [checkInChangedAt].
+  HabitModel toggleCheckIn(DateTime date, {DateTime? now}) {
+    final changedAt = now ?? DateTime.now();
     final key = formatDate(date);
     final updated = Map<String, bool>.from(checkIns);
     if (updated[key] == true) {
@@ -173,7 +176,11 @@ class HabitModel {
     }
     return copyWith(
       checkIns: updated,
-      lastModifiedAt: DateTime.now(),
+      checkInChangedAt: {
+        ...checkInChangedAt,
+        key: changedAt.toUtc().millisecondsSinceEpoch,
+      },
+      lastModifiedAt: changedAt,
     );
   }
 
@@ -181,16 +188,23 @@ class HabitModel {
   String get displayEmoji {
     if (emoji != null && emoji!.trim().isNotEmpty) return emoji!.trim();
     final lower = '${title.toLowerCase()} ${routineGroup.toLowerCase()}';
-    if (lower.contains('sun') || lower.contains('morning') || lower.contains('wake')) return '☀️';
-    if (lower.contains('focus') || lower.contains('code') || lower.contains('deep') || lower.contains('sprint')) return '⚡';
-    if (lower.contains('water') || lower.contains('hydrat')) return '💧';
-    if (lower.contains('journal') || lower.contains('gratitude') || lower.contains('read') || lower.contains('book')) return '📖';
-    if (lower.contains('night') || lower.contains('sleep') || lower.contains('evening') || lower.contains('bed')) return '🌙';
-    if (lower.contains('gym') || lower.contains('workout') || lower.contains('train') || lower.contains('fitness') || lower.contains('run') || lower.contains('strength')) return '💪';
-    if (lower.contains('meditat') || lower.contains('breath') || lower.contains('mind')) return '🧘';
-    if (lower.contains('walk') || lower.contains('step')) return '🚶';
+    for (final (keywords, glyph) in _emojiKeywords) {
+      if (keywords.any(lower.contains)) return glyph;
+    }
     return '🎯';
   }
+
+  /// Fallback emoji by keyword, checked in order (first match wins).
+  static const List<(List<String>, String)> _emojiKeywords = [
+    (['sun', 'morning', 'wake'], '☀️'),
+    (['focus', 'code', 'deep', 'sprint'], '⚡'),
+    (['water', 'hydrat'], '💧'),
+    (['journal', 'gratitude', 'read', 'book'], '📖'),
+    (['night', 'sleep', 'evening', 'bed'], '🌙'),
+    (['gym', 'workout', 'train', 'fitness', 'run', 'strength'], '💪'),
+    (['meditat', 'breath', 'mind'], '🧘'),
+    (['walk', 'step'], '🚶'),
+  ];
 
   /// Current active streak.
   int get currentStreak => calculateCurrentStreak();
@@ -320,11 +334,12 @@ class HabitModel {
 
   /// Calculates longest historical streak across all recorded check-ins.
   int calculateLongestStreak() {
-    final completedDates = checkIns.entries
-        .where((e) => e.value == true)
-        .map((e) => parseDate(e.key))
-        .toList()
-      ..sort((a, b) => a.compareTo(b));
+    final completedDates =
+        checkIns.entries
+            .where((e) => e.value == true)
+            .map((e) => parseDate(e.key))
+            .toList()
+          ..sort((a, b) => a.compareTo(b));
 
     if (completedDates.isEmpty) return 0;
 
@@ -429,6 +444,7 @@ class HabitModel {
     DateTime? createdAt,
     bool? isArchived,
     Map<String, bool>? checkIns,
+    Map<String, int>? checkInChangedAt,
     String? emoji,
     int? customColorValue,
     String? iconCode,
@@ -448,15 +464,18 @@ class HabitModel {
       accentIndex: accentIndex ?? this.accentIndex,
       createdAt: createdAt ?? this.createdAt,
       isArchived: isArchived ?? this.isArchived,
-      checkIns: checkIns != null
-          ? Map.unmodifiable(checkIns)
-          : this.checkIns,
+      checkIns: checkIns != null ? Map.unmodifiable(checkIns) : this.checkIns,
+      checkInChangedAt: checkInChangedAt != null
+          ? Map.unmodifiable(checkInChangedAt)
+          : this.checkInChangedAt,
       emoji: clearEmoji ? null : (emoji ?? this.emoji),
-      customColorValue:
-          clearCustomColor ? null : (customColorValue ?? this.customColorValue),
+      customColorValue: clearCustomColor
+          ? null
+          : (customColorValue ?? this.customColorValue),
       iconCode: clearIconCode ? null : (iconCode ?? this.iconCode),
-      reminderTime:
-          clearReminderTime ? null : (reminderTime ?? this.reminderTime),
+      reminderTime: clearReminderTime
+          ? null
+          : (reminderTime ?? this.reminderTime),
       lastModifiedAt: lastModifiedAt ?? this.lastModifiedAt,
     );
   }
@@ -472,11 +491,13 @@ class HabitModel {
       'createdAt': createdAt.toIso8601String(),
       'isArchived': isArchived,
       'checkIns': checkIns,
+      if (checkInChangedAt.isNotEmpty) 'checkInChangedAt': checkInChangedAt,
       if (emoji != null) 'emoji': emoji,
       if (customColorValue != null) 'customColorValue': customColorValue,
       if (iconCode != null) 'iconCode': iconCode,
       if (reminderTime != null) 'reminderTime': reminderTime,
-      if (lastModifiedAt != null) 'lastModifiedAt': lastModifiedAt!.toIso8601String(),
+      if (lastModifiedAt != null)
+        'lastModifiedAt': lastModifiedAt!.toIso8601String(),
     };
   }
 
@@ -489,8 +510,17 @@ class HabitModel {
       }
     }
 
+    final rawChangedAt = json['checkInChangedAt'] as Map<String, dynamic>?;
+    final changedAtMap = <String, int>{
+      if (rawChangedAt != null)
+        for (final entry in rawChangedAt.entries)
+          if (entry.value is num) entry.key: (entry.value as num).toInt(),
+    };
+
     return HabitModel(
-      id: json['id'] as String? ?? 'habit_${DateTime.now().millisecondsSinceEpoch}',
+      id:
+          json['id'] as String? ??
+          'habit_${DateTime.now().millisecondsSinceEpoch}',
       title: json['title'] as String? ?? '',
       subtitle: json['subtitle'] as String? ?? '',
       frequency: json['frequency'] != null
@@ -503,6 +533,7 @@ class HabitModel {
           : DateTime.now(),
       isArchived: json['isArchived'] as bool? ?? false,
       checkIns: checkInsMap,
+      checkInChangedAt: changedAtMap,
       emoji: json['emoji'] as String?,
       customColorValue: (json['customColorValue'] as num?)?.toInt(),
       iconCode: json['iconCode'] as String?,
@@ -530,26 +561,30 @@ class HabitModel {
           customColorValue == other.customColorValue &&
           iconCode == other.iconCode &&
           reminderTime == other.reminderTime &&
-          mapEquals(checkIns, other.checkIns);
+          mapEquals(checkIns, other.checkIns) &&
+          mapEquals(checkInChangedAt, other.checkInChangedAt);
 
   @override
   int get hashCode => Object.hash(
-        id,
-        title,
-        subtitle,
-        frequency,
-        routineGroup,
-        accentIndex,
-        createdAt,
-        isArchived,
-        emoji,
-        customColorValue,
-        iconCode,
-        reminderTime,
-        // Order-independent so equal maps (see mapEquals in ==) always hash
-        // the same regardless of insertion order.
-        Object.hashAllUnordered(
-          checkIns.entries.map((e) => Object.hash(e.key, e.value)),
-        ),
-      );
+    id,
+    title,
+    subtitle,
+    frequency,
+    routineGroup,
+    accentIndex,
+    createdAt,
+    isArchived,
+    emoji,
+    customColorValue,
+    iconCode,
+    reminderTime,
+    // Order-independent so equal maps (see mapEquals in ==) always hash
+    // the same regardless of insertion order.
+    Object.hashAllUnordered(
+      checkIns.entries.map((e) => Object.hash(e.key, e.value)),
+    ),
+    Object.hashAllUnordered(
+      checkInChangedAt.entries.map((e) => Object.hash(e.key, e.value)),
+    ),
+  );
 }

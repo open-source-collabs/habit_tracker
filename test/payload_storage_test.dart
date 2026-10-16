@@ -235,7 +235,7 @@ void main() {
     test('initial factory provides built-in themes and default metadata', () {
       final initial = AppPayloadModel.initial(lastModifiedBy: 'device_abc');
 
-      expect(initial.version, 1);
+      expect(initial.version, AppPayloadModel.currentSchemaVersion);
       expect(initial.lastModifiedBy, 'device_abc');
       expect(initial.activeThemeId, UserThemeModel.obsidianTwilight.id);
       expect(initial.userThemes.length, greaterThanOrEqualTo(2));
@@ -267,7 +267,7 @@ void main() {
       );
 
       final payload = AppPayloadModel(
-        version: 1,
+        version: AppPayloadModel.currentSchemaVersion,
         lastModifiedBy: 'engineer_desktop',
         lastModifiedAt: DateTime(2026, 10, 11, 16, 30),
         activeThemeId: customTheme.id,

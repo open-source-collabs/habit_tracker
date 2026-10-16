@@ -20,6 +20,8 @@ dependencies:
   path_provider: ^2.1.6
   widgets_kit: ^0.1.1
   flutter_timezone: ^5.1.1
+  google_sign_in: ^7.2.0
+  icloud_storage: ^2.2.0
 
 dev_dependencies:
   flutter_test:

@@ -7,7 +7,7 @@ import 'package:habit_tracker/app.dart';
 import 'package:habit_tracker/core/data/app_data_repository.dart';
 import 'package:habit_tracker/core/data/device_identity.dart';
 import 'package:habit_tracker/core/services/notification_service.dart';
-import 'package:habit_tracker/data/sync/merge_engine.dart';
+import 'package:habit_tracker/features/sync/domain/merge_engine.dart';
 import 'package:habit_tracker/features/dashboard/presentation/widgets/favorite_activities_carousel.dart';
 import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
 import 'package:habit_tracker/features/habits/data/storage/web_habit_storage.dart';

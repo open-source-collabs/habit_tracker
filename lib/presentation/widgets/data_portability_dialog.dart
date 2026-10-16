@@ -15,9 +15,7 @@ import '../../core/widgets/app_badge.dart';
 import '../../core/widgets/app_button.dart';
 import '../../core/widgets/app_dialog.dart';
 import '../../core/widgets/app_text_field.dart';
-import '../../data/sync/drive_sync_service.dart';
-import '../../data/sync/icloud_sync_service.dart';
-import '../../data/sync/merge_engine.dart';
+import '../../features/sync/domain/merge_engine.dart';
 import '../../features/habits/presentation/providers/habit_provider.dart';
 import '../../features/settings/presentation/providers/profile_provider.dart';
 import '../../features/themes/data/models/app_payload_model.dart';
@@ -25,7 +23,8 @@ import '../../features/themes/presentation/providers/theme_provider.dart';
 import '../providers/data_portability_provider.dart';
 
 /// Modal dialog for 1-tap manual JSON export, conflict-free import/restore,
-/// and serverless cloud synchronization across devices.
+/// for manual backups and moving data between devices. Automatic cloud sync
+/// lives in the Sync tab.
 class DataPortabilityDialog extends ConsumerStatefulWidget {
   const DataPortabilityDialog({super.key});
 
@@ -45,12 +44,10 @@ class DataPortabilityDialog extends ConsumerStatefulWidget {
 
 class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
   final TextEditingController _jsonInputController = TextEditingController();
-  final TextEditingController _driveTokenController = TextEditingController();
 
   @override
   void dispose() {
     _jsonInputController.dispose();
-    _driveTokenController.dispose();
     super.dispose();
   }
 
@@ -196,44 +193,6 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
         successDescription: 'Database fully restored from JSON backup!',
       );
     }
-  }
-
-  Future<void> _handleICloudSync() async {
-    ref.read(dataPortabilityProvider.notifier).setProcessing(true);
-    final service = ICloudSyncService();
-    final local = _buildCurrentPayload();
-    final merged = await service.sync(localPayload: local);
-
-    await _applyPayload(
-      payloadToApply: merged,
-      successDescription: service.status == ICloudSyncStatus.synced
-          ? 'iCloud sync complete! Database up-to-date.'
-          : (service.lastErrorMessage ?? 'iCloud sync finished.'),
-    );
-  }
-
-  Future<void> _handleDriveSync() async {
-    final token = _driveTokenController.text.trim();
-    if (token.isEmpty) {
-      ref
-          .read(dataPortabilityProvider.notifier)
-          .setImportError(
-            'Please enter a valid Google Drive OAuth Access Token.',
-          );
-      return;
-    }
-
-    ref.read(dataPortabilityProvider.notifier).setProcessing(true);
-    final service = DriveSyncService();
-    final local = _buildCurrentPayload();
-    final merged = await service.sync(accessToken: token, localPayload: local);
-
-    await _applyPayload(
-      payloadToApply: merged,
-      successDescription: service.status == DriveSyncStatus.synced
-          ? 'Google Drive sync complete! Merged conflict-free.'
-          : (service.lastErrorMessage ?? 'Google Drive sync finished.'),
-    );
   }
 
   @override
@@ -527,141 +486,6 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
                     ),
                   ],
 
-                  SizedBox(height: 16.h),
-
-                  // Section 3: Cloud Sync Accordion
-                  GestureDetector(
-                    onTap: () => ref
-                        .read(dataPortabilityProvider.notifier)
-                        .toggleCloudSection(),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 14.w,
-                        vertical: 10.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: context.scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(AppRadius.chip),
-                        border: Border.all(
-                          color: context.cardBorderColor,
-                          width: AppSizes.borderWidth,
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.cloud_queue_rounded,
-                            size: AppIconSizes.md,
-                            color: context.primaryAccent,
-                          ),
-                          SizedBox(width: 10.w),
-                          Expanded(
-                            child: Text(
-                              'Cloud Sync (iCloud & Google Drive)',
-                              style: AppTextStyles.labelMedium(context)
-                                  .copyWith(fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                          Icon(
-                            portabilityState.showCloudSection
-                                ? Icons.expand_less_rounded
-                                : Icons.expand_more_rounded,
-                            color: context.textSecondaryColor,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  if (portabilityState.showCloudSection) ...[
-                    SizedBox(height: 12.h),
-                    // iCloud Sync Option
-                    Container(
-                      padding: EdgeInsets.all(12.r),
-                      decoration: BoxDecoration(
-                        color: context.scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(AppRadius.chip),
-                        border: Border.all(
-                          color: context.cardBorderColor,
-                          width: AppSizes.borderWidth,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            'Apple iCloud Documents (iOS / macOS)',
-                            style: AppTextStyles.labelMedium(context)
-                                .copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            'Direct native container synchronization using Ubiquity storage.',
-                            style: AppTextStyles.labelSmall(
-                              context,
-                              color: context.textMutedColor,
-                            ),
-                          ),
-                          SizedBox(height: 10.h),
-                          AppButton(
-                            text: 'Sync with iCloud',
-                            leadingIcon: const Icon(Icons.cloud_sync_rounded),
-                            variant: AppButtonVariant.outline,
-                            size: AppButtonSize.sm,
-                            isLoading: portabilityState.isProcessing,
-                            onPressed: _handleICloudSync,
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 10.h),
-
-                    // Google Drive AppData Sync Option
-                    Container(
-                      padding: EdgeInsets.all(12.r),
-                      decoration: BoxDecoration(
-                        color: context.scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(AppRadius.chip),
-                        border: Border.all(
-                          color: context.cardBorderColor,
-                          width: AppSizes.borderWidth,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            'Google Drive (Android, Win, Linux, Web)',
-                            style: AppTextStyles.labelMedium(context)
-                                .copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          SizedBox(height: 4.h),
-                          Text(
-                            'Scoped strictly to private drive.appdata folder.',
-                            style: AppTextStyles.labelSmall(
-                              context,
-                              color: context.textMutedColor,
-                            ),
-                          ),
-                          SizedBox(height: 8.h),
-                          AppTextField(
-                            controller: _driveTokenController,
-                            labelText: 'OAUTH ACCESS TOKEN',
-                            hintText: 'ya29.a0AfH6...',
-                          ),
-                          SizedBox(height: 10.h),
-                          AppButton(
-                            text: 'Sync with Google Drive',
-                            leadingIcon: const Icon(Icons.cloud_upload_rounded),
-                            variant: AppButtonVariant.outline,
-                            size: AppButtonSize.sm,
-                            isLoading: portabilityState.isProcessing,
-                            onPressed: _handleDriveSync,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),

@@ -7,12 +7,16 @@ import Foundation
 
 import flutter_local_notifications
 import flutter_timezone
+import google_sign_in_ios
+import icloud_storage
 import shared_preferences_foundation
 import widgets_kit
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   FlutterLocalNotificationsPlugin.register(with: registry.registrar(forPlugin: "FlutterLocalNotificationsPlugin"))
   FlutterTimezonePlugin.register(with: registry.registrar(forPlugin: "FlutterTimezonePlugin"))
+  GoogleSignInPlugin.register(with: registry.registrar(forPlugin: "GoogleSignInPlugin"))
+  IcloudStoragePlugin.register(with: registry.registrar(forPlugin: "IcloudStoragePlugin"))
   SharedPreferencesPlugin.register(with: registry.registrar(forPlugin: "SharedPreferencesPlugin"))
   WidgetsKitPlugin.register(with: registry.registrar(forPlugin: "WidgetsKitPlugin"))
 }

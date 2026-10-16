@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../features/themes/data/models/app_payload_model.dart';
 
 /// State representation for Data Portability & Sync workflows.
@@ -7,14 +8,12 @@ class DataPortabilityState {
   final String? importErrorMessage;
   final String? exportSuccessMessage;
   final bool isProcessing;
-  final bool showCloudSection;
 
   const DataPortabilityState({
     this.parsedImportPayload,
     this.importErrorMessage,
     this.exportSuccessMessage,
     this.isProcessing = false,
-    this.showCloudSection = false,
   });
 
   DataPortabilityState copyWith({
@@ -22,7 +21,6 @@ class DataPortabilityState {
     String? Function()? importErrorMessage,
     String? Function()? exportSuccessMessage,
     bool? isProcessing,
-    bool? showCloudSection,
   }) {
     return DataPortabilityState(
       parsedImportPayload: parsedImportPayload != null
@@ -35,21 +33,16 @@ class DataPortabilityState {
           ? exportSuccessMessage()
           : this.exportSuccessMessage,
       isProcessing: isProcessing ?? this.isProcessing,
-      showCloudSection: showCloudSection ?? this.showCloudSection,
     );
   }
 }
 
-/// Auto-disposing notifier orchestrating export, import, validation, and cloud sync status.
+/// Auto-disposing notifier orchestrating JSON export, import, and validation.
 class DataPortabilityNotifier
     extends AutoDisposeNotifier<DataPortabilityState> {
   @override
   DataPortabilityState build() {
     return const DataPortabilityState();
-  }
-
-  void toggleCloudSection() {
-    state = state.copyWith(showCloudSection: !state.showCloudSection);
   }
 
   void setExportSuccess(String message) {
@@ -102,5 +95,5 @@ class DataPortabilityNotifier
 /// Provider exposing the reactive state for the Data Portability modal.
 final dataPortabilityProvider =
     AutoDisposeNotifierProvider<DataPortabilityNotifier, DataPortabilityState>(
-  DataPortabilityNotifier.new,
-);
+      DataPortabilityNotifier.new,
+    );

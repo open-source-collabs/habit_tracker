@@ -6,17 +6,31 @@ import 'dynamic_theme_model.dart';
 
 /// Root JSON container persisting the application state, custom themes,
 /// and dynamic habit tracking entities.
+///
+/// Schema history:
+/// - v1: habits, themes, active theme, display name.
+/// - v2: deletion tombstones ([deletedHabits], [deletedThemes]) and per-day
+///   check-in change times (`HabitModel.checkInChangedAt`), so deletions and
+///   un-checks propagate through sync instead of being resurrected by it.
 @immutable
 class AppPayloadModel {
   /// Schema version written by this build. Bump it when the JSON shape
   /// changes and register a step in [_migrations] that upgrades the previous
   /// version's JSON.
-  static const int currentSchemaVersion = 1;
+  static const int currentSchemaVersion = 2;
 
   /// Upgrade steps keyed by the version they upgrade *from*:
   /// `_migrations[n]` turns version-n JSON into version-(n+1) JSON.
   static final Map<int, Map<String, dynamic> Function(Map<String, dynamic>)>
-      _migrations = {};
+      _migrations = {
+    // v1 → v2: v1 had no tombstones; start with none. Check-ins without a
+    // change time are treated as "checked at an unknown, earliest time".
+    1: (json) => {
+          ...json,
+          'deletedHabits': json['deletedHabits'] ?? <String, dynamic>{},
+          'deletedThemes': json['deletedThemes'] ?? <String, dynamic>{},
+        },
+  };
 
   final int version;
   final String lastModifiedBy;
@@ -25,9 +39,15 @@ class AppPayloadModel {
   final List<UserThemeModel> userThemes;
   final List<HabitModel> habits;
 
-  /// Name used to greet the user; empty when not set. Optional and additive,
-  /// so payloads without it stay valid at the same schema version.
+  /// Name used to greet the user; empty when not set.
   final String displayName;
+
+  /// Ids of deleted habits and when they were deleted. Lets sync remove a
+  /// habit on other devices instead of restoring it from their copy.
+  final Map<String, DateTime> deletedHabits;
+
+  /// Ids of deleted custom themes and when they were deleted.
+  final Map<String, DateTime> deletedThemes;
 
   const AppPayloadModel({
     required this.version,
@@ -37,6 +57,8 @@ class AppPayloadModel {
     required this.userThemes,
     required this.habits,
     this.displayName = '',
+    this.deletedHabits = const {},
+    this.deletedThemes = const {},
   });
 
   /// Factory providing default initial state with built-in theme presets.
@@ -62,6 +84,8 @@ class AppPayloadModel {
     List<UserThemeModel>? userThemes,
     List<HabitModel>? habits,
     String? displayName,
+    Map<String, DateTime>? deletedHabits,
+    Map<String, DateTime>? deletedThemes,
   }) {
     return AppPayloadModel(
       displayName: displayName ?? this.displayName,
@@ -75,6 +99,12 @@ class AppPayloadModel {
       habits: habits != null
           ? List.unmodifiable(habits)
           : this.habits,
+      deletedHabits: deletedHabits != null
+          ? Map.unmodifiable(deletedHabits)
+          : this.deletedHabits,
+      deletedThemes: deletedThemes != null
+          ? Map.unmodifiable(deletedThemes)
+          : this.deletedThemes,
     );
   }
 
@@ -87,7 +117,25 @@ class AppPayloadModel {
       'userThemes': userThemes.map((t) => t.toJson()).toList(),
       'habits': habits.map((h) => h.toJson()).toList(),
       if (displayName.isNotEmpty) 'displayName': displayName,
+      'deletedHabits': _encodeTimes(deletedHabits),
+      'deletedThemes': _encodeTimes(deletedThemes),
     };
+  }
+
+  static Map<String, String> _encodeTimes(Map<String, DateTime> times) => {
+        for (final e in times.entries) e.key: e.value.toUtc().toIso8601String(),
+      };
+
+  static Map<String, DateTime> _decodeTimes(Object? raw) {
+    if (raw is! Map) return const {};
+    final result = <String, DateTime>{};
+    for (final entry in raw.entries) {
+      final parsed = entry.value is String
+          ? DateTime.tryParse(entry.value as String)
+          : null;
+      if (parsed != null) result[entry.key as String] = parsed;
+    }
+    return result;
   }
 
   /// Upgrades [json] from its stored schema version to [currentSchemaVersion].
@@ -136,6 +184,8 @@ class AppPayloadModel {
       userThemes: themes,
       habits: habits,
       displayName: json['displayName'] as String? ?? '',
+      deletedHabits: _decodeTimes(json['deletedHabits']),
+      deletedThemes: _decodeTimes(json['deletedThemes']),
     );
   }
 
@@ -164,7 +214,21 @@ class AppPayloadModel {
           activeThemeId == other.activeThemeId &&
           displayName == other.displayName &&
           listEquals(userThemes, other.userThemes) &&
-          listEquals(habits, other.habits);
+          listEquals(habits, other.habits) &&
+          _sameInstants(deletedHabits, other.deletedHabits) &&
+          _sameInstants(deletedThemes, other.deletedThemes);
+
+  /// Compares by instant: a local and a UTC [DateTime] for the same moment
+  /// aren't `==`, but a tombstone read back from JSON (UTC) must equal the
+  /// one created locally.
+  static bool _sameInstants(Map<String, DateTime> a, Map<String, DateTime> b) {
+    if (a.length != b.length) return false;
+    for (final entry in a.entries) {
+      final other = b[entry.key];
+      if (other == null || !other.isAtSameMomentAs(entry.value)) return false;
+    }
+    return true;
+  }
 
   @override
   int get hashCode => Object.hash(
@@ -174,6 +238,16 @@ class AppPayloadModel {
         displayName,
         Object.hashAll(userThemes),
         Object.hashAll(habits),
+        Object.hashAllUnordered(
+          deletedHabits.entries.map(
+            (e) => Object.hash(e.key, e.value.microsecondsSinceEpoch),
+          ),
+        ),
+        Object.hashAllUnordered(
+          deletedThemes.entries.map(
+            (e) => Object.hash(e.key, e.value.microsecondsSinceEpoch),
+          ),
+        ),
       );
 }
 

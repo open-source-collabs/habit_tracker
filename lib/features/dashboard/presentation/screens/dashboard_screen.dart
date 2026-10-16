@@ -23,7 +23,7 @@ import '../widgets/bento_stats_card.dart';
 import '../widgets/calendar_strip.dart';
 import '../widgets/consistency_chart.dart';
 import '../widgets/favorite_activities_carousel.dart';
-import '../widgets/sync_tab_view.dart';
+import '../../../sync/presentation/screens/sync_tab_view.dart';
 import '../widgets/themes_tab_view.dart';
 
 /// Responsive Dashboard Screen adapting dynamically to screen width.

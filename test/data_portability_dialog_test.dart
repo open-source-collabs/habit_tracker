@@ -81,7 +81,8 @@ void main() {
       expect(find.text('Copy Database JSON to Clipboard'), findsOneWidget);
       expect(find.text('1-TAP DATABASE IMPORT / RESTORE'), findsOneWidget);
       expect(find.text('Paste JSON from Clipboard'), findsOneWidget);
-      expect(find.text('Cloud Sync (iCloud & Google Drive)'), findsOneWidget);
+      expect(find.text('Cloud Sync (iCloud & Google Drive)'), findsNothing,
+          reason: 'cloud sync moved to the Sync tab');
     });
 
     testWidgets(

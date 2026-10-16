@@ -7,6 +7,7 @@ import 'core/routes/routes.dart';
 import 'core/services/notification_service.dart';
 import 'features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'features/notifications/presentation/providers/notification_provider.dart';
+import 'features/sync/presentation/providers/sync_controller.dart';
 import 'core/theme/theme_factory.dart';
 import 'core/widgets/app_screen_util_init.dart';
 import 'core/widgets_kit/habit_widget_sync_service.dart';
@@ -37,6 +38,8 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp> {
     // After the first frame so launch stays fast; reminders are rebuilt from
     // stored habits in case the OS dropped them (reboot, app update).
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Starts cloud sync if this device has it turned on (no-op otherwise).
+      ref.read(syncControllerProvider);
       await ref.read(reminderSyncProvider).restoreAll();
       final launchPayload = await notifications.takeLaunchPayload();
       if (launchPayload != null && mounted) _openFromNotification(launchPayload);

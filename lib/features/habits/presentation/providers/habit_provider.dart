@@ -139,7 +139,12 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
 
     state = AsyncData(updatedList);
     unawaited(notifications.cancelHabitReminder(habitId));
-    await _persist(updatedList);
+    // The tombstone makes the deletion reach other devices through sync.
+    final deletedAt = DateTime.now();
+    await _persist(
+      updatedList,
+      tombstones: (t) => {...t, habitId: deletedAt},
+    );
     return (habit: removed, index: index);
   }
 
@@ -151,12 +156,21 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
       return;
     }
     final notifications = ref.read(notificationServiceProvider);
+    // Restoring counts as a modification after the deletion, so it also wins
+    // over the tombstone on devices that already received it.
+    final restored = habit.copyWith(lastModifiedAt: DateTime.now());
     final updatedList = List<HabitModel>.from(currentList)
-      ..insert((index ?? currentList.length).clamp(0, currentList.length), habit);
+      ..insert(
+        (index ?? currentList.length).clamp(0, currentList.length),
+        restored,
+      );
 
     state = AsyncData(updatedList);
-    unawaited(notifications.syncHabitReminder(habit));
-    await _persist(updatedList);
+    unawaited(notifications.syncHabitReminder(restored));
+    await _persist(
+      updatedList,
+      tombstones: (t) => Map.of(t)..remove(habit.id),
+    );
   }
 
   /// Archives (pauses) or unarchives a habit. History is kept; archived
@@ -188,11 +202,20 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
     await _persist(habits);
   }
 
-  /// Writes [habits] into the app payload, then refreshes home screen widgets.
-  Future<void> _persist(List<HabitModel> habits) async {
+  /// Writes [habits] (and optionally updated deletion [tombstones]) into the
+  /// app payload, then refreshes home screen widgets.
+  Future<void> _persist(
+    List<HabitModel> habits, {
+    Map<String, DateTime> Function(Map<String, DateTime> current)? tombstones,
+  }) async {
     final repository = ref.read(appDataRepositoryProvider);
     try {
-      await repository.update((payload) => payload.copyWith(habits: habits));
+      await repository.update(
+        (payload) => payload.copyWith(
+          habits: habits,
+          deletedHabits: tombstones?.call(payload.deletedHabits),
+        ),
+      );
     } catch (e) {
       debugPrint('HabitListNotifier: Failed to persist habits: $e');
       return;

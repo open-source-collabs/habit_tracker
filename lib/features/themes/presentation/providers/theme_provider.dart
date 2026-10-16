@@ -211,7 +211,9 @@ class ThemeNotifier extends Notifier<UserThemeState> {
           ? UserThemeModel.defaultTheme.id
           : state.activeThemeId,
     );
-    await _persist();
+    // The tombstone makes the deletion reach other devices through sync.
+    final deletedAt = DateTime.now();
+    await _persist(tombstones: (t) => {...t, id: deletedAt});
   }
 
   /// Restores themes and active theme from an imported payload.
@@ -229,16 +231,19 @@ class ThemeNotifier extends Notifier<UserThemeState> {
 
   /// Writes the custom themes and active id into the app payload.
   /// Returns whether the write succeeded.
-  Future<bool> _persist() async {
+  Future<bool> _persist({
+    Map<String, DateTime> Function(Map<String, DateTime> current)? tombstones,
+  }) async {
     final customThemes = state.customThemes;
     final activeThemeId = state.activeThemeId;
     try {
       await _repository.update(
-            (payload) => payload.copyWith(
-              userThemes: customThemes,
-              activeThemeId: activeThemeId,
-            ),
-          );
+        (payload) => payload.copyWith(
+          userThemes: customThemes,
+          activeThemeId: activeThemeId,
+          deletedThemes: tombstones?.call(payload.deletedThemes),
+        ),
+      );
       return true;
     } catch (e) {
       debugPrint('ThemeNotifier: failed to persist themes: $e');
