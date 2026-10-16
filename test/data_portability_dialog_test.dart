@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:habit_tracker/core/theme/theme_factory.dart';
 import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
@@ -61,6 +62,7 @@ void main() {
   late _FakeHabitStorage fakeStorage;
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     fakeStorage = _FakeHabitStorage();
   });
 

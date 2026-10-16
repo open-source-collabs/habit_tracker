@@ -17,6 +17,7 @@ import '../../data/sync/drive_sync_service.dart';
 import '../../data/sync/icloud_sync_service.dart';
 import '../../data/sync/merge_engine.dart';
 import '../../features/habits/presentation/providers/habit_provider.dart';
+import '../../features/settings/presentation/providers/profile_provider.dart';
 import '../../features/themes/data/models/app_payload_model.dart';
 import '../../features/themes/presentation/providers/theme_provider.dart';
 import '../providers/data_portability_provider.dart';
@@ -62,6 +63,7 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
       activeThemeId: themeState.activeThemeId,
       userThemes: themeState.allThemes,
       habits: habits,
+      displayName: ref.read(displayNameProvider),
     );
   }
 
@@ -114,6 +116,12 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
             themes: payloadToApply.userThemes,
             activeThemeId: payloadToApply.activeThemeId,
           );
+      // Older exports have no name; keep the current one rather than wipe it.
+      if (payloadToApply.displayName.isNotEmpty) {
+        await ref
+            .read(displayNameProvider.notifier)
+            .setDisplayName(payloadToApply.displayName);
+      }
 
       AppHaptics.heavyImpact();
 

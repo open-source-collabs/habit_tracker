@@ -87,6 +87,11 @@ abstract final class AppNavigator {
     return pushNamed(context, AppRoutes.themeStudio);
   }
 
+  /// Navigates to the Settings screen.
+  static Future<void> toSettings(BuildContext context) {
+    return pushNamed(context, AppRoutes.settings);
+  }
+
   /// Navigates to Data Portability & Sync dialog via named route.
   static Future<void> toDataPortability(BuildContext context) {
     return pushNamed(context, AppRoutes.dataPortability);

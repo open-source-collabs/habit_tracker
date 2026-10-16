@@ -44,9 +44,10 @@ class HabitWidgetSyncService {
       targetDate.day,
     );
 
-    // Calculate metrics for the target date
-    final scheduledHabits =
-        habits.where((h) => h.frequency.isScheduledFor(normalizedDate)).toList();
+    // Calculate metrics for the target date (archived habits are paused)
+    final scheduledHabits = habits
+        .where((h) => !h.isArchived && h.frequency.isScheduledFor(normalizedDate))
+        .toList();
     final totalCount = scheduledHabits.length;
 
     final completedHabits = scheduledHabits

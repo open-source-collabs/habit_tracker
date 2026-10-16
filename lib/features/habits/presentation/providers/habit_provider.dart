@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:habit_tracker/core/widgets_kit/habit_widget_sync_service.dart';
 import '../../../../core/data/app_data_repository.dart';
+import '../../../../core/services/notification_service.dart';
 import '../../../themes/presentation/providers/theme_provider.dart';
 import '../../data/models/habit_model.dart';
 
@@ -16,8 +17,16 @@ final selectedDateProvider = StateProvider<DateTime>((ref) {
   return DateTime(now.year, now.month, now.day);
 });
 
-/// Active routine category filter ('All', 'Morning', 'Focus', 'Health', 'Evening', etc.)
-final activeRoutineFilterProvider = StateProvider<String>((ref) => 'All');
+/// Filter value showing every active habit.
+const String kAllHabitsFilter = 'All';
+
+/// Filter value showing archived (paused) habits instead of active ones.
+const String kArchivedHabitsFilter = 'Archived';
+
+/// Active routine category filter: [kAllHabitsFilter], a routine group name,
+/// or [kArchivedHabitsFilter].
+final activeRoutineFilterProvider =
+    StateProvider<String>((ref) => kAllHabitsFilter);
 
 /// Tracks heatmap expansion toggle state per habit ID.
 final habitHeatmapExpandedProvider = StateProvider.family<bool, String>((ref, habitId) => false);
@@ -74,6 +83,7 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
     if (habitIndex == -1) return;
 
     final targetHabit = currentList[habitIndex];
+    if (targetHabit.isArchived) return;
     final updatedHabit = targetHabit.toggleCheckIn(date);
 
     final updatedList = List<HabitModel>.from(currentList);
@@ -109,13 +119,59 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
     await _persist(updatedList);
   }
 
-  /// Removes a habit by [habitId] and persists the updated collection.
-  Future<void> deleteHabit(String habitId) async {
+  /// Removes a habit by [habitId], cancels its reminder, and persists.
+  ///
+  /// Returns the removed habit and its position so the caller can offer undo
+  /// via [restoreHabit], or `null` if no such habit exists.
+  Future<({HabitModel habit, int index})?> deleteHabit(String habitId) async {
     final currentList = state.valueOrNull;
-    if (currentList == null) return;
-    final updatedList = currentList.where((h) => h.id != habitId).toList();
+    if (currentList == null) return null;
+    final index = currentList.indexWhere((h) => h.id == habitId);
+    if (index == -1) return null;
+
+    final removed = currentList[index];
+    final notifications = ref.read(notificationServiceProvider);
+    final updatedList = List<HabitModel>.from(currentList)..removeAt(index);
 
     state = AsyncData(updatedList);
+    unawaited(notifications.cancelHabitReminder(habitId));
+    await _persist(updatedList);
+    return (habit: removed, index: index);
+  }
+
+  /// Re-inserts a previously deleted [habit] (e.g. from an undo action) at
+  /// [index], restoring its reminder.
+  Future<void> restoreHabit(HabitModel habit, {int? index}) async {
+    final currentList = state.valueOrNull;
+    if (currentList == null || currentList.any((h) => h.id == habit.id)) {
+      return;
+    }
+    final notifications = ref.read(notificationServiceProvider);
+    final updatedList = List<HabitModel>.from(currentList)
+      ..insert((index ?? currentList.length).clamp(0, currentList.length), habit);
+
+    state = AsyncData(updatedList);
+    unawaited(notifications.syncHabitReminder(habit));
+    await _persist(updatedList);
+  }
+
+  /// Archives (pauses) or unarchives a habit. History is kept; archived
+  /// habits can't be checked off, don't count in stats, and have no reminder.
+  Future<void> setArchived(String habitId, {required bool archived}) async {
+    final currentList = state.valueOrNull;
+    if (currentList == null) return;
+    final index = currentList.indexWhere((h) => h.id == habitId);
+    if (index == -1 || currentList[index].isArchived == archived) return;
+
+    final notifications = ref.read(notificationServiceProvider);
+    final updated = currentList[index].copyWith(
+      isArchived: archived,
+      lastModifiedAt: DateTime.now(),
+    );
+    final updatedList = List<HabitModel>.from(currentList)..[index] = updated;
+
+    state = AsyncData(updatedList);
+    unawaited(notifications.syncHabitReminder(updated));
     await _persist(updatedList);
   }
 
@@ -250,8 +306,11 @@ final filteredHabitsProvider = Provider<List<HabitModel>>((ref) {
   final filter = ref.watch(activeRoutineFilterProvider);
 
   final habits = habitsAsync.valueOrNull ?? const [];
-  if (filter == 'All') {
+  if (filter == kAllHabitsFilter) {
     return habits.where((h) => !h.isArchived).toList();
+  }
+  if (filter == kArchivedHabitsFilter) {
+    return habits.where((h) => h.isArchived).toList();
   }
   return habits
       .where((h) => !h.isArchived && h.routineGroup.toLowerCase() == filter.toLowerCase())
@@ -313,14 +372,24 @@ final dailyHabitStatsProvider = Provider<DailyHabitStats>((ref) {
   );
 });
 
-/// List of all unique routine categories present in active habits.
+/// Filter options: [kAllHabitsFilter], each routine group used by an active
+/// habit, then [kArchivedHabitsFilter] when any habit is archived.
 final routineGroupsProvider = Provider<List<String>>((ref) {
   final habits = ref.watch(habitListProvider).valueOrNull ?? const [];
-  final groups = <String>{'All'};
+  final groups = <String>{kAllHabitsFilter};
+  var hasArchived = false;
   for (final habit in habits) {
-    if (!habit.isArchived && habit.routineGroup.trim().isNotEmpty) {
+    if (habit.isArchived) {
+      hasArchived = true;
+    } else if (habit.routineGroup.trim().isNotEmpty) {
       groups.add(habit.routineGroup.trim());
     }
   }
-  return groups.toList();
+  return [...groups, if (hasArchived) kArchivedHabitsFilter];
+});
+
+/// Number of archived (paused) habits.
+final archivedHabitCountProvider = Provider<int>((ref) {
+  final habits = ref.watch(habitListProvider).valueOrNull ?? const [];
+  return habits.where((h) => h.isArchived).length;
 });

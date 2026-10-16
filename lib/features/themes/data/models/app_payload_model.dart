@@ -25,6 +25,10 @@ class AppPayloadModel {
   final List<UserThemeModel> userThemes;
   final List<HabitModel> habits;
 
+  /// Name used to greet the user; empty when not set. Optional and additive,
+  /// so payloads without it stay valid at the same schema version.
+  final String displayName;
+
   const AppPayloadModel({
     required this.version,
     required this.lastModifiedBy,
@@ -32,6 +36,7 @@ class AppPayloadModel {
     required this.activeThemeId,
     required this.userThemes,
     required this.habits,
+    this.displayName = '',
   });
 
   /// Factory providing default initial state with built-in theme presets.
@@ -56,8 +61,10 @@ class AppPayloadModel {
     String? activeThemeId,
     List<UserThemeModel>? userThemes,
     List<HabitModel>? habits,
+    String? displayName,
   }) {
     return AppPayloadModel(
+      displayName: displayName ?? this.displayName,
       version: version ?? this.version,
       lastModifiedBy: lastModifiedBy ?? this.lastModifiedBy,
       lastModifiedAt: lastModifiedAt ?? this.lastModifiedAt,
@@ -79,6 +86,7 @@ class AppPayloadModel {
       'activeThemeId': activeThemeId,
       'userThemes': userThemes.map((t) => t.toJson()).toList(),
       'habits': habits.map((h) => h.toJson()).toList(),
+      if (displayName.isNotEmpty) 'displayName': displayName,
     };
   }
 
@@ -127,6 +135,7 @@ class AppPayloadModel {
           json['activeThemeId'] as String? ?? UserThemeModel.defaultTheme.id,
       userThemes: themes,
       habits: habits,
+      displayName: json['displayName'] as String? ?? '',
     );
   }
 
@@ -153,6 +162,7 @@ class AppPayloadModel {
           version == other.version &&
           lastModifiedBy == other.lastModifiedBy &&
           activeThemeId == other.activeThemeId &&
+          displayName == other.displayName &&
           listEquals(userThemes, other.userThemes) &&
           listEquals(habits, other.habits);
 
@@ -161,6 +171,7 @@ class AppPayloadModel {
         version,
         lastModifiedBy,
         activeThemeId,
+        displayName,
         Object.hashAll(userThemes),
         Object.hashAll(habits),
       );

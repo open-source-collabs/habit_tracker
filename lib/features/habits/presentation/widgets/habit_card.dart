@@ -20,6 +20,9 @@ class BentoHabitCard extends ConsumerStatefulWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
+  /// Archives an active habit or unarchives an archived one.
+  final VoidCallback? onArchiveToggle;
+
   const BentoHabitCard({
     super.key,
     required this.habit,
@@ -27,7 +30,11 @@ class BentoHabitCard extends ConsumerStatefulWidget {
     this.onToggle,
     this.onEdit,
     this.onDelete,
+    this.onArchiveToggle,
   });
+
+  bool get _hasActions =>
+      onEdit != null || onDelete != null || onArchiveToggle != null;
 
   @override
   ConsumerState<BentoHabitCard> createState() => _BentoHabitCardState();
@@ -84,6 +91,8 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
   }
 
   void _handleToggle() {
+    // Archived habits are paused and can't be checked off.
+    if (widget.habit.isArchived) return;
     AppHaptics.lightImpact();
     if (widget.onToggle != null) {
       widget.onToggle!();
@@ -118,368 +127,484 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
   @override
   Widget build(BuildContext context) {
     final accentColor = widget.habit.resolveColor(context);
-    final showHeatmap = ref.watch(habitHeatmapExpandedProvider(widget.habit.id));
+    final showHeatmap = ref.watch(
+      habitHeatmapExpandedProvider(widget.habit.id),
+    );
 
     final isCompleted = widget.habit.isCompletedOn(widget.date);
-    final currentStreak = widget.habit.calculateCurrentStreak(asOf: widget.date);
+    final currentStreak = widget.habit.calculateCurrentStreak(
+      asOf: widget.date,
+    );
+    final isArchived = widget.habit.isArchived;
 
-    return ScaleTransition(
-      scale: _cardScaleAnimation,
-      child: Listener(
-        behavior: HitTestBehavior.opaque,
-        onPointerDown: (_) => _cardPressController.forward(),
-        onPointerUp: (_) => _cardPressController.reverse(),
-        onPointerCancel: (_) => _cardPressController.reverse(),
-        child: GestureDetector(
+    return Opacity(
+      opacity: isArchived ? 0.6 : 1.0,
+      child: ScaleTransition(
+        scale: _cardScaleAnimation,
+        child: Listener(
           behavior: HitTestBehavior.opaque,
-          onTap: _handleToggle,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            padding: EdgeInsets.symmetric(
-              horizontal: 14.r.clamp(12.0, 18.0),
-              vertical: 12.r.clamp(10.0, 16.0),
-            ),
-            decoration: BoxDecoration(
-              color: context.cardBackgroundColor,
-              borderRadius: BorderRadius.circular(20.r.clamp(16.0, 22.0)),
-              border: Border.all(
-                color: isCompleted
-                    ? accentColor
-                    : context.cardBorderColor,
-                width: 1.2,
+          onPointerDown: (_) => _cardPressController.forward(),
+          onPointerUp: (_) => _cardPressController.reverse(),
+          onPointerCancel: (_) => _cardPressController.reverse(),
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _handleToggle,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+              padding: EdgeInsets.symmetric(
+                horizontal: 14.r.clamp(12.0, 18.0),
+                vertical: 12.r.clamp(10.0, 16.0),
               ),
-              boxShadow: isCompleted
-                  ? [
-                      BoxShadow(
-                        color: accentColor.withValues(alpha: 0.35),
-                        blurRadius: 16.r,
-                        spreadRadius: 0,
-                        offset: Offset(0, 3.h),
-                      ),
-                    ]
-                  : [
-                      BoxShadow(
-                        color: context.shadowColor,
-                        blurRadius: 8.r,
-                        offset: Offset(0, 2.h),
-                      ),
-                    ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                // Spring Check-off Circle
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTapDown: (_) => _checkPressController.forward(),
-                  onTapUp: (_) => _checkPressController.reverse(),
-                  onTapCancel: () => _checkPressController.reverse(),
-                  onTap: _handleToggle,
-                  child: ScaleTransition(
-                    scale: _checkScaleAnimation,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeOutCubic,
-                      width: 40.r.clamp(36.0, 44.0),
-                      height: 40.r.clamp(36.0, 44.0),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isCompleted ? accentColor : AppColors.transparent,
-                        border: Border.all(
-                          color: isCompleted
-                              ? accentColor
-                              : context.cardBorderColor.withValues(alpha: 0.8),
-                          width: 2.0,
-                        ),
-                        boxShadow: isCompleted
-                            ? [
-                                BoxShadow(
-                                  color: accentColor.withValues(alpha: 0.45),
-                                  blurRadius: 8.r,
-                                  offset: Offset(0, 2.h),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: Center(
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          transitionBuilder: (child, anim) =>
-                              ScaleTransition(scale: anim, child: child),
-                          child: isCompleted
-                              ? Icon(
-                                  Icons.check_rounded,
-                                  key: const ValueKey('checked'),
-                                  color: AppColors.white,
-                                  size: 22.sp,
-                                )
-                              : (widget.habit.iconCode != null &&
-                                      HabitIconRegistry.getIcon(widget.habit.iconCode) != null)
-                                  ? Icon(
-                                      HabitIconRegistry.getIcon(widget.habit.iconCode)!,
-                                      key: const ValueKey('unchecked_icon'),
-                                      color: accentColor,
-                                      size: 20.sp,
-                                    )
-                                  : Text(
-                                      widget.habit.displayEmoji,
-                                      key: const ValueKey('unchecked'),
-                                      style: TextStyle(fontSize: 18.sp),
-                                    ),
-                        ),
-                      ),
-                    ),
-                  ),
+              decoration: BoxDecoration(
+                color: context.cardBackgroundColor,
+                borderRadius: BorderRadius.circular(20.r.clamp(16.0, 22.0)),
+                border: Border.all(
+                  color: isCompleted ? accentColor : context.cardBorderColor,
+                  width: 1.2,
                 ),
-                SizedBox(width: 12.w.clamp(10.0, 16.0)),
-
-                // Title, Subtitle, and Badges
-                Expanded(
-                  child: Column(
+                boxShadow: isCompleted
+                    ? [
+                        BoxShadow(
+                          color: accentColor.withValues(alpha: 0.35),
+                          blurRadius: 16.r,
+                          spreadRadius: 0,
+                          offset: Offset(0, 3.h),
+                        ),
+                      ]
+                    : [
+                        BoxShadow(
+                          color: context.shadowColor,
+                          blurRadius: 8.r,
+                          offset: Offset(0, 2.h),
+                        ),
+                      ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              widget.habit.title,
-                              style: context.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: context.textPrimaryColor,
-                                decoration: isCompleted
-                                    ? TextDecoration.lineThrough
+                      // Spring Check-off Circle
+                      Semantics(
+                        button: true,
+                        enabled: !isArchived,
+                        toggled: isCompleted,
+                        label: isArchived
+                            ? '${widget.habit.title}, archived'
+                            : '${widget.habit.title}, '
+                                  '${isCompleted ? 'done' : 'not done'}',
+                        hint: isArchived
+                            ? null
+                            : (isCompleted
+                                  ? 'Double tap to undo'
+                                  : 'Double tap to mark done'),
+                        excludeSemantics: true,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTapDown: (_) => _checkPressController.forward(),
+                          onTapUp: (_) => _checkPressController.reverse(),
+                          onTapCancel: () => _checkPressController.reverse(),
+                          onTap: _handleToggle,
+                          child: ScaleTransition(
+                            scale: _checkScaleAnimation,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 220),
+                              curve: Curves.easeOutCubic,
+                              width: 40.r.clamp(36.0, 44.0),
+                              height: 40.r.clamp(36.0, 44.0),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isCompleted
+                                    ? accentColor
+                                    : AppColors.transparent,
+                                border: Border.all(
+                                  color: isCompleted
+                                      ? accentColor
+                                      : context.cardBorderColor.withValues(
+                                          alpha: 0.8,
+                                        ),
+                                  width: 2.0,
+                                ),
+                                boxShadow: isCompleted
+                                    ? [
+                                        BoxShadow(
+                                          color: accentColor.withValues(
+                                            alpha: 0.45,
+                                          ),
+                                          blurRadius: 8.r,
+                                          offset: Offset(0, 2.h),
+                                        ),
+                                      ]
                                     : null,
-                                decorationColor: context.textPrimaryColor
-                                    .withValues(alpha: 0.4),
+                              ),
+                              child: Center(
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 200),
+                                  transitionBuilder: (child, anim) =>
+                                      ScaleTransition(
+                                        scale: anim,
+                                        child: child,
+                                      ),
+                                  child: isCompleted
+                                      ? Icon(
+                                          Icons.check_rounded,
+                                          key: const ValueKey('checked'),
+                                          color: AppColors.white,
+                                          size: 22.sp,
+                                        )
+                                      : (widget.habit.iconCode != null &&
+                                            HabitIconRegistry.getIcon(
+                                                  widget.habit.iconCode,
+                                                ) !=
+                                                null)
+                                      ? Icon(
+                                          HabitIconRegistry.getIcon(
+                                            widget.habit.iconCode,
+                                          )!,
+                                          key: const ValueKey('unchecked_icon'),
+                                          color: accentColor,
+                                          size: 20.sp,
+                                        )
+                                      : Text(
+                                          widget.habit.displayEmoji,
+                                          key: const ValueKey('unchecked'),
+                                          style: TextStyle(fontSize: 18.sp),
+                                        ),
+                                ),
                               ),
                             ),
                           ),
-                          if (widget.onEdit != null || widget.onDelete != null)
-                            PopupMenuButton<String>(
-                              icon: Icon(
-                                Icons.more_vert,
-                                size: 18.sp,
-                                color: context.textMutedColor,
-                              ),
-                              color: context.cardBackgroundColor,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16.r),
-                                side: BorderSide(
-                                  color: context.cardBorderColor,
-                                  width: 1.2,
-                                ),
-                              ),
-                              onSelected: (val) {
-                                if (val == 'edit' && widget.onEdit != null) {
-                                  widget.onEdit!();
-                                } else if (val == 'delete' &&
-                                    widget.onDelete != null) {
-                                  widget.onDelete!();
-                                }
-                              },
-                              itemBuilder: (menuContext) => [
-                                if (widget.onEdit != null)
-                                  PopupMenuItem(
-                                    value: 'edit',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.edit_outlined,
-                                            size: 16.sp,
-                                            color: context.textPrimaryColor),
-                                        SizedBox(width: 8.w),
-                                        Text('Edit',
-                                            style: context.textTheme.bodyMedium?.copyWith(
-                                                color: context.textPrimaryColor)),
-                                      ],
-                                    ),
+                        ),
+                      ),
+                      SizedBox(width: 12.w.clamp(10.0, 16.0)),
+
+                      // Title, Subtitle, and Badges
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    widget.habit.title,
+                                    style: context.textTheme.titleMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          color: context.textPrimaryColor,
+                                          decoration: isCompleted
+                                              ? TextDecoration.lineThrough
+                                              : null,
+                                          decorationColor: context
+                                              .textPrimaryColor
+                                              .withValues(alpha: 0.4),
+                                        ),
                                   ),
-                                if (widget.onDelete != null)
-                                  PopupMenuItem(
-                                    value: 'delete',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.delete_outline,
-                                            size: 16.sp, color: context.colorScheme.error),
-                                        SizedBox(width: 8.w),
-                                        Text('Delete',
-                                            style: context.textTheme.bodyMedium?.copyWith(
-                                                color: context.colorScheme.error)),
-                                      ],
+                                ),
+                                if (widget._hasActions)
+                                  PopupMenuButton<String>(
+                                    tooltip: 'Habit actions',
+                                    icon: Icon(
+                                      Icons.more_vert,
+                                      size: 18.sp,
+                                      color: context.textMutedColor,
                                     ),
+                                    color: context.cardBackgroundColor,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16.r),
+                                      side: BorderSide(
+                                        color: context.cardBorderColor,
+                                        width: 1.2,
+                                      ),
+                                    ),
+                                    onSelected: (val) {
+                                      if (val == 'edit' &&
+                                          widget.onEdit != null) {
+                                        widget.onEdit!();
+                                      } else if (val == 'archive' &&
+                                          widget.onArchiveToggle != null) {
+                                        widget.onArchiveToggle!();
+                                      } else if (val == 'delete' &&
+                                          widget.onDelete != null) {
+                                        widget.onDelete!();
+                                      }
+                                    },
+                                    itemBuilder: (menuContext) => [
+                                      if (widget.onEdit != null)
+                                        PopupMenuItem(
+                                          value: 'edit',
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.edit_outlined,
+                                                size: 16.sp,
+                                                color: context.textPrimaryColor,
+                                              ),
+                                              SizedBox(width: 8.w),
+                                              Text(
+                                                'Edit',
+                                                style: context
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      color: context
+                                                          .textPrimaryColor,
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      if (widget.onArchiveToggle != null)
+                                        PopupMenuItem(
+                                          value: 'archive',
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                isArchived
+                                                    ? Icons.unarchive_outlined
+                                                    : Icons.archive_outlined,
+                                                size: 16.sp,
+                                                color: context.textPrimaryColor,
+                                              ),
+                                              SizedBox(width: 8.w),
+                                              Text(
+                                                isArchived
+                                                    ? 'Unarchive'
+                                                    : 'Archive',
+                                                style: context
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      color: context
+                                                          .textPrimaryColor,
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      if (widget.onDelete != null)
+                                        PopupMenuItem(
+                                          value: 'delete',
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.delete_outline,
+                                                size: 16.sp,
+                                                color:
+                                                    context.colorScheme.error,
+                                              ),
+                                              SizedBox(width: 8.w),
+                                              Text(
+                                                'Delete',
+                                                style: context
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      color: context
+                                                          .colorScheme
+                                                          .error,
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                    ],
                                   ),
                               ],
                             ),
-                        ],
-                      ),
-                      if (widget.habit.subtitle.isNotEmpty) ...[
-                        SizedBox(height: 2.h),
-                        Text(
-                          widget.habit.subtitle,
-                          style: context.textTheme.bodyMedium?.copyWith(
-                            color: context.textSecondaryColor,
-                            fontSize: 12.sp,
-                          ),
-                        ),
-                      ],
-                      SizedBox(height: 8.h),
-
-                      // Bento Micro-Pills (Routine, Frequency, Streak)
-                      Wrap(
-                        spacing: 6.w,
-                        runSpacing: 4.h,
-                        children: [
-                          // Routine Group Pill
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 8.w, vertical: 3.h),
-                            decoration: BoxDecoration(
-                              color: context.isDarkMode
-                                  ? context.surfaceElevatedColor
-                                  : context.cardBorderColor.withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            child: Text(
-                              widget.habit.routineGroup,
-                              style: context.textTheme.labelSmall?.copyWith(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w600,
-                                color: context.textPrimaryColor,
-                              ),
-                            ),
-                          ),
-
-                          // Frequency Pill
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 8.w, vertical: 3.h),
-                            decoration: BoxDecoration(
-                              color: context.isDarkMode
-                                  ? context.surfaceElevatedColor
-                                  : context.cardBorderColor.withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            child: Text(
-                              _formatFrequency(widget.habit.frequency),
-                              style: context.textTheme.labelSmall?.copyWith(
-                                fontSize: 10.sp,
-                                fontWeight: FontWeight.w600,
-                                color: context.textPrimaryColor,
-                              ),
-                            ),
-                          ),
-
-                          // Streak Fire Badge
-                          if (currentStreak > 0)
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 8.w, vertical: 3.h),
-                              decoration: BoxDecoration(
-                                color: accentColor.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(8.r),
-                                border: Border.all(
-                                  color: accentColor.withValues(alpha: 0.3),
-                                  width: 1,
+                            if (widget.habit.subtitle.isNotEmpty) ...[
+                              SizedBox(height: 2.h),
+                              Text(
+                                widget.habit.subtitle,
+                                style: context.textTheme.bodyMedium?.copyWith(
+                                  color: context.textSecondaryColor,
+                                  fontSize: 12.sp,
                                 ),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.local_fire_department_rounded,
-                                    size: 13.sp,
-                                    color: accentColor,
-                                  ),
-                                  SizedBox(width: 3.w),
-                                  Text(
-                                    '$currentStreak days',
-                                    style: context.textTheme.labelSmall?.copyWith(
-                                      fontSize: 10.sp,
-                                      fontWeight: FontWeight.w800,
-                                      color: accentColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                            ],
+                            SizedBox(height: 8.h),
 
-                          // Heatmap Toggle Pill
-                          GestureDetector(
-                            onTap: () {
-                              AppHaptics.selectionClick();
-                              ref
-                                  .read(habitHeatmapExpandedProvider(
-                                          widget.habit.id)
-                                      .notifier)
-                                  .state = !showHeatmap;
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 7.w, vertical: 3.h),
-                              decoration: BoxDecoration(
-                                color: showHeatmap
-                                    ? accentColor.withValues(alpha: 0.18)
-                                    : (context.isDarkMode
+                            // Bento Micro-Pills (Routine, Frequency, Streak)
+                            Wrap(
+                              spacing: 6.w,
+                              runSpacing: 4.h,
+                              children: [
+                                // Routine Group Pill
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w,
+                                    vertical: 3.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: context.isDarkMode
                                         ? context.surfaceElevatedColor
-                                        : context.cardBorderColor.withValues(alpha: 0.4)),
-                                borderRadius: BorderRadius.circular(8.r),
-                                border: Border.all(
-                                  color: showHeatmap
-                                      ? accentColor
-                                      : AppColors.transparent,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.calendar_view_week_rounded,
-                                    size: 11.sp,
-                                    color: showHeatmap
-                                        ? accentColor
-                                        : context.textMutedColor,
+                                        : context.cardBorderColor.withValues(
+                                            alpha: 0.4,
+                                          ),
+                                    borderRadius: BorderRadius.circular(8.r),
                                   ),
-                                  SizedBox(width: 3.w),
-                                  Text(
-                                    'Heatmap',
-                                    style: context.textTheme.labelSmall?.copyWith(
-                                      fontSize: 10.sp,
-                                      fontWeight: FontWeight.w600,
-                                      color: showHeatmap
-                                          ? accentColor
-                                          : context.textSecondaryColor,
+                                  child: Text(
+                                    widget.habit.routineGroup,
+                                    style: context.textTheme.labelSmall
+                                        ?.copyWith(
+                                          fontSize: 10.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: context.textPrimaryColor,
+                                        ),
+                                  ),
+                                ),
+
+                                // Frequency Pill
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w,
+                                    vertical: 3.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: context.isDarkMode
+                                        ? context.surfaceElevatedColor
+                                        : context.cardBorderColor.withValues(
+                                            alpha: 0.4,
+                                          ),
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                  child: Text(
+                                    _formatFrequency(widget.habit.frequency),
+                                    style: context.textTheme.labelSmall
+                                        ?.copyWith(
+                                          fontSize: 10.sp,
+                                          fontWeight: FontWeight.w600,
+                                          color: context.textPrimaryColor,
+                                        ),
+                                  ),
+                                ),
+
+                                // Streak Fire Badge
+                                if (currentStreak > 0)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 8.w,
+                                      vertical: 3.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: accentColor.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8.r),
+                                      border: Border.all(
+                                        color: accentColor.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.local_fire_department_rounded,
+                                          size: 13.sp,
+                                          color: accentColor,
+                                        ),
+                                        SizedBox(width: 3.w),
+                                        Text(
+                                          '$currentStreak days',
+                                          style: context.textTheme.labelSmall
+                                              ?.copyWith(
+                                                fontSize: 10.sp,
+                                                fontWeight: FontWeight.w800,
+                                                color: accentColor,
+                                              ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
+
+                                // Heatmap Toggle Pill
+                                GestureDetector(
+                                  onTap: () {
+                                    AppHaptics.selectionClick();
+                                    ref
+                                            .read(
+                                              habitHeatmapExpandedProvider(
+                                                widget.habit.id,
+                                              ).notifier,
+                                            )
+                                            .state =
+                                        !showHeatmap;
+                                  },
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 7.w,
+                                      vertical: 3.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: showHeatmap
+                                          ? accentColor.withValues(alpha: 0.18)
+                                          : (context.isDarkMode
+                                                ? context.surfaceElevatedColor
+                                                : context.cardBorderColor
+                                                      .withValues(alpha: 0.4)),
+                                      borderRadius: BorderRadius.circular(8.r),
+                                      border: Border.all(
+                                        color: showHeatmap
+                                            ? accentColor
+                                            : AppColors.transparent,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_view_week_rounded,
+                                          size: 11.sp,
+                                          color: showHeatmap
+                                              ? accentColor
+                                              : context.textMutedColor,
+                                        ),
+                                        SizedBox(width: 3.w),
+                                        Text(
+                                          'Heatmap',
+                                          style: context.textTheme.labelSmall
+                                              ?.copyWith(
+                                                fontSize: 10.sp,
+                                                fontWeight: FontWeight.w600,
+                                                color: showHeatmap
+                                                    ? accentColor
+                                                    : context
+                                                          .textSecondaryColor,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
 
-            // Expandable Heatmap Grid
-            if (showHeatmap) ...[
-              SizedBox(height: 14.h),
-              HeatmapGrid(
-                checkIns: widget.habit.checkIns,
-                activeColor: accentColor,
-                initialRangeDays: 60,
-                showHeader: false,
-                showRangeSelector: true,
+                  // Expandable Heatmap Grid
+                  if (showHeatmap) ...[
+                    SizedBox(height: 14.h),
+                    HeatmapGrid(
+                      checkIns: widget.habit.checkIns,
+                      activeColor: accentColor,
+                      initialRangeDays: 60,
+                      showHeader: false,
+                      showRangeSelector: true,
+                    ),
+                  ],
+                ],
               ),
-            ],
-          ],
-        ),
+            ),
           ),
         ),
       ),

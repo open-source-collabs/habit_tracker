@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/habits/data/models/habit_model.dart';
+import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/themes/presentation/screens/theme_studio_sheet.dart';
 import '../../presentation/widgets/data_portability_dialog.dart';
 import '../../presentation/widgets/habit_creator_sheet.dart';
@@ -73,6 +74,9 @@ class AppRouter {
           (context) => const ThemeStudioSheet(),
           settings,
         );
+
+      case AppRoutes.settings:
+        return _buildPageRoute(const SettingsScreen(), settings);
 
       case AppRoutes.dataPortability:
         return _buildAdaptiveDialogRoute<void>(

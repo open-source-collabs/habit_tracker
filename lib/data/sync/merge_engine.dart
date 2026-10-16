@@ -56,6 +56,10 @@ AppPayloadModel mergePayloads({
   final mergedLastModifiedBy =
       incomingIsNewer ? incoming.lastModifiedBy : local.lastModifiedBy;
 
+  // 5. Display name: newest non-empty value wins
+  final newerName = incomingIsNewer ? incoming.displayName : local.displayName;
+  final olderName = incomingIsNewer ? local.displayName : incoming.displayName;
+
   return AppPayloadModel(
     version: mergedVersion,
     lastModifiedBy: mergedLastModifiedBy,
@@ -63,6 +67,7 @@ AppPayloadModel mergePayloads({
     activeThemeId: resolvedActiveThemeId,
     userThemes: mergedThemes,
     habits: mergedHabits,
+    displayName: newerName.isNotEmpty ? newerName : olderName,
   );
 }
 

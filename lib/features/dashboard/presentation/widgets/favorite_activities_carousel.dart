@@ -5,52 +5,70 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
+import '../../../habits/data/models/habit_model.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
+import '../../../habits/presentation/widgets/habit_extensions.dart';
 
-/// "Favorite activities" pastel-tinted wellness card carousel directly from Reference Image 1.
+/// The user's strongest active habits, ranked by current streak (then total
+/// check-ins). Tapping a card filters the feed to that habit's routine.
+final topHabitsProvider = Provider<List<HabitModel>>((ref) {
+  final habits = ref.watch(habitListProvider).valueOrNull ?? const [];
+  final asOf = ref.watch(selectedDateProvider);
+
+  final ranked =
+      habits
+          .where((h) => !h.isArchived)
+          .map(
+            (h) => (
+              habit: h,
+              streak: h.calculateCurrentStreak(asOf: asOf),
+              total: h.checkIns.values.where((done) => done).length,
+            ),
+          )
+          .where((e) => e.total > 0)
+          .toList()
+        ..sort((a, b) {
+          final byStreak = b.streak.compareTo(a.streak);
+          return byStreak != 0 ? byStreak : b.total.compareTo(a.total);
+        });
+  return ranked.take(4).map((e) => e.habit).toList();
+});
+
+/// Pastel-tinted carousel of the user's top habits.
 class FavoriteActivitiesCarousel extends ConsumerWidget {
   const FavoriteActivitiesCarousel({super.key});
 
-  static const List<({
-    String title,
-    String stat,
-    IconData icon,
-    Color accentColor,
-    String routineGroup,
-  })> _activities = [
-    (
-      title: 'Mind Detox',
-      stat: '13h logged',
-      icon: Icons.psychology_alt_rounded,
-      accentColor: AppColors.neonLavender,
-      routineGroup: 'Focus',
-    ),
-    (
-      title: 'Gratitude Notes',
-      stat: '34 entries',
-      icon: Icons.wb_sunny_rounded,
-      accentColor: AppColors.cyanGlow,
-      routineGroup: 'Evening',
-    ),
-    (
-      title: 'Conscious Breath',
-      stat: '34 sessions',
-      icon: Icons.spa_rounded,
-      accentColor: AppColors.emeraldMint,
-      routineGroup: 'Morning',
-    ),
-    (
-      title: 'Strength Training',
-      stat: '18 workouts',
-      icon: Icons.fitness_center_rounded,
-      accentColor: AppColors.sunsetCoral,
-      routineGroup: 'Fitness',
-    ),
-  ];
+  static String _statLabel(HabitModel habit, DateTime asOf) {
+    final streak = habit.calculateCurrentStreak(asOf: asOf);
+    if (streak > 0) {
+      final unit = habit.frequency.type == HabitFrequencyType.timesPerWeek
+          ? (streak == 1 ? 'week' : 'weeks')
+          : (streak == 1 ? 'day' : 'days');
+      return '$streak $unit streak';
+    }
+    final total = habit.checkIns.values.where((done) => done).length;
+    return '$total check-in${total == 1 ? '' : 's'}';
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeFilter = ref.watch(activeRoutineFilterProvider);
+    final asOf = ref.watch(selectedDateProvider);
+    final topHabits = ref.watch(topHabitsProvider);
+    if (topHabits.isEmpty) return const SizedBox.shrink();
+
+    final activities = topHabits
+        .map(
+          (h) => (
+            title: h.title,
+            stat: _statLabel(h, asOf),
+            icon: HabitIconRegistry.getIcon(h.iconCode),
+            emoji: h.displayEmoji,
+            accentColor: h.resolveColor(context),
+            routineGroup: h.routineGroup,
+          ),
+        )
+        .toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,7 +76,7 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
         Padding(
           padding: EdgeInsets.symmetric(horizontal: 2.w),
           child: Text(
-            'Favorite activities',
+            'Top streaks',
             style: context.textTheme.titleMedium?.copyWith(
               fontSize: 15.sp.clamp(14.0, 16.0),
               fontWeight: FontWeight.w700,
@@ -73,12 +91,13 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
-            itemCount: _activities.length,
+            itemCount: activities.length,
             separatorBuilder: (context, index) =>
                 SizedBox(width: 10.w.clamp(8.0, 14.0)),
             itemBuilder: (context, index) {
-              final act = _activities[index];
-              final isSelected = activeFilter.toLowerCase() == act.routineGroup.toLowerCase();
+              final act = activities[index];
+              final isSelected =
+                  activeFilter.toLowerCase() == act.routineGroup.toLowerCase();
 
               // In light theme: soft pastel watercolor tint; in dark theme: ambient blended surface
               final bgColor = AppColors.pastelSurface(
@@ -90,8 +109,11 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
               return GestureDetector(
                 onTap: () {
                   AppHaptics.selectionClick();
-                  final newFilter = isSelected ? 'All' : act.routineGroup;
-                  ref.read(activeRoutineFilterProvider.notifier).state = newFilter;
+                  final newFilter = isSelected
+                      ? kAllHabitsFilter
+                      : act.routineGroup;
+                  ref.read(activeRoutineFilterProvider.notifier).state =
+                      newFilter;
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 220),
@@ -160,11 +182,19 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                               color: act.accentColor.withValues(alpha: 0.2),
                               shape: BoxShape.circle,
                             ),
-                            child: Icon(
-                              act.icon,
-                              size: 16.sp.clamp(14.0, 18.0),
-                              color: act.accentColor,
-                            ),
+                            child: act.icon != null
+                                ? Icon(
+                                    act.icon,
+                                    size: 16.sp.clamp(14.0, 18.0),
+                                    color: act.accentColor,
+                                  )
+                                : Text(
+                                    act.emoji,
+                                    style: context.textTheme.bodySmall
+                                        ?.copyWith(
+                                          fontSize: 13.sp.clamp(11.0, 15.0),
+                                        ),
+                                  ),
                           ),
                         ],
                       ),

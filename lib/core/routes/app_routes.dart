@@ -17,6 +17,9 @@ abstract final class AppRoutes {
   /// Theme Studio
   static const String themeStudio = '/themes/studio';
 
+  /// Settings (profile, archived habits, data & privacy)
+  static const String settings = '/settings';
+
   /// Data Portability & Sync Backup
   static const String dataPortability = '/settings/data-portability';
 }

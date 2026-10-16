@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_tracker/core/utils/date_format.dart';
 import 'package:habit_tracker/app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -50,7 +51,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Dusk & Dawn Tracker'), findsOneWidget);
+    expect(find.text(AppDateFormat.longDay(DateTime.now())), findsOneWidget);
     expect(find.text('Themes'), findsOneWidget);
     expect(find.text('Sync'), findsOneWidget);
     expect(find.text('ACTIVE HABITS'), findsOneWidget);
@@ -76,7 +77,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Dusk & Dawn Tracker'), findsOneWidget);
+    expect(find.text(AppDateFormat.longDay(DateTime.now())), findsOneWidget);
     expect(find.text('Themes'), findsOneWidget);
     expect(find.text('Sync'), findsOneWidget);
     expect(find.text('ACTIVE HABITS'), findsOneWidget);

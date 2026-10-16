@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -142,6 +143,32 @@ class NotificationService {
     } catch (e) {
       debugPrint('NotificationService scheduleHabitReminder notice: $e');
     }
+  }
+
+  /// Brings [habit]'s scheduled reminder in line with its current state:
+  /// scheduled when it has a reminder time and is active, cancelled otherwise.
+  Future<void> syncHabitReminder(HabitModel habit) {
+    final time = _parseReminderTime(habit.reminderTime);
+    if (habit.isArchived || time == null) {
+      return cancelHabitReminder(habit.id);
+    }
+    return scheduleHabitReminder(
+      habitId: habit.id,
+      habitTitle: habit.title,
+      time: time,
+      frequency: habit.frequency,
+    );
+  }
+
+  static TimeOfDay? _parseReminderTime(String? value) {
+    if (value == null) return null;
+    final parts = value.split(':');
+    if (parts.length != 2) return null;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null) return null;
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+    return TimeOfDay(hour: hour, minute: minute);
   }
 
   /// Cancels an existing scheduled reminder for [habitId].
@@ -298,3 +325,9 @@ class NotificationService {
     }
   }
 }
+
+/// Injectable access to [NotificationService], so callers can be tested with
+/// a fake instead of the platform plugin.
+final notificationServiceProvider = Provider<NotificationService>(
+  (ref) => NotificationService.instance,
+);

@@ -4,7 +4,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/routes/routes.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/date_format.dart';
 import '../../../../core/utils/haptics.dart';
+import '../../../settings/presentation/providers/profile_provider.dart';
 import '../../../habits/data/models/habit_model.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
 import '../../../habits/presentation/widgets/data_load_error_view.dart';
@@ -67,6 +69,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final habitsAsync = ref.watch(habitListProvider);
     final filteredHabits = ref.watch(filteredHabitsProvider);
     final routineGroups = ref.watch(routineGroupsProvider);
+
+    // Fall back to "All" when the selected filter disappears, e.g. after the
+    // last archived habit is restored or a routine's last habit is deleted.
+    ref.listen(routineGroupsProvider, (_, groups) {
+      final filter = ref.read(activeRoutineFilterProvider);
+      if (!groups.any((g) => g.toLowerCase() == filter.toLowerCase())) {
+        ref.read(activeRoutineFilterProvider.notifier).state = kAllHabitsFilter;
+      }
+    });
     final activeFilter = ref.watch(activeRoutineFilterProvider);
     final selectedTabIndex = ref.watch(selectedDashboardTabProvider);
     final primaryAccent = context.primaryAccent;
@@ -174,7 +185,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     BuildContext context,
     UserThemeModel activeTheme,
   ) {
+    final displayName = ref.watch(displayNameProvider);
+    final greeting = displayName.isEmpty
+        ? _getGreeting()
+        : '${_getGreeting()}, $displayName';
+
     return AppBar(
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 12),
+          child: AppIconButton(
+            icon: Icons.settings_outlined,
+            tooltip: 'Settings',
+            onPressed: () => AppNavigator.toSettings(context),
+          ),
+        ),
+      ],
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -183,7 +209,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             children: [
               Flexible(
                 child: Text(
-                  '${_getGreeting()}, Frede',
+                  greeting,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.headlineSmall?.copyWith(
@@ -200,7 +226,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           SizedBox(height: 2.h),
           Text(
-            'Dusk & Dawn Tracker',
+            AppDateFormat.longDay(DateTime.now()),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: context.textTheme.labelSmall?.copyWith(
@@ -249,7 +275,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
         // Section Title
         Text(
-          'ACTIVE HABITS',
+          _habitsSectionTitle(activeFilter),
           style: context.textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
@@ -261,12 +287,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
         // Habits List
         if (filteredHabits.isEmpty)
-          _buildEmptyState(context)
+          _buildEmptyState(context, activeFilter)
         else
           ...filteredHabits.map((habit) {
             return Padding(
               padding: EdgeInsets.only(bottom: 10.h),
-              child: BentoHabitCard(habit: habit, date: selectedDate),
+              child: _buildHabitCard(habit, selectedDate),
             );
           }),
         SizedBox(height: 100.h),
@@ -320,7 +346,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               _buildFilterChips(context, routineGroups, activeFilter),
               SizedBox(height: 10.h.clamp(8.0, 14.0)),
               Text(
-                'ACTIVE HABITS',
+                _habitsSectionTitle(activeFilter),
                 style: context.textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
@@ -330,12 +356,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
               SizedBox(height: 8.h.clamp(6.0, 12.0)),
               if (filteredHabits.isEmpty)
-                _buildEmptyState(context)
+                _buildEmptyState(context, activeFilter)
               else
                 ...filteredHabits.map((habit) {
                   return Padding(
                     padding: EdgeInsets.only(bottom: 10.h.clamp(8.0, 14.0)),
-                    child: BentoHabitCard(habit: habit, date: selectedDate),
+                    child: _buildHabitCard(habit, selectedDate),
                   );
                 }),
               SizedBox(height: 100.h.clamp(80.0, 110.0)),
@@ -458,7 +484,68 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
+  String _habitsSectionTitle(String activeFilter) =>
+      activeFilter == kArchivedHabitsFilter ? 'ARCHIVED HABITS' : 'ACTIVE HABITS';
+
+  Widget _buildHabitCard(HabitModel habit, DateTime selectedDate) {
+    return BentoHabitCard(
+      key: ValueKey(habit.id),
+      habit: habit,
+      date: selectedDate,
+      onEdit: habit.isArchived
+          ? null
+          : () => AppNavigator.toEditHabit(context, habit),
+      onArchiveToggle: () => _toggleArchived(habit),
+      onDelete: () => _confirmDelete(habit),
+    );
+  }
+
+  Future<void> _toggleArchived(HabitModel habit) async {
+    final archive = !habit.isArchived;
+    final notifier = ref.read(habitListProvider.notifier);
+    await notifier.setArchived(habit.id, archived: archive);
+    if (!mounted) return;
+    _showUndoSnackBar(
+      archive
+          ? '"${habit.title}" archived. Its history is kept.'
+          : '"${habit.title}" is active again.',
+      onUndo: () => notifier.setArchived(habit.id, archived: !archive),
+    );
+  }
+
+  Future<void> _confirmDelete(HabitModel habit) async {
+    final confirmed = await showAppConfirmDialog(
+      context: context,
+      title: 'Delete "${habit.title}"?',
+      message: 'This removes the habit and its entire check-in history. '
+          'To pause it and keep its history, archive it instead.',
+      confirmText: 'Delete',
+      isDestructive: true,
+    );
+    if (!confirmed || !mounted) return;
+
+    final notifier = ref.read(habitListProvider.notifier);
+    final removed = await notifier.deleteHabit(habit.id);
+    if (removed == null || !mounted) return;
+    _showUndoSnackBar(
+      '"${habit.title}" deleted.',
+      onUndo: () => notifier.restoreHabit(removed.habit, index: removed.index),
+    );
+  }
+
+  void _showUndoSnackBar(String message, {required VoidCallback onUndo}) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(label: 'Undo', onPressed: onUndo),
+        ),
+      );
+  }
+
+  Widget _buildEmptyState(BuildContext context, String activeFilter) {
     return Container(
       padding: EdgeInsets.all(32.r),
       decoration: BoxDecoration(
@@ -472,7 +559,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             Text('🎯', style: TextStyle(fontSize: 32.sp.clamp(26.0, 36.0))),
             SizedBox(height: 10.h),
             Text(
-              'No habits in this routine',
+              activeFilter == kArchivedHabitsFilter
+                  ? 'No archived habits'
+                  : 'No habits in this routine',
               style: context.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: context.textPrimaryColor,
