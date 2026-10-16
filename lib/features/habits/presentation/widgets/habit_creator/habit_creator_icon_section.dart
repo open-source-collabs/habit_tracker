@@ -190,7 +190,7 @@ class _HabitCreatorIconSectionState
                       },
                       child: Icon(
                         entry.value,
-                        size: 19.r,
+                        size: AppIconSizes.lg,
                         color: isSelected
                             ? activeColor
                             : context.textPrimaryColor,
@@ -214,14 +214,20 @@ class _HabitCreatorIconSectionState
             ? context.surfaceElevatedColor
             : context.cardBorderColor.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: context.cardBorderColor, width: 1.0),
+        border: Border.all(
+          color: context.cardBorderColor,
+          width: AppSizes.borderWidth,
+        ),
       ),
       child: TabBar(
         controller: _iconTabController,
         indicator: BoxDecoration(
           color: context.cardBackgroundColor,
-          borderRadius: BorderRadius.circular(10.r),
-          border: Border.all(color: context.cardBorderColor, width: 1.0),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+            color: context.cardBorderColor,
+            width: AppSizes.borderWidth,
+          ),
           boxShadow: [
             BoxShadow(
               color: context.shadowColor,
@@ -271,7 +277,7 @@ class _GlyphTile extends StatelessWidget {
           color: isSelected
               ? activeColor.withValues(alpha: 0.22)
               : context.cardBackgroundColor,
-          borderRadius: BorderRadius.circular(10.r),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: isSelected ? activeColor : context.cardBorderColor,
             width: isSelected ? AppSizes.borderWidthFocused : 1.0,

@@ -79,7 +79,7 @@ class AppFloatingNavBar extends StatelessWidget {
           padding: effectiveMargin,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30.r),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
               boxShadow: [
                 BoxShadow(
                   color: context.shadowColor.withValues(
@@ -96,7 +96,7 @@ class AppFloatingNavBar extends StatelessWidget {
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(30.r),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                 child: Container(
@@ -108,7 +108,7 @@ class AppFloatingNavBar extends StatelessWidget {
                     color: context.cardBackgroundColor.withValues(
                       alpha: isDark ? 0.82 : 0.88,
                     ),
-                    borderRadius: BorderRadius.circular(32.r),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                     border: Border.all(
                       color: context.cardBorderColor.withValues(alpha: 0.8),
                       width: AppSizes.borderWidth,
@@ -254,7 +254,7 @@ class _NavBarTabButtonState extends State<_NavBarTabButton>
                 color: isSelected
                     ? primaryAccent.withValues(alpha: 0.35)
                     : AppColors.transparent,
-                width: 1.0,
+                width: AppSizes.borderWidth,
               ),
             ),
             child: Column(
@@ -270,7 +270,7 @@ class _NavBarTabButtonState extends State<_NavBarTabButton>
                       curve: Curves.easeOutBack,
                       child: Icon(
                         isSelected ? (item.activeIcon ?? item.icon) : item.icon,
-                        size: 21.r,
+                        size: AppIconSizes.lg,
                         color: isSelected
                             ? primaryAccent
                             : context.textMutedColor,
@@ -416,13 +416,17 @@ class _CenterActionButtonState extends State<_CenterActionButton>
                 ],
                 border: Border.all(
                   color: context.onPrimaryColor.withValues(alpha: 0.2),
-                  width: 1.5,
+                  width: AppSizes.borderWidthFocused,
                 ),
               ),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  Icon(widget.icon, color: context.onPrimaryColor, size: 22.r),
+                  Icon(
+                    widget.icon,
+                    color: context.onPrimaryColor,
+                    size: AppIconSizes.xl,
+                  ),
                   SizedBox(
                     width: 0,
                     height: 0,
@@ -433,7 +437,9 @@ class _CenterActionButtonState extends State<_CenterActionButton>
                       maxHeight: 0,
                       child: Text(
                         widget.tooltip,
-                        style: context.textTheme.labelSmall?.copyWith(fontSize: 0),
+                        style: context.textTheme.labelSmall?.copyWith(
+                          fontSize: 0,
+                        ),
                       ),
                     ),
                   ),

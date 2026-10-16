@@ -1,0 +1,146 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import '../../../../../core/theme/app_colors.dart';
+import '../../../../../core/theme/app_dimensions.dart';
+import '../../../../../core/theme/app_font_sizes.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/utils/haptics.dart';
+import '../../../data/models/habit_model.dart';
+import '../../providers/habit_provider.dart';
+import '../habit_extensions.dart';
+
+/// The row of micro-pills under a habit's title: routine, frequency, current
+/// streak (when > 0) and the heatmap toggle.
+class HabitCardPills extends ConsumerWidget {
+  final HabitModel habit;
+  final int currentStreak;
+  final Color accentColor;
+
+  const HabitCardPills({
+    super.key,
+    required this.habit,
+    required this.currentStreak,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final heatmapProvider = habitHeatmapExpandedProvider(habit.id);
+    final showHeatmap = ref.watch(heatmapProvider);
+    final neutralFill = context.isDarkMode
+        ? context.surfaceElevatedColor
+        : context.cardBorderColor.withValues(alpha: 0.4);
+
+    return Wrap(
+      spacing: 6.w,
+      runSpacing: 4.h,
+      children: [
+        _HabitCardPill(
+          label: habit.routineGroup,
+          background: neutralFill,
+          foreground: context.textPrimaryColor,
+        ),
+        _HabitCardPill(
+          label: habit.frequency.label,
+          background: neutralFill,
+          foreground: context.textPrimaryColor,
+        ),
+        if (currentStreak > 0)
+          _HabitCardPill(
+            label: '$currentStreak days',
+            icon: Icons.local_fire_department_rounded,
+            iconSize: AppIconSizes.xs,
+            background: accentColor.withValues(alpha: 0.15),
+            foreground: accentColor,
+            borderColor: accentColor.withValues(alpha: 0.3),
+            fontWeight: FontWeight.w800,
+          ),
+        GestureDetector(
+          onTap: () {
+            AppHaptics.selectionClick();
+            ref.read(heatmapProvider.notifier).state = !showHeatmap;
+          },
+          child: _HabitCardPill(
+            label: 'Heatmap',
+            icon: Icons.calendar_view_week_rounded,
+            iconSize: AppIconSizes.xxs,
+            iconColor: showHeatmap ? accentColor : context.textMutedColor,
+            background: showHeatmap
+                ? accentColor.withValues(alpha: 0.18)
+                : neutralFill,
+            foreground: showHeatmap ? accentColor : context.textSecondaryColor,
+            borderColor: showHeatmap ? accentColor : AppColors.transparent,
+            horizontalPadding: 7.w,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// One small rounded label, optionally led by an icon.
+class _HabitCardPill extends StatelessWidget {
+  final String label;
+  final Color background;
+  final Color foreground;
+  final IconData? icon;
+  final double? iconSize;
+  final Color? iconColor;
+  final Color? borderColor;
+  final FontWeight fontWeight;
+  final double? horizontalPadding;
+
+  const _HabitCardPill({
+    required this.label,
+    required this.background,
+    required this.foreground,
+    this.icon,
+    this.iconSize,
+    this.iconColor,
+    this.borderColor,
+    this.fontWeight = FontWeight.w600,
+    this.horizontalPadding,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Text(
+      label,
+      style: context.textTheme.labelSmall?.copyWith(
+        fontSize: AppFontSizes.micro,
+        fontWeight: fontWeight,
+        color: foreground,
+      ),
+    );
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: horizontalPadding ?? 8.w,
+        vertical: 3.h,
+      ),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: borderColor == null
+            ? null
+            : Border.all(color: borderColor!, width: AppSizes.borderWidth),
+      ),
+      child: icon == null
+          ? text
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: iconSize ?? AppIconSizes.xs,
+                  color: iconColor ?? foreground,
+                ),
+                SizedBox(width: 3.w),
+                text,
+              ],
+            ),
+    );
+  }
+}

@@ -32,34 +32,37 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('HabitTrackerApp renders home screen with active theme on mobile',
-      (WidgetTester tester) async {
-    // Mobile screen resolution: 390x844 (dp)
-    tester.view.physicalSize = const Size(780, 1688);
-    tester.view.devicePixelRatio = 2.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets(
+    'HabitTrackerApp renders home screen with active theme on mobile',
+    (WidgetTester tester) async {
+      // Mobile screen resolution: 390x844 (dp)
+      tester.view.physicalSize = const Size(780, 1688);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          habitStorageProvider.overrideWithValue(FakeHabitStorage()),
-        ],
-        child: const HabitTrackerApp(),
-      ),
-    );
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            habitStorageProvider.overrideWithValue(FakeHabitStorage()),
+          ],
+          child: const HabitTrackerApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text(AppDateFormat.longDay(DateTime.now())), findsOneWidget);
-    expect(find.text('Themes'), findsOneWidget);
-    expect(find.text('Sync'), findsOneWidget);
-    expect(find.text('ACTIVE HABITS'), findsOneWidget);
-    expect(find.text('PROGRESS OVERVIEW'), findsOneWidget);
-    expect(find.text('New Habit'), findsOneWidget);
-  });
+      expect(find.text(AppDateFormat.longDay(DateTime.now())), findsOneWidget);
+      expect(find.text('Themes'), findsOneWidget);
+      expect(find.text('Sync'), findsOneWidget);
+      expect(find.text('ACTIVE HABITS'), findsOneWidget);
+      expect(find.text('PROGRESS OVERVIEW'), findsOneWidget);
+      expect(find.text('New Habit'), findsOneWidget);
+    },
+  );
 
-  testWidgets('HabitTrackerApp renders Bento multi-column layout on desktop',
-      (WidgetTester tester) async {
+  testWidgets('HabitTrackerApp renders Bento multi-column layout on desktop', (
+    WidgetTester tester,
+  ) async {
     // Desktop screen resolution: 1200x900 (dp)
     tester.view.physicalSize = const Size(2400, 1800);
     tester.view.devicePixelRatio = 2.0;
@@ -68,9 +71,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          habitStorageProvider.overrideWithValue(FakeHabitStorage()),
-        ],
+        overrides: [habitStorageProvider.overrideWithValue(FakeHabitStorage())],
         child: const HabitTrackerApp(),
       ),
     );

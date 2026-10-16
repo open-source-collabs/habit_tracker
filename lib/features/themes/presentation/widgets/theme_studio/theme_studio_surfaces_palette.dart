@@ -128,7 +128,7 @@ class _ColorTile extends StatelessWidget {
               height: 32.r,
               decoration: BoxDecoration(
                 color: color,
-                borderRadius: BorderRadius.circular(10.r),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(
                   color: theme.textPrimary.withValues(alpha: 0.2),
                 ),

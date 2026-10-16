@@ -212,7 +212,7 @@ class _WeekdaysSelector extends StatelessWidget {
                       color: isDaySelected
                           ? activeColor
                           : context.cardBackgroundColor,
-                      borderRadius: BorderRadius.circular(10.r),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       border: Border.all(
                         color: isDaySelected
                             ? activeColor

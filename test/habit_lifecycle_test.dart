@@ -51,6 +51,15 @@ class _FakeNotifications implements NotificationService {
   Future<void> cancelDigest(int id) async {}
 
   @override
+  Future<void> scheduleDailyDigest({
+    required int id,
+    required String title,
+    required String body,
+    required TimeOfDay time,
+    String? payload,
+  }) async {}
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -59,16 +68,15 @@ HabitModel _habit(
   String routine = 'Morning',
   bool archived = false,
   Map<String, bool> checkIns = const {},
-}) =>
-    HabitModel(
-      id: id,
-      title: 'Habit $id',
-      frequency: const HabitFrequency.daily(),
-      routineGroup: routine,
-      createdAt: DateTime(2026, 1, 1),
-      isArchived: archived,
-      checkIns: checkIns,
-    );
+}) => HabitModel(
+  id: id,
+  title: 'Habit $id',
+  frequency: const HabitFrequency.daily(),
+  routineGroup: routine,
+  createdAt: DateTime(2026, 1, 1),
+  isArchived: archived,
+  checkIns: checkIns,
+);
 
 Map<String, bool> _daysBack(int count, {int startOffset = 0}) {
   final now = DateTime.now();
@@ -116,16 +124,24 @@ void main() {
 
       await notifier.setArchived('a', archived: true);
 
-      final archived =
-          container.read(habitListProvider).value!.firstWhere((h) => h.id == 'a');
+      final archived = container
+          .read(habitListProvider)
+          .value!
+          .firstWhere((h) => h.id == 'a');
       expect(archived.isArchived, isTrue);
       expect(archived.checkIns.length, 3, reason: 'history is kept');
       expect(container.read(filteredHabitsProvider).map((h) => h.id), ['b']);
       expect(container.read(dailyHabitStatsProvider).totalScheduled, 1);
-      expect(container.read(routineGroupsProvider), contains(kArchivedHabitsFilter));
+      expect(
+        container.read(routineGroupsProvider),
+        contains(kArchivedHabitsFilter),
+      );
       expect(container.read(archivedHabitCountProvider), 1);
-      expect(notifications.synced.single.isArchived, isTrue,
-          reason: 'reminder is brought in line (cancelled) on archive');
+      expect(
+        notifications.synced.single.isArchived,
+        isTrue,
+        reason: 'reminder is brought in line (cancelled) on archive',
+      );
 
       container.read(activeRoutineFilterProvider.notifier).state =
           kArchivedHabitsFilter;
@@ -152,19 +168,21 @@ void main() {
 
   group('Delete & undo', () {
     test('delete cancels the reminder and undo restores position', () async {
-      final container = await containerWith(
-        [_habit('a'), _habit('b', checkIns: _daysBack(2)), _habit('c')],
-      );
+      final container = await containerWith([
+        _habit('a'),
+        _habit('b', checkIns: _daysBack(2)),
+        _habit('c'),
+      ]);
       final notifier = container.read(habitListProvider.notifier);
 
       final removed = await notifier.deleteHabit('b');
 
       expect(removed!.index, 1);
       expect(notifications.cancelled, ['b']);
-      expect(
-        container.read(habitListProvider).value!.map((h) => h.id),
-        ['a', 'c'],
-      );
+      expect(container.read(habitListProvider).value!.map((h) => h.id), [
+        'a',
+        'c',
+      ]);
 
       await notifier.restoreHabit(removed.habit, index: removed.index);
 
@@ -188,9 +206,11 @@ void main() {
       final id = DeviceIdentity.generateId();
       expect(
         id,
-        matches(RegExp(
-          r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
-        )),
+        matches(
+          RegExp(
+            r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+          ),
+        ),
       );
 
       const identity = DeviceIdentity();
@@ -247,24 +267,28 @@ void main() {
     });
   });
 
-  test('top habits rank by streak, then total, skipping archived and unused',
-      () async {
-    final container = await containerWith([
-      _habit('long', checkIns: _daysBack(5)),
-      _habit('lapsed', checkIns: _daysBack(9, startOffset: 3)),
-      _habit('short', checkIns: _daysBack(2)),
-      _habit('archived', archived: true, checkIns: _daysBack(10)),
-      _habit('never'),
-    ]);
+  test(
+    'top habits rank by streak, then total, skipping archived and unused',
+    () async {
+      final container = await containerWith([
+        _habit('long', checkIns: _daysBack(5)),
+        _habit('lapsed', checkIns: _daysBack(9, startOffset: 3)),
+        _habit('short', checkIns: _daysBack(2)),
+        _habit('archived', archived: true, checkIns: _daysBack(10)),
+        _habit('never'),
+      ]);
 
-    expect(
-      container.read(topHabitsProvider).map((h) => h.id),
-      ['long', 'short', 'lapsed'],
-    );
-  });
+      expect(container.read(topHabitsProvider).map((h) => h.id), [
+        'long',
+        'short',
+        'lapsed',
+      ]);
+    },
+  );
 
-  testWidgets('dashboard: delete a habit from its menu, then undo',
-      (tester) async {
+  testWidgets('dashboard: delete a habit from its menu, then undo', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(780, 1688);
     tester.view.devicePixelRatio = 2.0;
     addTearDown(tester.view.resetPhysicalSize);

@@ -268,7 +268,7 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
             borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(
               color: widget.activeColor.withValues(alpha: 0.6),
-              width: 1.0,
+              width: AppSizes.borderWidth,
             ),
           ),
           child: Row(
@@ -343,7 +343,7 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
         : '${_formatTooltipDate(date)}: Incomplete';
 
     final decoration = BoxDecoration(
-      borderRadius: BorderRadius.circular(3.r),
+      borderRadius: BorderRadius.circular(AppRadius.hairline),
       color: isCompleted
           ? widget.activeColor
           : context.cardBorderColor.withValues(alpha: 0.35),
@@ -351,7 +351,7 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
         color: isCompleted
             ? widget.activeColor
             : context.cardBorderColor.withValues(alpha: 0.7),
-        width: 1.0,
+        width: AppSizes.borderWidth,
       ),
       boxShadow: isCompleted
           ? [
@@ -371,7 +371,10 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        border: Border.all(color: context.cardBorderColor, width: 1.0),
+        border: Border.all(
+          color: context.cardBorderColor,
+          width: AppSizes.borderWidth,
+        ),
         boxShadow: [
           BoxShadow(
             color: context.shadowColor,
@@ -391,7 +394,7 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
                 widget.onDaySelected!(date);
               }
             : null,
-        borderRadius: BorderRadius.circular(3.r),
+        borderRadius: BorderRadius.circular(AppRadius.hairline),
         child: Container(width: 10.r, height: 10.r, decoration: decoration),
       ),
     );
@@ -440,7 +443,7 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
                     color: isSelected
                         ? widget.activeColor
                         : context.cardBorderColor,
-                    width: 1.0,
+                    width: AppSizes.borderWidth,
                   ),
                 ),
                 child: Text(

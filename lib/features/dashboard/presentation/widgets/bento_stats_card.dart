@@ -20,7 +20,7 @@ class BentoStatsCard extends ConsumerWidget {
       padding: EdgeInsets.all(12.r),
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(18.r),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: context.cardBorderColor,
           width: AppSizes.borderWidth,

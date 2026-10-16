@@ -123,7 +123,7 @@ class ThemesTabView extends ConsumerWidget {
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: context.cardBorderColor,
-                        width: 1.5,
+                        width: AppSizes.borderWidthFocused,
                       ),
                       boxShadow: [
                         BoxShadow(
@@ -211,7 +211,10 @@ class ThemesTabView extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: preset.scaffoldBg,
                 shape: BoxShape.circle,
-                border: Border.all(color: presetAccent, width: 2.0),
+                border: Border.all(
+                  color: presetAccent,
+                  width: AppSizes.borderWidthSelected,
+                ),
               ),
               child: Center(
                 child: Container(

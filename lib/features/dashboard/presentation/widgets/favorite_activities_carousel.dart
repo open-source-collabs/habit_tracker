@@ -123,7 +123,7 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                   padding: EdgeInsets.all(10.r),
                   decoration: BoxDecoration(
                     color: bgColor,
-                    borderRadius: BorderRadius.circular(18.r),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(
                       color: isSelected
                           ? act.accentColor

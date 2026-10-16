@@ -73,7 +73,7 @@ class ThemeStudioAccentPalette extends StatelessWidget {
                   borderRadius: BorderRadius.circular(AppRadius.chip),
                   border: Border.all(
                     color: theme.textPrimary.withValues(alpha: 0.2),
-                    width: 1.5,
+                    width: AppSizes.borderWidthFocused,
                   ),
                   boxShadow: [
                     BoxShadow(

@@ -75,7 +75,9 @@ class _AppDropdownState<T> extends ConsumerState<AppDropdown<T>> {
       backgroundColor: context.cardBackgroundColor,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppRadius.sheet),
+        ),
       ),
       builder: (sheetContext) {
         return _DropdownSelectionSheet<T>(
@@ -171,7 +173,7 @@ class _AppDropdownState<T> extends ConsumerState<AppDropdown<T>> {
                   curve: Curves.easeOutCubic,
                   child: Icon(
                     Icons.keyboard_arrow_down_rounded,
-                    size: 22.r,
+                    size: AppIconSizes.xl,
                     color: isOpen
                         ? context.primaryAccent
                         : context.textMutedColor,
@@ -218,7 +220,7 @@ class _DropdownSelectionSheet<T> extends StatelessWidget {
                 height: 4.5.w,
                 decoration: BoxDecoration(
                   color: context.cardBorderColor,
-                  borderRadius: BorderRadius.circular(3.r),
+                  borderRadius: BorderRadius.circular(AppRadius.hairline),
                 ),
               ),
             ),

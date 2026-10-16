@@ -42,7 +42,7 @@ class HabitCreatorHeader extends ConsumerWidget {
               borderRadius: BorderRadius.circular(AppRadius.chip),
               border: Border.all(
                 color: activeColor.withValues(alpha: 0.6),
-                width: 1.5,
+                width: AppSizes.borderWidthFocused,
               ),
             ),
             child: Center(
@@ -57,7 +57,7 @@ class HabitCreatorHeader extends ConsumerWidget {
                       HabitIconRegistry.getIcon(formState.selectedIconCode) ??
                           Icons.star_rounded,
                       color: activeColor,
-                      size: 22.r,
+                      size: AppIconSizes.xl,
                     ),
             ),
           ),

@@ -105,7 +105,7 @@ class ConsistencyChart extends ConsumerWidget {
                   color: context.isDarkMode
                       ? context.surfaceElevatedColor
                       : context.cardBorderColor.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(10.r),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Text(
                   'Avg. $avgPercent%',
@@ -181,7 +181,7 @@ class ConsistencyChart extends ConsumerWidget {
                           color: isHighlight
                               ? primaryAccent.withValues(alpha: 0.15)
                               : AppColors.transparent,
-                          borderRadius: BorderRadius.circular(5.r),
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
                         ),
                         child: Text(
                           bar.label,

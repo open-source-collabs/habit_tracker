@@ -112,7 +112,9 @@ class _ColorPickerDialogState extends ConsumerState<ColorPickerDialog> {
       ),
       insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400),
+        constraints: const BoxConstraints(
+          maxWidth: AppSizes.compactDialogMaxWidth,
+        ),
         child: Padding(
           padding: EdgeInsets.all(16.r),
           child: Column(
@@ -156,7 +158,7 @@ class _ColorPickerDialogState extends ConsumerState<ColorPickerDialog> {
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       border: Border.all(
                         color: context.cardBorderColor,
-                        width: 1.5,
+                        width: AppSizes.borderWidthFocused,
                       ),
                       boxShadow: [
                         BoxShadow(
@@ -281,7 +283,7 @@ class _ColorPickerDialogState extends ConsumerState<ColorPickerDialog> {
                       _hexController.text = AppColors.colorToHex(color);
                       AppHaptics.lightImpact();
                     },
-                    borderRadius: BorderRadius.circular(10.r),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     child: Container(
                       width: 24.r,
                       height: 24.r,

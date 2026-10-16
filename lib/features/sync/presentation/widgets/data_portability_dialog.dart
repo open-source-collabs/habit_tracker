@@ -349,7 +349,7 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
                       ),
                       decoration: BoxDecoration(
                         color: context.primaryAccent.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(10.r),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(
                           color: context.primaryAccent.withValues(alpha: 0.4),
                         ),
@@ -483,7 +483,6 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
                       ),
                     ),
                   ],
-
                 ],
               ),
             ),

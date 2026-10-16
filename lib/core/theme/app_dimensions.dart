@@ -41,6 +41,7 @@ abstract final class AppDesign {
 /// Use the scaled getters in widgets. The `*Value` constants are the raw
 /// design units for contexts built outside `ScreenUtilInit` (e.g. ThemeData).
 abstract final class AppRadius {
+  static const double hairlineValue = 3;
   static const double xsValue = 6;
   static const double smValue = 8;
   static const double mdValue = 12;
@@ -49,6 +50,12 @@ abstract final class AppRadius {
   static const double xlValue = 20;
   static const double cardValue = 24;
   static const double sheetValue = 28;
+
+  /// Large enough to fully round any component: stadium/pill shapes.
+  static const double pillValue = 999;
+
+  /// 3 — drag handles, heatmap cells, hairline bars
+  static double get hairline => hairlineValue.r;
 
   /// 6 — progress bars, tiny indicators
   static double get xs => xsValue.r;
@@ -74,6 +81,9 @@ abstract final class AppRadius {
   /// 28 — bottom sheet top corners
   static double get sheet => sheetValue.r;
 
+  /// Fully rounded ends — floating nav bar, stadium pills. Not scaled.
+  static double get pill => pillValue;
+
   static BorderRadius get cardBorderRadius => BorderRadius.circular(card);
   static BorderRadius get sheetBorderRadius =>
       BorderRadius.vertical(top: Radius.circular(sheet));
@@ -81,6 +91,9 @@ abstract final class AppRadius {
 
 /// Icon size tokens (mobile design units, scaled with `.r`).
 abstract final class AppIconSizes {
+  /// 12 — glyphs beside micro labels in dense pills
+  static double get xxs => 12.r;
+
   /// 14 — inline glyphs inside badges and pills
   static double get xs => 14.r;
 
@@ -95,6 +108,9 @@ abstract final class AppIconSizes {
 
   /// 24 — Material default, app bar actions
   static double get xl => 24.r;
+
+  /// 32 — sheet and dialog header icons
+  static double get xxl => 32.r;
 
   /// 40 — empty states and hero illustrations
   static double get hero => 40.r;
@@ -111,6 +127,9 @@ abstract final class AppSizes {
   /// Focused input border width. Never scaled.
   static const double borderWidthFocused = 1.6;
 
+  /// Selection rings (chosen swatch, check circle). Never scaled.
+  static const double borderWidthSelected = 2;
+
   static double get buttonHeightSm => 32.w;
   static double get buttonHeightMd => 42.w;
   static double get buttonHeightLg => 48.w;
@@ -118,4 +137,13 @@ abstract final class AppSizes {
   /// Max width of bottom sheets and dialogs on wide screens (logical px).
   static const double sheetMaxWidth = 600;
   static const double dialogMaxWidth = 480;
+
+  /// Compact dialogs: confirmations, color picker, error states.
+  static const double compactDialogMaxWidth = 420;
+
+  /// Form dialogs on desktop, e.g. the habit creator.
+  static const double formDialogMaxWidth = 580;
+
+  /// Readable column for full-screen pages such as Settings.
+  static const double pageMaxWidth = 640;
 }

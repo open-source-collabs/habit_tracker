@@ -47,7 +47,7 @@ class HabitCreatorBottomSheetFrame extends StatelessWidget {
               height: 4.h,
               decoration: BoxDecoration(
                 color: context.textMutedColor.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2.r),
+                borderRadius: BorderRadius.circular(AppRadius.hairline),
               ),
             ),
           ),
@@ -97,7 +97,7 @@ class HabitCreatorDialogFrame extends StatelessWidget {
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: 580,
+          maxWidth: AppSizes.formDialogMaxWidth,
           maxHeight: MediaQuery.sizeOf(context).height * 0.85,
         ),
         child: Column(

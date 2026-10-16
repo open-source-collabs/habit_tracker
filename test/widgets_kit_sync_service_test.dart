@@ -31,24 +31,26 @@ void main() {
 
   setUpAll(() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(const MethodChannel('widgets_kit'), (call) async {
-      if (call.method == 'saveWidgetData') {
-        final args = call.arguments as Map<dynamic, dynamic>?;
-        if (args != null) {
-          final id = args['id'] as String;
-          final data = args['data'];
-          mockedWidgetData[id] = data;
-        }
-        return true;
-      } else if (call.method == 'updateWidget') {
-        return true;
-      } else if (call.method == 'getWidgetData') {
-        final args = call.arguments as Map<dynamic, dynamic>?;
-        final id = args?['id'] as String?;
-        return mockedWidgetData[id];
-      }
-      return null;
-    });
+        .setMockMethodCallHandler(const MethodChannel('widgets_kit'), (
+          call,
+        ) async {
+          if (call.method == 'saveWidgetData') {
+            final args = call.arguments as Map<dynamic, dynamic>?;
+            if (args != null) {
+              final id = args['id'] as String;
+              final data = args['data'];
+              mockedWidgetData[id] = data;
+            }
+            return true;
+          } else if (call.method == 'updateWidget') {
+            return true;
+          } else if (call.method == 'getWidgetData') {
+            final args = call.arguments as Map<dynamic, dynamic>?;
+            final id = args?['id'] as String?;
+            return mockedWidgetData[id];
+          }
+          return null;
+        });
   });
 
   group('HabitWidgetSyncService Tests', () {
@@ -71,9 +73,7 @@ void main() {
           frequency: const HabitFrequency.daily(),
           createdAt: today.subtract(const Duration(days: 5)),
           emoji: '💧',
-          checkIns: {
-            todayStr: true,
-          },
+          checkIns: {todayStr: true},
         ),
         HabitModel(
           id: 'habit_2',
@@ -96,7 +96,10 @@ void main() {
       expect(mockedWidgetData[HabitWidgetSyncService.keyTotalCount], 2);
       expect(mockedWidgetData[HabitWidgetSyncService.keyCompletedCount], 1);
       expect(mockedWidgetData[HabitWidgetSyncService.keyCompletionRate], '50%');
-      expect(mockedWidgetData[HabitWidgetSyncService.keyTopPendingTitle], 'Morning Run');
+      expect(
+        mockedWidgetData[HabitWidgetSyncService.keyTopPendingTitle],
+        'Morning Run',
+      );
       expect(mockedWidgetData[HabitWidgetSyncService.keyTopPendingEmoji], '🏃');
       expect(mockedWidgetData[HabitWidgetSyncService.keyAllCompleted], isFalse);
     });
@@ -131,74 +134,72 @@ void main() {
         ),
       ];
 
-      final result = await syncService.syncHabits(
-        habits: habits,
-        date: today,
-      );
+      final result = await syncService.syncHabits(habits: habits, date: today);
 
       expect(result, isTrue);
       expect(mockedWidgetData[HabitWidgetSyncService.keyTotalCount], 1);
       expect(mockedWidgetData[HabitWidgetSyncService.keyCompletedCount], 1);
-      expect(mockedWidgetData[HabitWidgetSyncService.keyCompletionRate], '100%');
+      expect(
+        mockedWidgetData[HabitWidgetSyncService.keyCompletionRate],
+        '100%',
+      );
       expect(mockedWidgetData[HabitWidgetSyncService.keyAllCompleted], isTrue);
     });
   });
 
   group('HabitWidgetSnapshotView Widget Tests', () {
-    testWidgets('renders habit counts and progress indicator in snapshot card',
-        (tester) async {
-      final today = DateTime(2026, 10, 12);
-      final todayStr = HabitModel.formatDate(today);
+    testWidgets(
+      'renders habit counts and progress indicator in snapshot card',
+      (tester) async {
+        final today = DateTime(2026, 10, 12);
+        final todayStr = HabitModel.formatDate(today);
 
-      final habits = [
-        HabitModel(
-          id: 'habit_1',
-          title: 'Meditate',
-          subtitle: '10 min mindfulness',
-          frequency: const HabitFrequency.daily(),
-          createdAt: today.subtract(const Duration(days: 5)),
-          emoji: '🧘',
-          checkIns: {
-            todayStr: true,
-            HabitModel.formatDate(today.subtract(const Duration(days: 1))): true,
-          },
-        ),
-        HabitModel(
-          id: 'habit_2',
-          title: 'Workout',
-          subtitle: 'Gym session',
-          frequency: const HabitFrequency.daily(),
-          createdAt: today.subtract(const Duration(days: 3)),
-          emoji: '💪',
-          checkIns: const {},
-        ),
-      ];
+        final habits = [
+          HabitModel(
+            id: 'habit_1',
+            title: 'Meditate',
+            subtitle: '10 min mindfulness',
+            frequency: const HabitFrequency.daily(),
+            createdAt: today.subtract(const Duration(days: 5)),
+            emoji: '🧘',
+            checkIns: {
+              todayStr: true,
+              HabitModel.formatDate(today.subtract(const Duration(days: 1))):
+                  true,
+            },
+          ),
+          HabitModel(
+            id: 'habit_2',
+            title: 'Workout',
+            subtitle: 'Gym session',
+            frequency: const HabitFrequency.daily(),
+            createdAt: today.subtract(const Duration(days: 3)),
+            emoji: '💪',
+            checkIns: const {},
+          ),
+        ];
 
-      await tester.pumpWidget(
-        MaterialApp(
-          theme: ThemeFactory.createTheme(UserThemeModel.nordicSerenity),
-          home: Scaffold(
-            body: HabitWidgetSnapshotView(
-              habits: habits,
-              date: today,
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeFactory.createTheme(UserThemeModel.nordicSerenity),
+            home: Scaffold(
+              body: HabitWidgetSnapshotView(habits: habits, date: today),
             ),
           ),
-        ),
-      );
+        );
 
-      expect(find.text('Habit Tracker'), findsOneWidget);
-      expect(find.text('1 / 2'), findsOneWidget);
-      expect(find.textContaining('completed today (50%)'), findsOneWidget);
-      expect(find.byType(LinearProgressIndicator), findsOneWidget);
-    });
+        expect(find.text('Habit Tracker'), findsOneWidget);
+        expect(find.text('1 / 2'), findsOneWidget);
+        expect(find.textContaining('completed today (50%)'), findsOneWidget);
+        expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      },
+    );
   });
 
   group('WidgetsKitInterop Tests', () {
     test('handles habittracker deep link URI safely', () {
       final container = ProviderContainer(
-        overrides: [
-          habitStorageProvider.overrideWithValue(FakeTestStorage()),
-        ],
+        overrides: [habitStorageProvider.overrideWithValue(FakeTestStorage())],
       );
       addTearDown(container.dispose);
 

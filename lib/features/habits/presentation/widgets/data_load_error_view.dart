@@ -33,7 +33,9 @@ class DataLoadErrorView extends ConsumerWidget {
 
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
+        constraints: const BoxConstraints(
+          maxWidth: AppSizes.compactDialogMaxWidth,
+        ),
         child: Padding(
           padding: EdgeInsets.all(24.r),
           child: AppCard(

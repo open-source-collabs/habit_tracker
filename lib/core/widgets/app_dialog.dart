@@ -57,7 +57,7 @@ class AppDialog extends StatelessWidget {
       child: Center(
         child: Container(
           constraints: BoxConstraints(
-            maxWidth: 420,
+            maxWidth: AppSizes.compactDialogMaxWidth,
             maxHeight: MediaQuery.sizeOf(context).height * 0.88,
           ),
           padding: EdgeInsets.all(16.r),

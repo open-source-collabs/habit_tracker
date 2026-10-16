@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:habit_tracker/core/theme/app_colors.dart';
 
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_font_sizes.dart';
@@ -9,6 +8,9 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../data/models/habit_model.dart';
 import '../providers/habit_provider.dart';
+import 'habit_card/habit_card_actions_menu.dart';
+import 'habit_card/habit_card_check_button.dart';
+import 'habit_card/habit_card_pills.dart';
 import 'habit_extensions.dart';
 import 'heatmap_grid.dart';
 
@@ -43,52 +45,25 @@ class BentoHabitCard extends ConsumerStatefulWidget {
 }
 
 class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
-    with TickerProviderStateMixin {
-  late final AnimationController _cardPressController;
-  late final Animation<double> _cardScaleAnimation;
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _pressController = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 120),
+    reverseDuration: const Duration(milliseconds: 280),
+  );
 
-  late final AnimationController _checkPressController;
-  late final Animation<double> _checkScaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // 0.96 Card Spring Animation
-    _cardPressController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 120),
-      reverseDuration: const Duration(milliseconds: 280),
-    );
-
-    _cardScaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
-      CurvedAnimation(
-        parent: _cardPressController,
-        curve: Curves.easeOutCubic,
-        reverseCurve: Curves.elasticOut,
-      ),
-    );
-
-    // Spring Animation for the Check-off Button
-    _checkPressController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 90),
-      reverseDuration: const Duration(milliseconds: 220),
-    );
-
-    _checkScaleAnimation = Tween<double>(begin: 1.0, end: 0.88).animate(
-      CurvedAnimation(
-        parent: _checkPressController,
-        curve: Curves.easeOutCubic,
-        reverseCurve: Curves.elasticOut,
-      ),
-    );
-  }
+  late final Animation<double> _scale = Tween<double>(begin: 1.0, end: 0.96)
+      .animate(
+        CurvedAnimation(
+          parent: _pressController,
+          curve: Curves.easeOutCubic,
+          reverseCurve: Curves.elasticOut,
+        ),
+      );
 
   @override
   void dispose() {
-    _cardPressController.dispose();
-    _checkPressController.dispose();
+    _pressController.dispose();
     super.dispose();
   }
 
@@ -96,8 +71,9 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
     // Archived habits are paused and can't be checked off.
     if (widget.habit.isArchived) return;
     AppHaptics.lightImpact();
-    if (widget.onToggle != null) {
-      widget.onToggle!();
+    final onToggle = widget.onToggle;
+    if (onToggle != null) {
+      onToggle();
     } else {
       ref
           .read(habitListProvider.notifier)
@@ -105,49 +81,23 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
     }
   }
 
-  String _formatFrequency(HabitFrequency freq) {
-    switch (freq.type) {
-      case HabitFrequencyType.daily:
-        return 'Daily';
-      case HabitFrequencyType.specificWeekdays:
-        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        if (freq.daysOfWeek.length == 7) return 'Daily';
-        if (freq.daysOfWeek.length == 5 &&
-            freq.daysOfWeek.contains(1) &&
-            freq.daysOfWeek.contains(2) &&
-            freq.daysOfWeek.contains(3) &&
-            freq.daysOfWeek.contains(4) &&
-            freq.daysOfWeek.contains(5)) {
-          return 'Weekdays';
-        }
-        return freq.daysOfWeek.map((d) => days[(d - 1).clamp(0, 6)]).join(', ');
-      case HabitFrequencyType.timesPerWeek:
-        return '${freq.targetTimesPerWeek}x / wk';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final accentColor = widget.habit.resolveColor(context);
-    final showHeatmap = ref.watch(
-      habitHeatmapExpandedProvider(widget.habit.id),
-    );
-
-    final isCompleted = widget.habit.isCompletedOn(widget.date);
-    final currentStreak = widget.habit.calculateCurrentStreak(
-      asOf: widget.date,
-    );
-    final isArchived = widget.habit.isArchived;
+    final habit = widget.habit;
+    final accentColor = habit.resolveColor(context);
+    final showHeatmap = ref.watch(habitHeatmapExpandedProvider(habit.id));
+    final isCompleted = habit.isCompletedOn(widget.date);
+    final currentStreak = habit.calculateCurrentStreak(asOf: widget.date);
 
     return Opacity(
-      opacity: isArchived ? 0.6 : 1.0,
+      opacity: habit.isArchived ? 0.6 : 1.0,
       child: ScaleTransition(
-        scale: _cardScaleAnimation,
+        scale: _scale,
         child: Listener(
           behavior: HitTestBehavior.opaque,
-          onPointerDown: (_) => _cardPressController.forward(),
-          onPointerUp: (_) => _cardPressController.reverse(),
-          onPointerCancel: (_) => _cardPressController.reverse(),
+          onPointerDown: (_) => _pressController.forward(),
+          onPointerUp: (_) => _pressController.reverse(),
+          onPointerCancel: (_) => _pressController.reverse(),
           child: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: _handleToggle,
@@ -155,30 +105,7 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOutCubic,
               padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
-              decoration: BoxDecoration(
-                color: context.cardBackgroundColor,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-                border: Border.all(
-                  color: isCompleted ? accentColor : context.cardBorderColor,
-                  width: AppSizes.borderWidth,
-                ),
-                boxShadow: isCompleted
-                    ? [
-                        BoxShadow(
-                          color: accentColor.withValues(alpha: 0.35),
-                          blurRadius: 16,
-                          spreadRadius: 0,
-                          offset: const Offset(0, 3),
-                        ),
-                      ]
-                    : [
-                        BoxShadow(
-                          color: context.shadowColor,
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-              ),
+              decoration: _decoration(context, accentColor, isCompleted),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -186,427 +113,27 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Spring Check-off Circle
-                      Semantics(
-                        button: true,
-                        enabled: !isArchived,
-                        toggled: isCompleted,
-                        label: isArchived
-                            ? '${widget.habit.title}, archived'
-                            : '${widget.habit.title}, '
-                                  '${isCompleted ? 'done' : 'not done'}',
-                        hint: isArchived
-                            ? null
-                            : (isCompleted
-                                  ? 'Double tap to undo'
-                                  : 'Double tap to mark done'),
-                        excludeSemantics: true,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTapDown: (_) => _checkPressController.forward(),
-                          onTapUp: (_) => _checkPressController.reverse(),
-                          onTapCancel: () => _checkPressController.reverse(),
-                          onTap: _handleToggle,
-                          child: ScaleTransition(
-                            scale: _checkScaleAnimation,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 220),
-                              curve: Curves.easeOutCubic,
-                              width: 40.r,
-                              height: 40.r,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: isCompleted
-                                    ? accentColor
-                                    : AppColors.transparent,
-                                border: Border.all(
-                                  color: isCompleted
-                                      ? accentColor
-                                      : context.cardBorderColor.withValues(
-                                          alpha: 0.8,
-                                        ),
-                                  width: 2.0,
-                                ),
-                                boxShadow: isCompleted
-                                    ? [
-                                        BoxShadow(
-                                          color: accentColor.withValues(
-                                            alpha: 0.45,
-                                          ),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ]
-                                    : null,
-                              ),
-                              child: Center(
-                                child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 200),
-                                  transitionBuilder: (child, anim) =>
-                                      ScaleTransition(
-                                        scale: anim,
-                                        child: child,
-                                      ),
-                                  child: isCompleted
-                                      ? Icon(
-                                          Icons.check_rounded,
-                                          key: const ValueKey('checked'),
-                                          color: AppColors.white,
-                                          size: 22.r,
-                                        )
-                                      : (widget.habit.iconCode != null &&
-                                            HabitIconRegistry.getIcon(
-                                                  widget.habit.iconCode,
-                                                ) !=
-                                                null)
-                                      ? Icon(
-                                          HabitIconRegistry.getIcon(
-                                            widget.habit.iconCode,
-                                          )!,
-                                          key: const ValueKey('unchecked_icon'),
-                                          color: accentColor,
-                                          size: AppIconSizes.lg,
-                                        )
-                                      : Text(
-                                          widget.habit.displayEmoji,
-                                          key: const ValueKey('unchecked'),
-                                          style: context.textTheme.titleLarge?.copyWith(
-                                            fontSize: AppFontSizes.titleLarge,
-                                          ),
-                                        ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+                      HabitCardCheckButton(
+                        habit: habit,
+                        isCompleted: isCompleted,
+                        accentColor: accentColor,
+                        onTap: _handleToggle,
                       ),
                       SizedBox(width: 12.w),
-
-                      // Title, Subtitle, and Badges
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    widget.habit.title,
-                                    style: context.textTheme.titleMedium
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.w700,
-                                          color: context.textPrimaryColor,
-                                          decoration: isCompleted
-                                              ? TextDecoration.lineThrough
-                                              : null,
-                                          decorationColor: context
-                                              .textPrimaryColor
-                                              .withValues(alpha: 0.4),
-                                        ),
-                                  ),
-                                ),
-                                if (widget._hasActions)
-                                  PopupMenuButton<String>(
-                                    tooltip: 'Habit actions',
-                                    icon: Icon(
-                                      Icons.more_vert,
-                                      size: AppIconSizes.md,
-                                      color: context.textMutedColor,
-                                    ),
-                                    color: context.cardBackgroundColor,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.lg,
-                                      ),
-                                      side: BorderSide(
-                                        color: context.cardBorderColor,
-                                        width: AppSizes.borderWidth,
-                                      ),
-                                    ),
-                                    onSelected: (val) {
-                                      if (val == 'edit' &&
-                                          widget.onEdit != null) {
-                                        widget.onEdit!();
-                                      } else if (val == 'archive' &&
-                                          widget.onArchiveToggle != null) {
-                                        widget.onArchiveToggle!();
-                                      } else if (val == 'delete' &&
-                                          widget.onDelete != null) {
-                                        widget.onDelete!();
-                                      }
-                                    },
-                                    itemBuilder: (menuContext) => [
-                                      if (widget.onEdit != null)
-                                        PopupMenuItem(
-                                          value: 'edit',
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons.edit_outlined,
-                                                size: AppIconSizes.sm,
-                                                color: context.textPrimaryColor,
-                                              ),
-                                              SizedBox(width: 8.w),
-                                              Text(
-                                                'Edit',
-                                                style: context
-                                                    .textTheme
-                                                    .bodyMedium
-                                                    ?.copyWith(
-                                                      color: context
-                                                          .textPrimaryColor,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      if (widget.onArchiveToggle != null)
-                                        PopupMenuItem(
-                                          value: 'archive',
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                isArchived
-                                                    ? Icons.unarchive_outlined
-                                                    : Icons.archive_outlined,
-                                                size: AppIconSizes.sm,
-                                                color: context.textPrimaryColor,
-                                              ),
-                                              SizedBox(width: 8.w),
-                                              Text(
-                                                isArchived
-                                                    ? 'Unarchive'
-                                                    : 'Archive',
-                                                style: context
-                                                    .textTheme
-                                                    .bodyMedium
-                                                    ?.copyWith(
-                                                      color: context
-                                                          .textPrimaryColor,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      if (widget.onDelete != null)
-                                        PopupMenuItem(
-                                          value: 'delete',
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons.delete_outline,
-                                                size: AppIconSizes.sm,
-                                                color:
-                                                    context.colorScheme.error,
-                                              ),
-                                              SizedBox(width: 8.w),
-                                              Text(
-                                                'Delete',
-                                                style: context
-                                                    .textTheme
-                                                    .bodyMedium
-                                                    ?.copyWith(
-                                                      color: context
-                                                          .colorScheme
-                                                          .error,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                              ],
-                            ),
-                            if (widget.habit.subtitle.isNotEmpty) ...[
-                              SizedBox(height: 2.h),
-                              Text(
-                                widget.habit.subtitle,
-                                style: context.textTheme.bodyMedium?.copyWith(
-                                  color: context.textSecondaryColor,
-                                  fontSize: AppFontSizes.bodySmall,
-                                ),
-                              ),
-                            ],
-                            SizedBox(height: 8.h),
-
-                            // Bento Micro-Pills (Routine, Frequency, Streak)
-                            Wrap(
-                              spacing: 6.w,
-                              runSpacing: 4.h,
-                              children: [
-                                // Routine Group Pill
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w,
-                                    vertical: 3.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: context.isDarkMode
-                                        ? context.surfaceElevatedColor
-                                        : context.cardBorderColor.withValues(
-                                            alpha: 0.4,
-                                          ),
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.sm,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    widget.habit.routineGroup,
-                                    style: context.textTheme.labelSmall
-                                        ?.copyWith(
-                                          fontSize: AppFontSizes.micro,
-                                          fontWeight: FontWeight.w600,
-                                          color: context.textPrimaryColor,
-                                        ),
-                                  ),
-                                ),
-
-                                // Frequency Pill
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 8.w,
-                                    vertical: 3.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: context.isDarkMode
-                                        ? context.surfaceElevatedColor
-                                        : context.cardBorderColor.withValues(
-                                            alpha: 0.4,
-                                          ),
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.sm,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    _formatFrequency(widget.habit.frequency),
-                                    style: context.textTheme.labelSmall
-                                        ?.copyWith(
-                                          fontSize: AppFontSizes.micro,
-                                          fontWeight: FontWeight.w600,
-                                          color: context.textPrimaryColor,
-                                        ),
-                                  ),
-                                ),
-
-                                // Streak Fire Badge
-                                if (currentStreak > 0)
-                                  Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 8.w,
-                                      vertical: 3.h,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: accentColor.withValues(
-                                        alpha: 0.15,
-                                      ),
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.sm,
-                                      ),
-                                      border: Border.all(
-                                        color: accentColor.withValues(
-                                          alpha: 0.3,
-                                        ),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.local_fire_department_rounded,
-                                          size: 13.r,
-                                          color: accentColor,
-                                        ),
-                                        SizedBox(width: 3.w),
-                                        Text(
-                                          '$currentStreak days',
-                                          style: context.textTheme.labelSmall
-                                              ?.copyWith(
-                                                fontSize: AppFontSizes.micro,
-                                                fontWeight: FontWeight.w800,
-                                                color: accentColor,
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                // Heatmap Toggle Pill
-                                GestureDetector(
-                                  onTap: () {
-                                    AppHaptics.selectionClick();
-                                    ref
-                                            .read(
-                                              habitHeatmapExpandedProvider(
-                                                widget.habit.id,
-                                              ).notifier,
-                                            )
-                                            .state =
-                                        !showHeatmap;
-                                  },
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 7.w,
-                                      vertical: 3.h,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: showHeatmap
-                                          ? accentColor.withValues(alpha: 0.18)
-                                          : (context.isDarkMode
-                                                ? context.surfaceElevatedColor
-                                                : context.cardBorderColor
-                                                      .withValues(alpha: 0.4)),
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.sm,
-                                      ),
-                                      border: Border.all(
-                                        color: showHeatmap
-                                            ? accentColor
-                                            : AppColors.transparent,
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          Icons.calendar_view_week_rounded,
-                                          size: 11.r,
-                                          color: showHeatmap
-                                              ? accentColor
-                                              : context.textMutedColor,
-                                        ),
-                                        SizedBox(width: 3.w),
-                                        Text(
-                                          'Heatmap',
-                                          style: context.textTheme.labelSmall
-                                              ?.copyWith(
-                                                fontSize: AppFontSizes.micro,
-                                                fontWeight: FontWeight.w600,
-                                                color: showHeatmap
-                                                    ? accentColor
-                                                    : context
-                                                          .textSecondaryColor,
-                                              ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                        child: _buildDetails(
+                          context,
+                          accentColor: accentColor,
+                          isCompleted: isCompleted,
+                          currentStreak: currentStreak,
                         ),
                       ),
                     ],
                   ),
-
-                  // Expandable Heatmap Grid
                   if (showHeatmap) ...[
                     SizedBox(height: 14.h),
                     HeatmapGrid(
-                      checkIns: widget.habit.checkIns,
+                      checkIns: habit.checkIns,
                       activeColor: accentColor,
                       initialRangeDays: 60,
                       showHeader: false,
@@ -619,6 +146,91 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
           ),
         ),
       ),
+    );
+  }
+
+  /// Card surface: accent border and glow when done, soft shadow otherwise.
+  BoxDecoration _decoration(
+    BuildContext context,
+    Color accentColor,
+    bool isCompleted,
+  ) {
+    return BoxDecoration(
+      color: context.cardBackgroundColor,
+      borderRadius: BorderRadius.circular(AppRadius.xl),
+      border: Border.all(
+        color: isCompleted ? accentColor : context.cardBorderColor,
+        width: AppSizes.borderWidth,
+      ),
+      boxShadow: [
+        if (isCompleted)
+          BoxShadow(
+            color: accentColor.withValues(alpha: 0.35),
+            blurRadius: 16,
+            offset: const Offset(0, 3),
+          )
+        else
+          BoxShadow(
+            color: context.shadowColor,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+      ],
+    );
+  }
+
+  /// Title (struck through when done), actions menu, subtitle and pills.
+  Widget _buildDetails(
+    BuildContext context, {
+    required Color accentColor,
+    required bool isCompleted,
+    required int currentStreak,
+  }) {
+    final habit = widget.habit;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                habit.title,
+                style: context.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: context.textPrimaryColor,
+                  decoration: isCompleted ? TextDecoration.lineThrough : null,
+                  decorationColor: context.textPrimaryColor.withValues(
+                    alpha: 0.4,
+                  ),
+                ),
+              ),
+            ),
+            if (widget._hasActions)
+              HabitCardActionsMenu(
+                isArchived: habit.isArchived,
+                onEdit: widget.onEdit,
+                onArchiveToggle: widget.onArchiveToggle,
+                onDelete: widget.onDelete,
+              ),
+          ],
+        ),
+        if (habit.subtitle.isNotEmpty) ...[
+          SizedBox(height: 2.h),
+          Text(
+            habit.subtitle,
+            style: context.textTheme.bodyMedium?.copyWith(
+              color: context.textSecondaryColor,
+              fontSize: AppFontSizes.bodySmall,
+            ),
+          ),
+        ],
+        SizedBox(height: 8.h),
+        HabitCardPills(
+          habit: habit,
+          currentStreak: currentStreak,
+          accentColor: accentColor,
+        ),
+      ],
     );
   }
 }

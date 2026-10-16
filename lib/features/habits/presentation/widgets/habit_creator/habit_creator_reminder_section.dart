@@ -153,7 +153,7 @@ class _ReminderTimeChip extends StatelessWidget {
             isDark: context.isDarkMode,
             opacity: 0.22,
           ),
-          borderRadius: BorderRadius.circular(10.r),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: activeColor, width: AppSizes.borderWidth),
         ),
         child: Row(

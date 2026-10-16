@@ -53,7 +53,10 @@ class AppBadge extends StatelessWidget {
             color: effectiveColor.withValues(alpha: 0.5),
             width: AppSizes.borderWidth,
           )
-        : Border.all(color: effectiveColor.withValues(alpha: 0.25), width: 1.0);
+        : Border.all(
+            color: effectiveColor.withValues(alpha: 0.25),
+            width: AppSizes.borderWidth,
+          );
 
     Widget badge = AnimatedContainer(
       duration: const Duration(milliseconds: 180),

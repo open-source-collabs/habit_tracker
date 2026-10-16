@@ -34,7 +34,9 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp> {
     WidgetsKitInterop.initialize(ref);
 
     final notifications = ref.read(notificationServiceProvider);
-    _notificationTaps = notifications.notificationTaps.listen(_openFromNotification);
+    _notificationTaps = notifications.notificationTaps.listen(
+      _openFromNotification,
+    );
     // After the first frame so launch stays fast; reminders are rebuilt from
     // stored habits in case the OS dropped them (reboot, app update).
     WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -42,7 +44,9 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp> {
       ref.read(syncControllerProvider);
       await ref.read(reminderSyncProvider).restoreAll();
       final launchPayload = await notifications.takeLaunchPayload();
-      if (launchPayload != null && mounted) _openFromNotification(launchPayload);
+      if (launchPayload != null && mounted) {
+        _openFromNotification(launchPayload);
+      }
     });
   }
 
@@ -51,8 +55,11 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp> {
   void _openFromNotification(String payload) {
     final now = DateTime.now();
     ref.read(selectedDashboardTabProvider.notifier).state = 0;
-    ref.read(selectedDateProvider.notifier).state =
-        DateTime(now.year, now.month, now.day);
+    ref.read(selectedDateProvider.notifier).state = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    );
     ref.read(activeRoutineFilterProvider.notifier).state = kAllHabitsFilter;
     AppRouter.navigatorKey.currentState?.popUntil((route) => route.isFirst);
   }

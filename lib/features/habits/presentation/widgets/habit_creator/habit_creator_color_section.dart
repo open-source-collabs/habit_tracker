@@ -114,7 +114,7 @@ class _PaletteSwatch extends StatelessWidget {
             color: isSelected
                 ? context.textPrimaryColor
                 : AppColors.transparent,
-            width: 2.4,
+            width: AppSizes.borderWidthSelected,
           ),
           boxShadow: isSelected
               ? [
@@ -159,10 +159,10 @@ class _CustomColorButton extends StatelessWidget {
           color: custom != null
               ? custom.withValues(alpha: 0.18)
               : context.cardBackgroundColor,
-          borderRadius: BorderRadius.circular(18.r),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: custom ?? context.cardBorderColor,
-            width: 1.4,
+            width: AppSizes.borderWidthFocused,
           ),
         ),
         child: Row(
@@ -174,7 +174,10 @@ class _CustomColorButton extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: const SweepGradient(colors: AppColors.hueSpectrum),
-                border: Border.all(color: context.cardBorderColor, width: 1),
+                border: Border.all(
+                  color: context.cardBorderColor,
+                  width: AppSizes.borderWidth,
+                ),
               ),
             ),
             SizedBox(width: 6.w),

@@ -58,7 +58,7 @@ class ThemeStudioPreviewCard extends StatelessWidget {
           padding: EdgeInsets.all(14.r),
           decoration: BoxDecoration(
             color: theme.cardBg,
-            borderRadius: BorderRadius.circular(18.r),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
               color: activeAccent,
               width: AppSizes.borderWidth,
@@ -85,14 +85,14 @@ class ThemeStudioPreviewCard extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: activeAccent.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(10.r),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
                           Icons.local_fire_department,
-                          size: 15.r,
+                          size: AppIconSizes.sm,
                           color: activeAccent,
                         ),
                         SizedBox(width: 4.w),

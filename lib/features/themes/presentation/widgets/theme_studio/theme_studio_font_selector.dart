@@ -64,7 +64,7 @@ class ThemeStudioFontSelector extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: theme.cardBg,
-                    borderRadius: BorderRadius.circular(18.r),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(
                       color: isSelected
                           ? (theme.accentPalette.isNotEmpty

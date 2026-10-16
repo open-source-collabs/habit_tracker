@@ -70,16 +70,15 @@ HabitModel _habit(
   Map<String, int> changedAt = const {},
   int modifiedMinute = 0,
   String title = 'Habit',
-}) =>
-    HabitModel(
-      id: id,
-      title: title,
-      frequency: const HabitFrequency.daily(),
-      createdAt: _t0,
-      checkIns: checkIns,
-      checkInChangedAt: changedAt,
-      lastModifiedAt: _at(modifiedMinute),
-    );
+}) => HabitModel(
+  id: id,
+  title: title,
+  frequency: const HabitFrequency.daily(),
+  createdAt: _t0,
+  checkIns: checkIns,
+  checkInChangedAt: changedAt,
+  lastModifiedAt: _at(modifiedMinute),
+);
 
 AppPayloadModel _payload(
   List<HabitModel> habits, {
@@ -87,17 +86,16 @@ AppPayloadModel _payload(
   Map<String, DateTime> deletedHabits = const {},
   List<UserThemeModel> themes = const [],
   Map<String, DateTime> deletedThemes = const {},
-}) =>
-    AppPayloadModel(
-      version: AppPayloadModel.currentSchemaVersion,
-      lastModifiedBy: 'device',
-      lastModifiedAt: _at(modifiedMinute),
-      activeThemeId: UserThemeModel.defaultTheme.id,
-      userThemes: themes,
-      habits: habits,
-      deletedHabits: deletedHabits,
-      deletedThemes: deletedThemes,
-    );
+}) => AppPayloadModel(
+  version: AppPayloadModel.currentSchemaVersion,
+  lastModifiedBy: 'device',
+  lastModifiedAt: _at(modifiedMinute),
+  activeThemeId: UserThemeModel.defaultTheme.id,
+  userThemes: themes,
+  habits: habits,
+  deletedHabits: deletedHabits,
+  deletedThemes: deletedThemes,
+);
 
 HabitModel _only(AppPayloadModel p) => p.habits.single;
 
@@ -116,13 +114,18 @@ void main() {
         _habit('h', changedAt: {day: _ms(5)}, modifiedMinute: 5),
       ], modifiedMinute: 5);
 
-      final merged = mergePayloads(local: checkedHere, incoming: uncheckedThere);
+      final merged = mergePayloads(
+        local: checkedHere,
+        incoming: uncheckedThere,
+      );
       expect(_only(merged).isCompletedOn(DateTime(2026, 10, 1)), isFalse);
       expect(_only(merged).checkInChangedAt[day], _ms(5));
     });
 
     test('a check made after an un-check wins', () {
-      final unchecked = _payload([_habit('h', changedAt: {day: _ms(1)})]);
+      final unchecked = _payload([
+        _habit('h', changedAt: {day: _ms(1)}),
+      ]);
       final checkedLater = _payload([
         _habit('h', checkIns: {day: true}, changedAt: {day: _ms(2)}),
       ]);
@@ -132,8 +135,12 @@ void main() {
     });
 
     test('legacy check-ins without times are a union (nothing lost)', () {
-      final a = _payload([_habit('h', checkIns: {'2026-10-01': true})]);
-      final b = _payload([_habit('h', checkIns: {'2026-10-02': true})]);
+      final a = _payload([
+        _habit('h', checkIns: {'2026-10-01': true}),
+      ]);
+      final b = _payload([
+        _habit('h', checkIns: {'2026-10-02': true}),
+      ]);
 
       expect(
         _only(mergePayloads(local: a, incoming: b)).checkIns.keys.toSet(),
@@ -181,22 +188,31 @@ void main() {
   });
 
   group('Merge: algebra', () {
-    final a = _payload([
-      _habit('shared',
-          checkIns: {'2026-10-01': true}, changedAt: {'2026-10-01': _ms(1)}),
-      _habit('onlyA', title: 'A'),
-    ], deletedHabits: {'gone': _at(3)});
+    final a = _payload(
+      [
+        _habit(
+          'shared',
+          checkIns: {'2026-10-01': true},
+          changedAt: {'2026-10-01': _ms(1)},
+        ),
+        _habit('onlyA', title: 'A'),
+      ],
+      deletedHabits: {'gone': _at(3)},
+    );
     final b = _payload([
-      _habit('shared',
-          changedAt: {'2026-10-01': _ms(4)},
-          checkIns: {'2026-10-02': true},
-          modifiedMinute: 4),
+      _habit(
+        'shared',
+        changedAt: {'2026-10-01': _ms(4)},
+        checkIns: {'2026-10-02': true},
+        modifiedMinute: 4,
+      ),
       _habit('onlyB', title: 'B'),
       _habit('gone'),
     ], modifiedMinute: 4);
 
-    Map<String, HabitModel> byId(AppPayloadModel p) =>
-        {for (final h in p.habits) h.id: h};
+    Map<String, HabitModel> byId(AppPayloadModel p) => {
+      for (final h in p.habits) h.id: h,
+    };
 
     test('is commutative in content', () {
       final ab = mergePayloads(local: a, incoming: b);
@@ -252,23 +268,28 @@ void main() {
 
       expect(outcome.uploaded, isTrue);
       expect(outcome.localChanged, isFalse);
-      expect(AppPayloadModel.fromRawJson(cloud.contents!).habits.single.id, 'h');
-    });
-
-    test('merges the other device\'s changes, then uploads the union',
-        () async {
-      final repo = await repoWith(_payload([_habit('mine')]));
-      final cloud = _FakeCloud(
-        contents: _payload([_habit('theirs')]).toRawJson(),
+      expect(
+        AppPayloadModel.fromRawJson(cloud.contents!).habits.single.id,
+        'h',
       );
-
-      final outcome = await SyncEngine.run(backend: cloud, repository: repo);
-
-      expect(outcome.localChanged, isTrue);
-      expect(repo.current!.habits.map((h) => h.id), ['mine', 'theirs']);
-      final uploaded = AppPayloadModel.fromRawJson(cloud.contents!);
-      expect(uploaded.habits.map((h) => h.id).toSet(), {'mine', 'theirs'});
     });
+
+    test(
+      'merges the other device\'s changes, then uploads the union',
+      () async {
+        final repo = await repoWith(_payload([_habit('mine')]));
+        final cloud = _FakeCloud(
+          contents: _payload([_habit('theirs')]).toRawJson(),
+        );
+
+        final outcome = await SyncEngine.run(backend: cloud, repository: repo);
+
+        expect(outcome.localChanged, isTrue);
+        expect(repo.current!.habits.map((h) => h.id), ['mine', 'theirs']);
+        final uploaded = AppPayloadModel.fromRawJson(cloud.contents!);
+        expect(uploaded.habits.map((h) => h.id).toSet(), {'mine', 'theirs'});
+      },
+    );
 
     test('does nothing when already in sync', () async {
       final data = _payload([_habit('h')]);
@@ -296,9 +317,9 @@ void main() {
 
     test('refuses cloud data from a newer app version', () async {
       final repo = await repoWith(_payload([_habit('h')]));
-      final newer = jsonDecode(_payload(const []).toRawJson())
-          as Map<String, dynamic>
-        ..['version'] = AppPayloadModel.currentSchemaVersion + 1;
+      final newer =
+          jsonDecode(_payload(const []).toRawJson()) as Map<String, dynamic>
+            ..['version'] = AppPayloadModel.currentSchemaVersion + 1;
       final cloud = _FakeCloud(contents: jsonEncode(newer));
 
       await expectLater(
@@ -308,11 +329,11 @@ void main() {
       expect(cloud.uploads, 0);
     });
 
-    test('keeps a local edit made while the download was in flight',
-        () async {
+    test('keeps a local edit made while the download was in flight', () async {
       final repo = await repoWith(_payload([_habit('a')]));
-      final cloud = _FakeCloud(contents: _payload([_habit('remote')]).toRawJson())
-        ..downloadGate = Completer<void>();
+      final cloud = _FakeCloud(
+        contents: _payload([_habit('remote')]).toRawJson(),
+      )..downloadGate = Completer<void>();
 
       final syncing = SyncEngine.run(backend: cloud, repository: repo);
       await pumpEventQueue();
@@ -322,10 +343,11 @@ void main() {
       cloud.downloadGate!.complete();
       await syncing;
 
-      expect(
-        repo.current!.habits.map((h) => h.id).toSet(),
-        {'a', 'editedMeanwhile', 'remote'},
-      );
+      expect(repo.current!.habits.map((h) => h.id).toSet(), {
+        'a',
+        'editedMeanwhile',
+        'remote',
+      });
     });
 
     test('two devices converge on deletions and un-checks', () async {
@@ -342,14 +364,20 @@ void main() {
       await SyncEngine.run(backend: cloud, repository: deviceB);
 
       // A deletes "drop"; B un-checks "keep" on the same day.
-      await deviceA.update((p) => p.copyWith(
-            habits: p.habits.where((h) => h.id != 'drop').toList(),
-            deletedHabits: {...p.deletedHabits, 'drop': DateTime.now()},
-          ));
-      await deviceB.update((p) => p.copyWith(habits: [
+      await deviceA.update(
+        (p) => p.copyWith(
+          habits: p.habits.where((h) => h.id != 'drop').toList(),
+          deletedHabits: {...p.deletedHabits, 'drop': DateTime.now()},
+        ),
+      );
+      await deviceB.update(
+        (p) => p.copyWith(
+          habits: [
             for (final h in p.habits)
               h.id == 'keep' ? h.toggleCheckIn(DateTime(2026, 10, 1)) : h,
-          ]));
+          ],
+        ),
+      );
 
       await SyncEngine.run(backend: cloud, repository: deviceA);
       await SyncEngine.run(backend: cloud, repository: deviceB);
@@ -368,42 +396,48 @@ void main() {
   });
 
   group('DriveAppDataClient', () {
-    test('creates the file in appDataFolder, then updates it in place',
-        () async {
-      final requests = <http.Request>[];
-      var fileExists = false;
-      final client = MockClient((request) async {
-        requests.add(request);
-        if (request.method == 'GET' && request.url.path.endsWith('/files')) {
-          return http.Response(
-            jsonEncode({
-              'files': fileExists ? [{'id': 'file_1'}] : <Object>[],
-            }),
-            200,
-          );
-        }
-        if (request.method == 'POST') {
-          fileExists = true;
-          return http.Response(jsonEncode({'id': 'file_1'}), 200);
-        }
-        return http.Response('{}', 200);
-      });
-      final drive = DriveAppDataClient(
-        accessToken: () async => 'token',
-        client: client,
-      );
+    test(
+      'creates the file in appDataFolder, then updates it in place',
+      () async {
+        final requests = <http.Request>[];
+        var fileExists = false;
+        final client = MockClient((request) async {
+          requests.add(request);
+          if (request.method == 'GET' && request.url.path.endsWith('/files')) {
+            return http.Response(
+              jsonEncode({
+                'files': fileExists
+                    ? [
+                        {'id': 'file_1'},
+                      ]
+                    : <Object>[],
+              }),
+              200,
+            );
+          }
+          if (request.method == 'POST') {
+            fileExists = true;
+            return http.Response(jsonEncode({'id': 'file_1'}), 200);
+          }
+          return http.Response('{}', 200);
+        });
+        final drive = DriveAppDataClient(
+          accessToken: () async => 'token',
+          client: client,
+        );
 
-      await drive.upload('{"v":1}');
-      await drive.upload('{"v":2}');
+        await drive.upload('{"v":1}');
+        await drive.upload('{"v":2}');
 
-      final post = requests.firstWhere((r) => r.method == 'POST');
-      expect(post.url.queryParameters['uploadType'], 'multipart');
-      expect(post.body, contains('"appDataFolder"'));
-      expect(post.headers['Authorization'], 'Bearer token');
-      final patch = requests.firstWhere((r) => r.method == 'PATCH');
-      expect(patch.url.path, endsWith('/files/file_1'));
-      expect(patch.body, '{"v":2}');
-    });
+        final post = requests.firstWhere((r) => r.method == 'POST');
+        expect(post.url.queryParameters['uploadType'], 'multipart');
+        expect(post.body, contains('"appDataFolder"'));
+        expect(post.headers['Authorization'], 'Bearer token');
+        final patch = requests.firstWhere((r) => r.method == 'PATCH');
+        expect(patch.url.path, endsWith('/files/file_1'));
+        expect(patch.body, '{"v":2}');
+      },
+    );
 
     test('reports rejected credentials as an auth problem', () async {
       final drive = DriveAppDataClient(
@@ -421,12 +455,14 @@ void main() {
     Future<ProviderContainer> container() async {
       storage = WebHabitStorage(InMemoryWebStore());
       await storage.savePayload(_payload([_habit('local')]));
-      final c = ProviderContainer(overrides: [
-        habitStorageProvider.overrideWithValue(storage),
-        cloudBackendsProvider.overrideWithValue({
-          CloudProvider.googleDrive: cloud,
-        }),
-      ]);
+      final c = ProviderContainer(
+        overrides: [
+          habitStorageProvider.overrideWithValue(storage),
+          cloudBackendsProvider.overrideWithValue({
+            CloudProvider.googleDrive: cloud,
+          }),
+        ],
+      );
       addTearDown(c.dispose);
       await c.read(habitListProvider.future);
       return c;
@@ -436,7 +472,8 @@ void main() {
       cloud = _FakeCloud(contents: _payload([_habit('fromCloud')]).toRawJson());
       final c = await container();
 
-      await c.read(syncControllerProvider.notifier)
+      await c
+          .read(syncControllerProvider.notifier)
           .connect(CloudProvider.googleDrive);
       await pumpEventQueue();
 
@@ -453,7 +490,8 @@ void main() {
         ..authError = const SyncAuthException('Sign-in was cancelled');
       final c = await container();
 
-      await c.read(syncControllerProvider.notifier)
+      await c
+          .read(syncControllerProvider.notifier)
           .connect(CloudProvider.googleDrive);
 
       final sync = c.read(syncControllerProvider);

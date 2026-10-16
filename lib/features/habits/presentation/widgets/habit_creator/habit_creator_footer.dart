@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../../../core/theme/app_dimensions.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/widgets/widgets.dart';
 
@@ -22,7 +23,10 @@ class HabitCreatorFooter extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
         border: Border(
-          top: BorderSide(color: context.cardBorderColor, width: 1.0),
+          top: BorderSide(
+            color: context.cardBorderColor,
+            width: AppSizes.borderWidth,
+          ),
         ),
       ),
       child: Row(

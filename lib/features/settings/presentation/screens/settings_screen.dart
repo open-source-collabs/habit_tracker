@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/data/app_data_repository.dart';
 import '../../../../core/routes/app_navigator.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
@@ -32,7 +33,7 @@ class SettingsScreen extends ConsumerWidget {
       ),
       body: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640),
+          constraints: const BoxConstraints(maxWidth: AppSizes.pageMaxWidth),
           child: ListView(
             padding: EdgeInsets.all(16.r),
             children: [

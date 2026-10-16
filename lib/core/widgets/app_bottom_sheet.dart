@@ -51,7 +51,7 @@ class AppBottomSheet extends StatelessWidget {
                     height: 4.w,
                     decoration: BoxDecoration(
                       color: context.cardBorderColor,
-                      borderRadius: BorderRadius.circular(3.r),
+                      borderRadius: BorderRadius.circular(AppRadius.hairline),
                     ),
                   ),
                 ),
@@ -82,7 +82,7 @@ class AppBottomSheet extends StatelessWidget {
                   if (showCloseButton)
                     AppIconButton(
                       icon: Icons.close_rounded,
-                      size: 32.r,
+                      size: AppIconSizes.xxl,
                       iconSize: AppIconSizes.md,
                       border: false,
                       onPressed: () => Navigator.of(context).pop(),

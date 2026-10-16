@@ -209,7 +209,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                 height: 4.5.w,
                 decoration: BoxDecoration(
                   color: _workingTheme.textPrimary.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2.r),
+                  borderRadius: BorderRadius.circular(AppRadius.hairline),
                 ),
               ),
 

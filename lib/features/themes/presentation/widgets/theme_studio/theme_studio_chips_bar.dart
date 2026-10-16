@@ -72,7 +72,10 @@ class ThemeStudioChipsBar extends StatelessWidget {
               fontWeight: FontWeight.w600,
               fontSize: AppFontSizes.caption,
             ),
-            side: BorderSide(color: workingTheme.cardBorder, width: 1),
+            side: BorderSide(
+              color: workingTheme.cardBorder,
+              width: AppSizes.borderWidth,
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
