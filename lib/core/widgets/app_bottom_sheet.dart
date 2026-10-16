@@ -1,6 +1,7 @@
-  import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../theme/app_dimensions.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/app_theme.dart';
 import 'app_button.dart';
@@ -30,13 +31,14 @@ class AppBottomSheet extends StatelessWidget {
     return SafeArea(
       child: Center(
         child: Container(
-          constraints: BoxConstraints(maxWidth: 600.w.clamp(400.0, 640.0)),
-          padding: padding ??
+          constraints: const BoxConstraints(maxWidth: AppSizes.sheetMaxWidth),
+          padding:
+              padding ??
               EdgeInsets.only(
-                left: 16.w.clamp(14.0, 20.0),
-                right: 16.w.clamp(14.0, 20.0),
+                left: 16.w,
+                right: 16.w,
                 top: 10.h,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 14.h,
+                bottom: MediaQuery.viewInsetsOf(context).bottom + 14.h,
               ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -45,8 +47,8 @@ class AppBottomSheet extends StatelessWidget {
               if (showDragHandle) ...[
                 Center(
                   child: Container(
-                    width: 40.w.clamp(36.0, 48.0),
-                    height: 4.h.clamp(3.0, 5.0),
+                    width: 40.w,
+                    height: 4.w,
                     decoration: BoxDecoration(
                       color: context.cardBorderColor,
                       borderRadius: BorderRadius.circular(3.r),
@@ -81,7 +83,7 @@ class AppBottomSheet extends StatelessWidget {
                     AppIconButton(
                       icon: Icons.close_rounded,
                       size: 32.r,
-                      iconSize: 18.sp,
+                      iconSize: AppIconSizes.md,
                       border: false,
                       onPressed: () => Navigator.of(context).pop(),
                     ),
@@ -112,7 +114,7 @@ Future<T?> showAppBottomSheet<T>({
     enableDrag: enableDrag,
     backgroundColor: context.cardBackgroundColor,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24.r.clamp(18.0, 24.0))),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.card)),
     ),
     builder: builder,
   );

@@ -2,23 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_dimensions.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/app_theme.dart';
 import '../utils/haptics.dart';
 
-enum AppButtonVariant {
-  primary,
-  secondary,
-  outline,
-  ghost,
-  danger,
-}
+enum AppButtonVariant { primary, secondary, outline, ghost, danger }
 
-enum AppButtonSize {
-  sm,
-  md,
-  lg,
-}
+enum AppButtonSize { sm, md, lg }
 
 /// Tactile, responsive app button adapting to active themes.
 /// Includes 0.96 scale-down spring press animation, light impact haptics,
@@ -96,33 +87,33 @@ class _AppButtonState extends State<AppButton>
   double get _height {
     switch (widget.size) {
       case AppButtonSize.sm:
-        return 32.h.clamp(28.0, 36.0);
+        return AppSizes.buttonHeightSm;
       case AppButtonSize.md:
-        return 42.h.clamp(38.0, 46.0);
+        return AppSizes.buttonHeightMd;
       case AppButtonSize.lg:
-        return 48.h.clamp(44.0, 52.0);
+        return AppSizes.buttonHeightLg;
     }
   }
 
   EdgeInsetsGeometry get _padding {
     switch (widget.size) {
       case AppButtonSize.sm:
-        return EdgeInsets.symmetric(horizontal: 12.w.clamp(10.0, 14.0));
+        return EdgeInsets.symmetric(horizontal: 12.w);
       case AppButtonSize.md:
-        return EdgeInsets.symmetric(horizontal: 16.w.clamp(12.0, 20.0));
+        return EdgeInsets.symmetric(horizontal: 16.w);
       case AppButtonSize.lg:
-        return EdgeInsets.symmetric(horizontal: 22.w.clamp(18.0, 26.0));
+        return EdgeInsets.symmetric(horizontal: 22.w);
     }
   }
 
   double get _borderRadius {
     switch (widget.size) {
       case AppButtonSize.sm:
-        return 10.r.clamp(8.0, 12.0);
+        return 10.r;
       case AppButtonSize.md:
-        return 14.r.clamp(12.0, 16.0);
+        return AppRadius.chip;
       case AppButtonSize.lg:
-        return 16.r.clamp(14.0, 18.0);
+        return AppRadius.lg;
     }
   }
 
@@ -145,8 +136,8 @@ class _AppButtonState extends State<AppButton>
           shadows = [
             BoxShadow(
               color: effectiveAccent.withValues(alpha: 0.38),
-              blurRadius: 16.r,
-              offset: Offset(0, 4.h),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
             ),
           ];
         }
@@ -155,7 +146,10 @@ class _AppButtonState extends State<AppButton>
       case AppButtonVariant.secondary:
         backgroundColor = context.surfaceElevatedColor;
         foregroundColor = context.textPrimaryColor;
-        border = Border.all(color: context.cardBorderColor, width: 1.2);
+        border = Border.all(
+          color: context.cardBorderColor,
+          width: AppSizes.borderWidth,
+        );
         break;
 
       case AppButtonVariant.outline:
@@ -181,8 +175,8 @@ class _AppButtonState extends State<AppButton>
           shadows = [
             BoxShadow(
               color: AppColors.error.withValues(alpha: 0.35),
-              blurRadius: 14.r,
-              offset: Offset(0, 4.h),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
             ),
           ];
         }
@@ -227,18 +221,21 @@ class _AppButtonState extends State<AppButton>
                 boxShadow: shadows,
               ),
               child: Row(
-                mainAxisSize:
-                    widget.fullWidth ? MainAxisSize.max : MainAxisSize.min,
+                mainAxisSize: widget.fullWidth
+                    ? MainAxisSize.max
+                    : MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   if (widget.isLoading) ...[
                     SizedBox(
-                      width: 18.r,
-                      height: 18.r,
+                      width: AppIconSizes.md,
+                      height: AppIconSizes.md,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.2,
-                        valueColor: AlwaysStoppedAnimation<Color>(foregroundColor),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          foregroundColor,
+                        ),
                       ),
                     ),
                     SizedBox(width: 10.w),
@@ -338,7 +335,7 @@ class _AppIconButtonState extends State<AppIconButton>
   @override
   Widget build(BuildContext context) {
     final double boxSize = widget.size ?? 40.r;
-    final double iSize = widget.iconSize ?? 18.sp;
+    final double iSize = widget.iconSize ?? AppIconSizes.md;
     final Color iconColor = widget.color ?? context.textPrimaryColor;
     final Color bgColor = widget.backgroundColor ?? context.cardBackgroundColor;
 
@@ -364,17 +361,18 @@ class _AppIconButtonState extends State<AppIconButton>
             alignment: Alignment.center,
             decoration: BoxDecoration(
               shape: widget.isCircle ? BoxShape.circle : BoxShape.rectangle,
-              borderRadius: widget.isCircle ? null : BorderRadius.circular(14.r),
+              borderRadius: widget.isCircle
+                  ? null
+                  : BorderRadius.circular(AppRadius.chip),
               color: bgColor,
               border: widget.border
-                  ? Border.all(color: context.cardBorderColor, width: 1.2)
+                  ? Border.all(
+                      color: context.cardBorderColor,
+                      width: AppSizes.borderWidth,
+                    )
                   : null,
             ),
-            child: Icon(
-              widget.icon,
-              size: iSize,
-              color: iconColor,
-            ),
+            child: Icon(widget.icon, size: iSize, color: iconColor),
           ),
         ),
       ),

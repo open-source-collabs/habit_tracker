@@ -1,6 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
 import 'app_colors.dart';
+import 'app_dimensions.dart';
+import 'app_font_sizes.dart';
 import 'app_theme_extension.dart';
 import '../../features/themes/data/models/dynamic_theme_model.dart';
 
@@ -40,8 +44,14 @@ abstract final class ThemeFactory {
 
     // Elevated surface computation (subtly lighter for dark, deeper for light)
     final surfaceElevated = isDark
-        ? Color.alphaBlend(AppColors.white.withValues(alpha: 0.05), model.cardBg)
-        : Color.alphaBlend(AppColors.black.withValues(alpha: 0.03), model.cardBg);
+        ? Color.alphaBlend(
+            AppColors.white.withValues(alpha: 0.05),
+            model.cardBg,
+          )
+        : Color.alphaBlend(
+            AppColors.black.withValues(alpha: 0.03),
+            model.cardBg,
+          );
 
     final appExtension = AppThemeExtension(
       cardBorder: model.cardBorder,
@@ -59,17 +69,17 @@ abstract final class ThemeFactory {
       textTheme: textTheme,
       primaryTextTheme: textTheme,
 
-      // 24px border radius with subtle 1.2px border and zero elevation
+      // Bento card radius with subtle hairline border and zero elevation
       cardTheme: CardThemeData(
         elevation: 0,
         color: model.cardBg,
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24.0),
+          borderRadius: BorderRadius.circular(AppRadius.cardValue),
           side: BorderSide(
             color: model.cardBorder,
-            width: 1.2,
+            width: AppSizes.borderWidth,
           ),
         ),
       ),
@@ -92,7 +102,7 @@ abstract final class ThemeFactory {
         backgroundColor: model.cardBg,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24.0),
+          borderRadius: BorderRadius.circular(AppRadius.cardValue),
           side: BorderSide.none,
         ),
       ),
@@ -100,7 +110,9 @@ abstract final class ThemeFactory {
         backgroundColor: model.cardBg,
         elevation: 0,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28.0)),
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppRadius.sheetValue),
+          ),
         ),
       ),
 
@@ -118,27 +130,38 @@ abstract final class ThemeFactory {
       // Divider Theme
       dividerTheme: DividerThemeData(
         color: model.cardBorder,
-        thickness: 1.2,
-        space: 1.2,
+        thickness: AppSizes.borderWidth,
+        space: AppSizes.borderWidth,
       ),
 
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: model.cardBg,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide(color: model.cardBorder, width: 1.2),
+          borderRadius: BorderRadius.circular(AppRadius.xlValue),
+          borderSide: BorderSide(
+            color: model.cardBorder,
+            width: AppSizes.borderWidth,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide(color: model.cardBorder, width: 1.2),
+          borderRadius: BorderRadius.circular(AppRadius.xlValue),
+          borderSide: BorderSide(
+            color: model.cardBorder,
+            width: AppSizes.borderWidth,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: BorderSide(color: primaryAccent, width: 1.6),
+          borderRadius: BorderRadius.circular(AppRadius.xlValue),
+          borderSide: BorderSide(
+            color: primaryAccent,
+            width: AppSizes.borderWidthFocused,
+          ),
         ),
       ),
 
@@ -148,7 +171,7 @@ abstract final class ThemeFactory {
         foregroundColor: AppColors.white,
         elevation: 4,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.0),
+          borderRadius: BorderRadius.circular(AppRadius.xlValue),
         ),
       ),
 
@@ -161,13 +184,27 @@ abstract final class ThemeFactory {
           fontWeight: FontWeight.w600,
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14.0),
-          side: BorderSide(color: model.cardBorder, width: 1.2),
+          borderRadius: BorderRadius.circular(AppRadius.chipValue),
+          side: BorderSide(
+            color: model.cardBorder,
+            width: AppSizes.borderWidth,
+          ),
         ),
       ),
 
       // Extensions
       extensions: [appExtension],
+    );
+  }
+
+  /// Rescales a theme built in raw mobile design units to the live ScreenUtil
+  /// scale. Call only below `AppScreenUtilInit`; on desktop the factor is 1.0.
+  static ThemeData applyScreenScale(ThemeData theme) {
+    final factor = 1.sp;
+    if (factor == 1.0) return theme;
+    return theme.copyWith(
+      textTheme: theme.textTheme.apply(fontSizeFactor: factor),
+      primaryTextTheme: theme.primaryTextTheme.apply(fontSizeFactor: factor),
     );
   }
 
@@ -177,16 +214,18 @@ abstract final class ThemeFactory {
     required Color primaryTextColor,
     required bool isDark,
   }) {
-    final secondaryTextColor =
-        isDark ? AppColors.textSecondary : AppColors.textSecondaryLight;
-    final mutedTextColor =
-        isDark ? AppColors.textMuted : AppColors.textMutedLight;
+    final secondaryTextColor = isDark
+        ? AppColors.textSecondary
+        : AppColors.textSecondaryLight;
+    final mutedTextColor = isDark
+        ? AppColors.textMuted
+        : AppColors.textMutedLight;
 
     return TextTheme(
       // Display: Extra prominent headings with aggressive tight tracking
       displayLarge: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 36,
+        fontSize: AppFontSizes.displayLargeValue,
         fontWeight: FontWeight.w800,
         letterSpacing: -0.8,
         color: primaryTextColor,
@@ -194,7 +233,7 @@ abstract final class ThemeFactory {
       ),
       displayMedium: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 30,
+        fontSize: AppFontSizes.displayMediumValue,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.6,
         color: primaryTextColor,
@@ -202,7 +241,7 @@ abstract final class ThemeFactory {
       ),
       displaySmall: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 26,
+        fontSize: AppFontSizes.displaySmallValue,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.5,
         color: primaryTextColor,
@@ -212,21 +251,21 @@ abstract final class ThemeFactory {
       // Headlines
       headlineLarge: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 24,
+        fontSize: AppFontSizes.headlineLargeValue,
         fontWeight: FontWeight.w700,
         letterSpacing: -0.4,
         color: primaryTextColor,
       ),
       headlineMedium: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 20,
+        fontSize: AppFontSizes.headlineMediumValue,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.3,
         color: primaryTextColor,
       ),
       headlineSmall: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 18,
+        fontSize: AppFontSizes.headlineSmallValue,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.25,
         color: primaryTextColor,
@@ -235,21 +274,21 @@ abstract final class ThemeFactory {
       // Titles
       titleLarge: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 18,
+        fontSize: AppFontSizes.titleLargeValue,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.2,
         color: primaryTextColor,
       ),
       titleMedium: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 16,
+        fontSize: AppFontSizes.titleMediumValue,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.2,
         color: primaryTextColor,
       ),
       titleSmall: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 14,
+        fontSize: AppFontSizes.titleSmallValue,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.15,
         color: secondaryTextColor,
@@ -258,7 +297,7 @@ abstract final class ThemeFactory {
       // Body: Clean, crisp text
       bodyLarge: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 16,
+        fontSize: AppFontSizes.bodyLargeValue,
         fontWeight: FontWeight.w400,
         letterSpacing: -0.2,
         color: primaryTextColor,
@@ -266,7 +305,7 @@ abstract final class ThemeFactory {
       ),
       bodyMedium: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 14,
+        fontSize: AppFontSizes.bodyMediumValue,
         fontWeight: FontWeight.w400,
         letterSpacing: -0.15,
         color: secondaryTextColor,
@@ -274,7 +313,7 @@ abstract final class ThemeFactory {
       ),
       bodySmall: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 12,
+        fontSize: AppFontSizes.bodySmallValue,
         fontWeight: FontWeight.w400,
         letterSpacing: -0.1,
         color: mutedTextColor,
@@ -284,21 +323,21 @@ abstract final class ThemeFactory {
       // Labels: Compact badges and tabs
       labelLarge: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 14,
+        fontSize: AppFontSizes.labelLargeValue,
         fontWeight: FontWeight.w600,
         letterSpacing: -0.1,
         color: primaryTextColor,
       ),
       labelMedium: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 12,
+        fontSize: AppFontSizes.labelMediumValue,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.0,
         color: secondaryTextColor,
       ),
       labelSmall: TextStyle(
         fontFamily: fontFamily,
-        fontSize: 11,
+        fontSize: AppFontSizes.labelSmallValue,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.0,
         color: mutedTextColor,

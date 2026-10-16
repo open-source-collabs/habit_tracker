@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../theme/app_dimensions.dart';
 import '../theme/app_theme.dart';
 import '../utils/haptics.dart';
 
@@ -34,8 +35,7 @@ class AppCard extends StatefulWidget {
   State<AppCard> createState() => _AppCardState();
 }
 
-class _AppCardState extends State<AppCard>
-    with SingleTickerProviderStateMixin {
+class _AppCardState extends State<AppCard> with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _scaleAnimation;
 
@@ -71,7 +71,7 @@ class _AppCardState extends State<AppCard>
 
   @override
   Widget build(BuildContext context) {
-    final double radius = widget.borderRadius ?? 18.r.clamp(14.0, 20.0);
+    final double radius = widget.borderRadius ?? 18.r;
     final Color bgColor = widget.backgroundColor ?? context.cardBackgroundColor;
     final Color bColor = widget.borderColor ?? context.cardBorderColor;
 
@@ -80,28 +80,28 @@ class _AppCardState extends State<AppCard>
       shadows = [
         BoxShadow(
           color: widget.glowColor!.withValues(alpha: 0.35),
-          blurRadius: 18.r.clamp(14.0, 20.0),
+          blurRadius: 18,
           spreadRadius: 1,
-          offset: Offset(0, 3.h),
+          offset: const Offset(0, 3),
         ),
       ];
     } else {
       shadows = [
         BoxShadow(
           color: context.shadowColor,
-          blurRadius: 10.r.clamp(8.0, 12.0),
-          offset: Offset(0, 2.h),
+          blurRadius: 10,
+          offset: const Offset(0, 2),
         ),
       ];
     }
 
     Widget content = Container(
       margin: widget.margin,
-      padding: widget.padding ?? EdgeInsets.all(14.r.clamp(12.0, 16.0)),
+      padding: widget.padding ?? EdgeInsets.all(14.r),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: bColor, width: 1.2),
+        border: Border.all(color: bColor, width: AppSizes.borderWidth),
         boxShadow: shadows,
       ),
       child: widget.child,

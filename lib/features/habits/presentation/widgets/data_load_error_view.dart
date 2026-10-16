@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../themes/data/models/app_payload_model.dart';
@@ -17,33 +19,34 @@ class DataLoadErrorView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final error = this.error;
-    final isNewerVersion = error is UnsupportedPayloadVersionException ||
+    final isNewerVersion =
+        error is UnsupportedPayloadVersionException ||
         (error is CorruptPayloadException &&
             error.cause is UnsupportedPayloadVersionException);
 
     final message = isNewerVersion
         ? 'Your data was saved by a newer version of the app. Update the app '
-            'to open it. Nothing has been changed.'
+              'to open it. Nothing has been changed.'
         : 'Your saved habits could not be read. Nothing has been overwritten. '
-            'You can try again, or start fresh. Starting fresh keeps a copy '
-            'of the unreadable data on this device.';
+              'You can try again, or start fresh. Starting fresh keeps a copy '
+              'of the unreadable data on this device.';
 
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(24.r),
           child: AppCard(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(20.r),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   Icons.warning_amber_rounded,
-                  size: 40,
+                  size: AppIconSizes.hero,
                   color: context.colorScheme.error,
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12.h),
                 Text(
                   "Couldn't load your habits",
                   textAlign: TextAlign.center,
@@ -52,7 +55,7 @@ class DataLoadErrorView extends ConsumerWidget {
                     color: context.textPrimaryColor,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8.h),
                 Text(
                   message,
                   textAlign: TextAlign.center,
@@ -60,7 +63,7 @@ class DataLoadErrorView extends ConsumerWidget {
                     color: context.textSecondaryColor,
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20.h),
                 AppButton(
                   text: 'Try again',
                   fullWidth: true,
@@ -68,7 +71,7 @@ class DataLoadErrorView extends ConsumerWidget {
                       ref.read(habitListProvider.notifier).retryLoad(),
                 ),
                 if (!isNewerVersion) ...[
-                  const SizedBox(height: 10),
+                  SizedBox(height: 10.h),
                   AppButton(
                     text: 'Start fresh',
                     variant: AppButtonVariant.danger,
@@ -88,7 +91,8 @@ class DataLoadErrorView extends ConsumerWidget {
     final confirmed = await showAppConfirmDialog(
       context: context,
       title: 'Start fresh?',
-      message: 'This starts an empty habit list. A copy of the unreadable '
+      message:
+          'This starts an empty habit list. A copy of the unreadable '
           'data stays on this device for recovery.',
       confirmText: 'Start fresh',
       isDestructive: true,

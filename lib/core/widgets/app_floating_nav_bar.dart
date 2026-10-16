@@ -1,8 +1,12 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../theme/app_breakpoints.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_dimensions.dart';
+import '../theme/app_font_sizes.dart';
 import '../theme/app_theme.dart';
 import '../utils/haptics.dart';
 
@@ -51,15 +55,16 @@ class AppFloatingNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.of(context).size.width >= 768.0;
+    final isDesktop = context.isDesktop;
     final primaryAccent = context.primaryAccent;
     final isDark = context.isDarkMode;
 
-    final effectiveMargin = margin ??
+    final effectiveMargin =
+        margin ??
         EdgeInsets.only(
-          left: isDesktop ? 24.0 : 20.w.clamp(16.0, 24.0),
-          right: isDesktop ? 24.0 : 20.w.clamp(16.0, 24.0),
-          bottom: isDesktop ? 18.0 : 12.h.clamp(10.0, 16.0),
+          left: isDesktop ? 24.w : 20.w,
+          right: isDesktop ? 24.w : 20.w,
+          bottom: isDesktop ? 18.h : 12.h,
         );
 
     final half = (items.length / 2).ceil();
@@ -74,10 +79,12 @@ class AppFloatingNavBar extends StatelessWidget {
           padding: effectiveMargin,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30.r.clamp(24.0, 32.0)),
+              borderRadius: BorderRadius.circular(30.r),
               boxShadow: [
                 BoxShadow(
-                  color: context.shadowColor.withValues(alpha: isDark ? 0.35 : 0.12),
+                  color: context.shadowColor.withValues(
+                    alpha: isDark ? 0.35 : 0.12,
+                  ),
                   blurRadius: 24,
                   offset: const Offset(0, 8),
                 ),
@@ -89,22 +96,22 @@ class AppFloatingNavBar extends StatelessWidget {
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(30.r.clamp(24.0, 32.0)),
+              borderRadius: BorderRadius.circular(30.r),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                 child: Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: 10.w.clamp(8.0, 14.0),
-                    vertical: 6.h.clamp(5.0, 8.0),
+                    horizontal: 10.w,
+                    vertical: 6.h,
                   ),
                   decoration: BoxDecoration(
                     color: context.cardBackgroundColor.withValues(
                       alpha: isDark ? 0.82 : 0.88,
                     ),
-                    borderRadius: BorderRadius.circular(32.r.clamp(24.0, 32.0)),
+                    borderRadius: BorderRadius.circular(32.r),
                     border: Border.all(
                       color: context.cardBorderColor.withValues(alpha: 0.8),
-                      width: 1.2,
+                      width: AppSizes.borderWidth,
                     ),
                   ),
                   child: Row(
@@ -126,10 +133,9 @@ class AppFloatingNavBar extends StatelessWidget {
                       // Center action button (if provided)
                       if (centerAction != null || onCenterActionPressed != null)
                         Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 6.w.clamp(4.0, 8.0),
-                          ),
-                          child: centerAction ??
+                          padding: EdgeInsets.symmetric(horizontal: 6.w),
+                          child:
+                              centerAction ??
                               _CenterActionButton(
                                 icon: centerActionIcon,
                                 tooltip: centerActionTooltip,
@@ -240,13 +246,10 @@ class _NavBarTabButtonState extends State<_NavBarTabButton>
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 220),
             curve: Curves.easeOutCubic,
-            padding: EdgeInsets.symmetric(
-              vertical: 7.h.clamp(5.0, 9.0),
-              horizontal: 4.w.clamp(3.0, 6.0),
-            ),
+            padding: EdgeInsets.symmetric(vertical: 7.h, horizontal: 4.w),
             decoration: BoxDecoration(
               color: isSelected ? activeSurface : AppColors.transparent,
-              borderRadius: BorderRadius.circular(20.r.clamp(16.0, 22.0)),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               border: Border.all(
                 color: isSelected
                     ? primaryAccent.withValues(alpha: 0.35)
@@ -267,7 +270,7 @@ class _NavBarTabButtonState extends State<_NavBarTabButton>
                       curve: Curves.easeOutBack,
                       child: Icon(
                         isSelected ? (item.activeIcon ?? item.icon) : item.icon,
-                        size: 21.sp.clamp(19.0, 23.0),
+                        size: 21.r,
                         color: isSelected
                             ? primaryAccent
                             : context.textMutedColor,
@@ -278,21 +281,23 @@ class _NavBarTabButtonState extends State<_NavBarTabButton>
                         right: -8.w,
                         top: -4.h,
                         child: Container(
-                          padding: const EdgeInsets.all(3),
+                          padding: EdgeInsets.all(3.r),
                           decoration: BoxDecoration(
                             color: primaryAccent,
                             shape: BoxShape.circle,
                           ),
-                          constraints: const BoxConstraints(
-                            minWidth: 14,
-                            minHeight: 14,
+                          constraints: BoxConstraints(
+                            minWidth: 14.r,
+                            minHeight: 14.r,
                           ),
                           child: Text(
-                            item.badgeCount! > 99 ? '99+' : '${item.badgeCount}',
+                            item.badgeCount! > 99
+                                ? '99+'
+                                : '${item.badgeCount}',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: context.onPrimaryColor,
-                              fontSize: 9.sp,
+                              fontSize: AppFontSizes.tiny,
                               fontWeight: FontWeight.w700,
                               height: 1.0,
                             ),
@@ -301,7 +306,7 @@ class _NavBarTabButtonState extends State<_NavBarTabButton>
                       ),
                   ],
                 ),
-                SizedBox(height: 3.h.clamp(2.0, 4.0)),
+                SizedBox(height: 3.h),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
@@ -311,8 +316,10 @@ class _NavBarTabButtonState extends State<_NavBarTabButton>
                       color: isSelected
                           ? primaryAccent
                           : context.textMutedColor,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                      fontSize: 10.sp.clamp(9.0, 11.0),
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      fontSize: AppFontSizes.micro,
                       letterSpacing: 0.2,
                     ),
                   ),
@@ -395,8 +402,8 @@ class _CenterActionButtonState extends State<_CenterActionButton>
           child: ScaleTransition(
             scale: _scaleAnimation,
             child: Container(
-              width: 42.w.clamp(38.0, 46.0),
-              height: 42.h.clamp(38.0, 46.0),
+              width: 42.r,
+              height: 42.r,
               decoration: BoxDecoration(
                 color: primaryAccent,
                 shape: BoxShape.circle,
@@ -415,11 +422,7 @@ class _CenterActionButtonState extends State<_CenterActionButton>
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  Icon(
-                    widget.icon,
-                    color: context.onPrimaryColor,
-                    size: 22.sp.clamp(20.0, 24.0),
-                  ),
+                  Icon(widget.icon, color: context.onPrimaryColor, size: 22.r),
                   SizedBox(
                     width: 0,
                     height: 0,

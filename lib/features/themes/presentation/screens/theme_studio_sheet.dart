@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_font_sizes.dart';
 import '../../../../core/theme/theme_factory.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../../../core/widgets/widgets.dart';
@@ -35,10 +37,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
       ref.watch(themeStudioWorkingThemeNotifierProvider);
   late TextEditingController _nameController;
 
-  static const List<String> _fontRegistry = [
-    'PlusJakartaSans',
-    'Inter',
-  ];
+  static const List<String> _fontRegistry = ['PlusJakartaSans', 'Inter'];
 
   @override
   void initState() {
@@ -93,8 +92,9 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
 
     // Saving an edited preset yields a new custom theme with its own id;
     // keep editing that one rather than the untouched preset.
-    final updatedTheme =
-        await ref.read(themeProvider.notifier).saveCustomTheme(draft);
+    final updatedTheme = await ref
+        .read(themeProvider.notifier)
+        .saveCustomTheme(draft);
     ref
         .read(themeStudioWorkingThemeNotifierProvider.notifier)
         .setWorkingTheme(updatedTheme);
@@ -113,7 +113,9 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
               ? updatedTheme.accentPalette.first
               : AppColors.emeraldMint,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
         ),
       );
     }
@@ -121,8 +123,9 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
 
   Future<void> _duplicateTheme() async {
     AppHaptics.mediumImpact();
-    final duplicated =
-        await ref.read(themeProvider.notifier).duplicateTheme(_workingTheme);
+    final duplicated = await ref
+        .read(themeProvider.notifier)
+        .duplicateTheme(_workingTheme);
     ref
         .read(themeStudioWorkingThemeNotifierProvider.notifier)
         .setWorkingTheme(duplicated);
@@ -158,7 +161,9 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
   @override
   Widget build(BuildContext context) {
     final themeState = ref.watch(themeProvider);
-    final previewThemeData = ThemeFactory.createTheme(_workingTheme);
+    final previewThemeData = ThemeFactory.applyScreenScale(
+      ThemeFactory.createTheme(_workingTheme),
+    );
     final activeAccent = _workingTheme.accentPalette.isNotEmpty
         ? _workingTheme.accentPalette.first
         : AppColors.neonLavender;
@@ -171,13 +176,16 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
         return Container(
           decoration: BoxDecoration(
             color: _workingTheme.scaffoldBg,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28.r)),
-            border: Border.all(color: _workingTheme.cardBorder, width: 1.2),
+            borderRadius: AppRadius.sheetBorderRadius,
+            border: Border.all(
+              color: _workingTheme.cardBorder,
+              width: AppSizes.borderWidth,
+            ),
             boxShadow: [
               BoxShadow(
                 color: AppColors.overlay50,
-                blurRadius: 30.r,
-                offset: Offset(0, -6.h),
+                blurRadius: 30,
+                offset: Offset(0, -6),
               ),
             ],
           ),
@@ -187,7 +195,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
               Container(
                 margin: EdgeInsets.symmetric(vertical: 12.h),
                 width: 44.w,
-                height: 4.5.h,
+                height: 4.5.w,
                 decoration: BoxDecoration(
                   color: _workingTheme.textPrimary.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2.r),
@@ -205,16 +213,19 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                       children: [
                         Text(
                           'Theme Studio',
-                          style: previewThemeData.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.4,
-                          ),
+                          style: previewThemeData.textTheme.titleLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: -0.4,
+                              ),
                         ),
                         SizedBox(height: 2.h),
                         Text(
                           'Design, customize, and persist dynamic themes',
                           style: previewThemeData.textTheme.bodySmall?.copyWith(
-                            color: _workingTheme.textPrimary.withValues(alpha: 0.6),
+                            color: _workingTheme.textPrimary.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                         ),
                       ],
@@ -232,7 +243,10 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
               Expanded(
                 child: ListView(
                   controller: scrollController,
-                  padding: EdgeInsets.symmetric(horizontal: 16.w.clamp(14.0, 20.0), vertical: 6.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 6.h,
+                  ),
                   children: [
                     // Theme Selector Chips & New Button
                     _buildThemeChipsBar(themeState),
@@ -291,35 +305,39 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                       ? _workingTheme.textPrimary
                       : _workingTheme.textPrimary.withValues(alpha: 0.6),
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  fontSize: 13.sp,
+                  fontSize: AppFontSizes.caption,
                 ),
                 side: BorderSide(
                   color: isSelected
                       ? (_workingTheme.accentPalette.isNotEmpty
-                          ? _workingTheme.accentPalette.first
-                          : _workingTheme.cardBorder)
+                            ? _workingTheme.accentPalette.first
+                            : _workingTheme.cardBorder)
                       : _workingTheme.cardBorder,
                   width: isSelected ? 1.5 : 1,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16.r),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
               ),
             );
           }),
           ActionChip(
-            avatar: Icon(Icons.add, size: 16.sp, color: _workingTheme.textPrimary),
+            avatar: Icon(
+              Icons.add,
+              size: AppIconSizes.sm,
+              color: _workingTheme.textPrimary,
+            ),
             label: const Text('New Custom'),
             onPressed: _createNewTheme,
             backgroundColor: _workingTheme.cardBg,
             labelStyle: TextStyle(
               color: _workingTheme.textPrimary,
               fontWeight: FontWeight.w600,
-              fontSize: 13.sp,
+              fontSize: AppFontSizes.caption,
             ),
             side: BorderSide(color: _workingTheme.cardBorder, width: 1),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16.r),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
           ),
         ],
@@ -338,7 +356,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
               'LIVE PREVIEW',
               style: TextStyle(
                 fontFamily: _workingTheme.fontFamily,
-                fontSize: 11.sp,
+                fontSize: AppFontSizes.labelSmall,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.2,
                 color: _workingTheme.textPrimary.withValues(alpha: 0.5),
@@ -348,14 +366,14 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
               padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
               decoration: BoxDecoration(
                 color: activeAccent.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12.r),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(color: activeAccent.withValues(alpha: 0.3)),
               ),
               child: Text(
                 _workingTheme.fontFamily,
                 style: TextStyle(
                   fontFamily: _workingTheme.fontFamily,
-                  fontSize: 11.sp,
+                  fontSize: AppFontSizes.labelSmall,
                   fontWeight: FontWeight.w700,
                   color: activeAccent,
                 ),
@@ -366,20 +384,20 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
         SizedBox(height: 10.h),
 
         Container(
-          padding: EdgeInsets.all(14.r.clamp(12.0, 16.0)),
+          padding: EdgeInsets.all(14.r),
           decoration: BoxDecoration(
             color: _workingTheme.cardBg,
-            borderRadius: BorderRadius.circular(18.r.clamp(14.0, 20.0)),
+            borderRadius: BorderRadius.circular(18.r),
             border: Border.all(
               color: activeAccent,
-              width: 1.2,
+              width: AppSizes.borderWidth,
             ),
             boxShadow: [
               BoxShadow(
                 color: activeAccent.withValues(alpha: 0.35),
-                blurRadius: 16.r,
+                blurRadius: 16,
                 spreadRadius: 0,
-                offset: Offset(0, 3.h),
+                offset: Offset(0, 3),
               ),
             ],
           ),
@@ -390,8 +408,10 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10.w,
+                      vertical: 4.h,
+                    ),
                     decoration: BoxDecoration(
                       color: activeAccent.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(10.r),
@@ -399,14 +419,17 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.local_fire_department,
-                            size: 15.sp, color: activeAccent),
+                        Icon(
+                          Icons.local_fire_department,
+                          size: 15.r,
+                          color: activeAccent,
+                        ),
                         SizedBox(width: 4.w),
                         Text(
                           '14 DAY STREAK',
                           style: TextStyle(
                             fontFamily: _workingTheme.fontFamily,
-                            fontSize: 11.sp,
+                            fontSize: AppFontSizes.labelSmall,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.5,
                             color: activeAccent,
@@ -424,11 +447,15 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                       boxShadow: [
                         BoxShadow(
                           color: activeAccent.withValues(alpha: 0.4),
-                          blurRadius: 6.r,
+                          blurRadius: 6,
                         ),
                       ],
                     ),
-                    child: Icon(Icons.check, color: previewTheme.colorScheme.onPrimary, size: 18.sp),
+                    child: Icon(
+                      Icons.check,
+                      color: previewTheme.colorScheme.onPrimary,
+                      size: AppIconSizes.md,
+                    ),
                   ),
                 ],
               ),
@@ -439,7 +466,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.3,
                   color: _workingTheme.textPrimary,
-                  fontSize: 18.sp.clamp(16.0, 20.0),
+                  fontSize: AppFontSizes.headlineSmall,
                 ),
               ),
               SizedBox(height: 4.h),
@@ -447,7 +474,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                 '20 mins • Completed today at 7:30 AM',
                 style: previewTheme.textTheme.bodyMedium?.copyWith(
                   color: _workingTheme.textPrimary.withValues(alpha: 0.7),
-                  fontSize: 12.sp.clamp(11.0, 13.0),
+                  fontSize: AppFontSizes.bodySmall,
                 ),
               ),
               SizedBox(height: 10.h),
@@ -497,7 +524,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
           'OFFLINE FONT REGISTRY (2 PROFESSIONAL FONTS)',
           style: TextStyle(
             fontFamily: _workingTheme.fontFamily,
-            fontSize: 11.sp,
+            fontSize: AppFontSizes.labelSmall,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.1,
             color: _workingTheme.textPrimary.withValues(alpha: 0.5),
@@ -514,17 +541,20 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                   margin: EdgeInsets.only(
                     right: font == _fontRegistry.first ? 10.w : 0,
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 14.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 14.h,
+                  ),
                   decoration: BoxDecoration(
                     color: _workingTheme.cardBg,
                     borderRadius: BorderRadius.circular(18.r),
                     border: Border.all(
                       color: isSelected
                           ? (_workingTheme.accentPalette.isNotEmpty
-                              ? _workingTheme.accentPalette.first
-                              : _workingTheme.cardBorder)
+                                ? _workingTheme.accentPalette.first
+                                : _workingTheme.cardBorder)
                           : _workingTheme.cardBorder,
-                      width: isSelected ? 1.8 : 1.2,
+                      width: isSelected ? 1.8 : AppSizes.borderWidth,
                     ),
                   ),
                   child: Column(
@@ -539,7 +569,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                                 : 'Inter',
                             style: TextStyle(
                               fontFamily: font,
-                              fontSize: 13.sp,
+                              fontSize: AppFontSizes.caption,
                               fontWeight: FontWeight.w700,
                               color: _workingTheme.textPrimary,
                             ),
@@ -547,7 +577,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                           if (isSelected)
                             Icon(
                               Icons.check_circle,
-                              size: 16.sp,
+                              size: AppIconSizes.sm,
                               color: _workingTheme.accentPalette.isNotEmpty
                                   ? _workingTheme.accentPalette.first
                                   : AppColors.neonLavender,
@@ -561,9 +591,10 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                             : 'Modern Precision Sans',
                         style: TextStyle(
                           fontFamily: font,
-                          fontSize: 11.sp,
-                          color:
-                              _workingTheme.textPrimary.withValues(alpha: 0.6),
+                          fontSize: AppFontSizes.labelSmall,
+                          color: _workingTheme.textPrimary.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     ],
@@ -585,7 +616,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
           'SURFACES & BORDER PALETTE',
           style: TextStyle(
             fontFamily: _workingTheme.fontFamily,
-            fontSize: 11.sp,
+            fontSize: AppFontSizes.labelSmall,
             fontWeight: FontWeight.w800,
             letterSpacing: 1.1,
             color: _workingTheme.textPrimary.withValues(alpha: 0.5),
@@ -655,13 +686,16 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16.r),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
         decoration: BoxDecoration(
           color: _workingTheme.cardBg,
-          borderRadius: BorderRadius.circular(16.r),
-          border: Border.all(color: _workingTheme.cardBorder, width: 1.2),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+            color: _workingTheme.cardBorder,
+            width: AppSizes.borderWidth,
+          ),
         ),
         child: Row(
           children: [
@@ -685,7 +719,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                     title,
                     style: TextStyle(
                       fontFamily: _workingTheme.fontFamily,
-                      fontSize: 13.sp,
+                      fontSize: AppFontSizes.caption,
                       fontWeight: FontWeight.w600,
                       color: _workingTheme.textPrimary,
                     ),
@@ -694,7 +728,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                     subtitle,
                     style: TextStyle(
                       fontFamily: 'Inter',
-                      fontSize: 11.sp,
+                      fontSize: AppFontSizes.labelSmall,
                       color: _workingTheme.textPrimary.withValues(alpha: 0.5),
                     ),
                   ),
@@ -703,7 +737,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
             ),
             Icon(
               Icons.edit,
-              size: 16.sp,
+              size: AppIconSizes.sm,
               color: _workingTheme.textPrimary.withValues(alpha: 0.4),
             ),
           ],
@@ -723,7 +757,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
               'HABIT ACCENT PALETTE',
               style: TextStyle(
                 fontFamily: _workingTheme.fontFamily,
-                fontSize: 11.sp,
+                fontSize: AppFontSizes.labelSmall,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 1.1,
                 color: _workingTheme.textPrimary.withValues(alpha: 0.5),
@@ -739,7 +773,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
               child: Text(
                 'Reset to Preset',
                 style: TextStyle(
-                  fontSize: 12.sp,
+                  fontSize: AppFontSizes.labelMedium,
                   fontWeight: FontWeight.w600,
                   color: _workingTheme.accentPalette.isNotEmpty
                       ? _workingTheme.accentPalette.first
@@ -765,13 +799,13 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                       .updatePaletteColor(index, newColor);
                 },
               ),
-              borderRadius: BorderRadius.circular(14.r),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
               child: Container(
                 width: 44.r,
                 height: 44.r,
                 decoration: BoxDecoration(
                   color: color,
-                  borderRadius: BorderRadius.circular(14.r),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   border: Border.all(
                     color: _workingTheme.textPrimary.withValues(alpha: 0.2),
                     width: 1.5,
@@ -779,13 +813,16 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                   boxShadow: [
                     BoxShadow(
                       color: color.withValues(alpha: 0.3),
-                      blurRadius: 8.r,
-                      offset: Offset(0, 2.h),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
                     ),
                   ],
                 ),
-                child: Icon(Icons.colorize,
-                    color: AppColors.white.withValues(alpha: 0.8), size: 16.sp),
+                child: Icon(
+                  Icons.colorize,
+                  color: AppColors.white.withValues(alpha: 0.8),
+                  size: AppIconSizes.sm,
+                ),
               ),
             );
           }),
@@ -799,7 +836,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
       children: [
         SizedBox(
           width: double.infinity,
-          height: 42.h.clamp(38.0, 46.0),
+          height: AppSizes.buttonHeightMd,
           child: FilledButton.icon(
             icon: const Icon(Icons.palette),
             label: Text(
@@ -813,7 +850,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
               backgroundColor: activeAccent,
               foregroundColor: Theme.of(context).colorScheme.onPrimary,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14.r),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
               ),
             ),
             onPressed: _saveTheme,
@@ -825,13 +862,16 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                icon: Icon(Icons.copy, size: 16.sp),
+                icon: Icon(Icons.copy, size: AppIconSizes.sm),
                 label: const Text('Duplicate'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _workingTheme.textPrimary,
-                  side: BorderSide(color: _workingTheme.cardBorder, width: 1.2),
+                  side: BorderSide(
+                    color: _workingTheme.cardBorder,
+                    width: AppSizes.borderWidth,
+                  ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14.r),
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
                   ),
                 ),
                 onPressed: _duplicateTheme,
@@ -841,18 +881,23 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
               SizedBox(width: 10.w),
               Expanded(
                 child: OutlinedButton.icon(
-                  icon: Icon(Icons.delete_outline,
-                      size: 16.sp, color: Theme.of(context).colorScheme.error),
+                  icon: Icon(
+                    Icons.delete_outline,
+                    size: AppIconSizes.sm,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
                   label: Text(
                     'Delete',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
+                    style: Theme.of(context).textTheme.labelLarge
+                        ?.copyWith(color: Theme.of(context).colorScheme.error),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: Theme.of(context).colorScheme.error, width: 1.2),
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.error,
+                      width: AppSizes.borderWidth,
+                    ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14.r),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                     ),
                   ),
                   onPressed: _deleteTheme,

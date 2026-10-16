@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_dimensions.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/app_theme.dart';
 import '../utils/haptics.dart';
@@ -32,41 +33,41 @@ class AppBadge extends StatelessWidget {
     final bgColor = isSelected
         ? effectiveColor
         : isOutlined
-            ? AppColors.transparent
-            : AppColors.pastelSurface(
-                effectiveColor,
-                isDark: context.isDarkMode,
-                opacity: 0.14,
-              );
+        ? AppColors.transparent
+        : AppColors.pastelSurface(
+            effectiveColor,
+            isDark: context.isDarkMode,
+            opacity: 0.14,
+          );
 
     final textColor = isSelected
         ? context.onPrimaryColor
         : isOutlined
-            ? effectiveColor
-            : effectiveColor;
+        ? effectiveColor
+        : effectiveColor;
 
     final border = isSelected
-        ? Border.all(color: effectiveColor, width: 1.2)
+        ? Border.all(color: effectiveColor, width: AppSizes.borderWidth)
         : isOutlined
-            ? Border.all(color: effectiveColor.withValues(alpha: 0.5), width: 1.2)
-            : Border.all(color: effectiveColor.withValues(alpha: 0.25), width: 1.0);
+        ? Border.all(
+            color: effectiveColor.withValues(alpha: 0.5),
+            width: AppSizes.borderWidth,
+          )
+        : Border.all(color: effectiveColor.withValues(alpha: 0.25), width: 1.0);
 
     Widget badge = AnimatedContainer(
       duration: const Duration(milliseconds: 180),
-      padding: EdgeInsets.symmetric(
-        horizontal: 8.w.clamp(6.0, 12.0),
-        vertical: 3.h.clamp(2.0, 5.0),
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: border,
         boxShadow: isSelected
             ? [
                 BoxShadow(
                   color: effectiveColor.withValues(alpha: 0.35),
-                  blurRadius: 8.r,
-                  offset: Offset(0, 2.h),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ]
             : const [],
@@ -75,10 +76,7 @@ class AppBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          if (icon != null) ...[
-            icon!,
-            SizedBox(width: 5.w.clamp(3.0, 6.0)),
-          ],
+          if (icon != null) ...[icon!, SizedBox(width: 5.w)],
           Flexible(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -116,11 +114,7 @@ class AppStreakBadge extends StatelessWidget {
   final int streakCount;
   final Color? color;
 
-  const AppStreakBadge({
-    super.key,
-    required this.streakCount,
-    this.color,
-  });
+  const AppStreakBadge({super.key, required this.streakCount, this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +125,7 @@ class AppStreakBadge extends StatelessWidget {
       color: accent,
       icon: Icon(
         Icons.local_fire_department_rounded,
-        size: 14.sp,
+        size: AppIconSizes.xs,
         color: accent,
       ),
     );

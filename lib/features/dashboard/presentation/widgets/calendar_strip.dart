@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:habit_tracker/core/theme/app_colors.dart';
 
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_font_sizes.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
@@ -30,19 +32,19 @@ class CalendarStrip extends ConsumerWidget {
     const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 12.w.clamp(10.0, 16.0),
-        vertical: 8.h.clamp(6.0, 10.0),
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(20.r.clamp(16.0, 22.0)),
-        border: Border.all(color: context.cardBorderColor, width: 1.2),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(
+          color: context.cardBorderColor,
+          width: AppSizes.borderWidth,
+        ),
         boxShadow: [
           BoxShadow(
             color: context.shadowColor,
-            blurRadius: 8.r,
-            offset: Offset(0, 2.h),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -68,7 +70,7 @@ class CalendarStrip extends ConsumerWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOutCubic,
-                width: 34.w.clamp(30.0, 38.0),
+                width: 34.w,
                 padding: EdgeInsets.symmetric(vertical: 6.h),
                 decoration: BoxDecoration(
                   color: isSelected
@@ -76,11 +78,11 @@ class CalendarStrip extends ConsumerWidget {
                       : (isToday
                             ? primaryAccent.withValues(alpha: 0.12)
                             : AppColors.transparent),
-                  borderRadius: BorderRadius.circular(14.r),
+                  borderRadius: BorderRadius.circular(AppRadius.chip),
                   border: isToday && !isSelected
                       ? Border.all(
                           color: primaryAccent.withValues(alpha: 0.4),
-                          width: 1.2,
+                          width: AppSizes.borderWidth,
                         )
                       : null,
                 ),
@@ -90,7 +92,7 @@ class CalendarStrip extends ConsumerWidget {
                     Text(
                       label,
                       style: context.textTheme.labelSmall?.copyWith(
-                        fontSize: 10.sp,
+                        fontSize: AppFontSizes.micro,
                         fontWeight: FontWeight.w600,
                         color: isSelected
                             ? context.onPrimaryColor
@@ -101,7 +103,7 @@ class CalendarStrip extends ConsumerWidget {
                     Text(
                       '${date.day}',
                       style: context.textTheme.titleMedium?.copyWith(
-                        fontSize: 13.sp,
+                        fontSize: AppFontSizes.caption,
                         fontWeight: isSelected || isToday
                             ? FontWeight.w800
                             : FontWeight.w600,
@@ -131,7 +133,7 @@ class CalendarStrip extends ConsumerWidget {
                 child: Icon(
                   Icons.add_rounded,
                   color: primaryAccent,
-                  size: 18.sp,
+                  size: AppIconSizes.md,
                 ),
               ),
             ),

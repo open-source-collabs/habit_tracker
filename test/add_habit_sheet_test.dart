@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:habit_tracker/core/widgets/app_screen_util_init.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:habit_tracker/core/theme/theme_factory.dart';
@@ -11,9 +11,8 @@ Widget _buildTestableWidget(Widget child) {
   final themeData = ThemeFactory.createTheme(UserThemeModel.obsidianTwilight);
 
   return ProviderScope(
-    child: ScreenUtilInit(
-      designSize: const Size(390, 844),
-      builder: (context, _) => MaterialApp(
+    child: AppScreenUtilInit(
+      builder: (context) => MaterialApp(
         theme: themeData,
         home: Scaffold(
           body: child,

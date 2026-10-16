@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_breakpoints.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_font_sizes.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../../../core/widgets/widgets.dart';
@@ -20,11 +23,11 @@ class ThemesTabView extends ConsumerWidget {
     final themeState = ref.watch(themeProvider);
     final activeTheme = themeState.activeTheme;
     final primaryAccent = context.primaryAccent;
-    final isDesktop = MediaQuery.of(context).size.width >= 768.0;
+    final isDesktop = context.isDesktop;
 
     return ListView(
       padding: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 24.0 : 16.w.clamp(14.0, 20.0),
+        horizontal: isDesktop ? 24.w : 16.w,
         vertical: 10.h,
       ),
       children: [
@@ -34,7 +37,7 @@ class ThemesTabView extends ConsumerWidget {
           style: context.textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
-            fontSize: 11.sp.clamp(10.0, 12.0),
+            fontSize: AppFontSizes.labelSmall,
             color: context.textMutedColor,
           ),
         ),
@@ -42,7 +45,7 @@ class ThemesTabView extends ConsumerWidget {
 
         // Active Theme Showcase Card
         AppCard(
-          padding: EdgeInsets.all(14.r.clamp(12.0, 18.0)),
+          padding: EdgeInsets.all(14.r),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -64,7 +67,7 @@ class ThemesTabView extends ConsumerWidget {
                         child: Icon(
                           Icons.palette_rounded,
                           color: primaryAccent,
-                          size: 20.sp.clamp(18.0, 22.0),
+                          size: AppIconSizes.lg,
                         ),
                       ),
                       SizedBox(width: 10.w),
@@ -76,7 +79,7 @@ class ThemesTabView extends ConsumerWidget {
                             style: context.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: context.textPrimaryColor,
-                              fontSize: 15.sp.clamp(14.0, 17.0),
+                              fontSize: AppFontSizes.subtitle,
                             ),
                           ),
                           SizedBox(height: 2.h),
@@ -104,7 +107,7 @@ class ThemesTabView extends ConsumerWidget {
                 style: context.textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.0,
-                  fontSize: 10.sp.clamp(9.0, 11.0),
+                  fontSize: AppFontSizes.micro,
                   color: context.textMutedColor,
                 ),
               ),
@@ -113,8 +116,8 @@ class ThemesTabView extends ConsumerWidget {
                 children: context.accentPalette.map((color) {
                   return Container(
                     margin: EdgeInsets.only(right: 8.w),
-                    width: 24.w.clamp(20.0, 28.0),
-                    height: 24.h.clamp(20.0, 28.0),
+                    width: 24.r,
+                    height: 24.r,
                     decoration: BoxDecoration(
                       color: color,
                       shape: BoxShape.circle,
@@ -165,7 +168,7 @@ class ThemesTabView extends ConsumerWidget {
       style: context.textTheme.labelSmall?.copyWith(
         fontWeight: FontWeight.w800,
         letterSpacing: 1.1,
-        fontSize: 11.sp.clamp(10.0, 12.0),
+        fontSize: AppFontSizes.labelSmall,
         color: context.textMutedColor,
       ),
     );
@@ -199,12 +202,12 @@ class ThemesTabView extends ConsumerWidget {
                 opacity: 0.12,
               )
             : context.cardBackgroundColor,
-        padding: EdgeInsets.all(12.r.clamp(10.0, 14.0)),
+        padding: EdgeInsets.all(12.r),
         child: Row(
           children: [
             Container(
-              width: 32.w.clamp(28.0, 36.0),
-              height: 32.h.clamp(28.0, 36.0),
+              width: 32.r,
+              height: 32.r,
               decoration: BoxDecoration(
                 color: preset.scaffoldBg,
                 shape: BoxShape.circle,
@@ -212,8 +215,8 @@ class ThemesTabView extends ConsumerWidget {
               ),
               child: Center(
                 child: Container(
-                  width: 14.w.clamp(12.0, 16.0),
-                  height: 14.h.clamp(12.0, 16.0),
+                  width: 14.r,
+                  height: 14.r,
                   decoration: BoxDecoration(
                     color: presetAccent,
                     shape: BoxShape.circle,
@@ -231,7 +234,7 @@ class ThemesTabView extends ConsumerWidget {
                     style: context.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: context.textPrimaryColor,
-                      fontSize: 14.sp.clamp(13.0, 16.0),
+                      fontSize: AppFontSizes.titleSmall,
                     ),
                   ),
                   SizedBox(height: 3.h),
@@ -239,8 +242,8 @@ class ThemesTabView extends ConsumerWidget {
                     children: preset.accentPalette.take(4).map((c) {
                       return Container(
                         margin: EdgeInsets.only(right: 5.w),
-                        width: 12.w.clamp(10.0, 14.0),
-                        height: 12.h.clamp(10.0, 14.0),
+                        width: 12.r,
+                        height: 12.r,
                         decoration: BoxDecoration(
                           color: c,
                           shape: BoxShape.circle,
@@ -253,14 +256,14 @@ class ThemesTabView extends ConsumerWidget {
             ),
             if (isSelected)
               Container(
-                padding: const EdgeInsets.all(4),
+                padding: EdgeInsets.all(4.r),
                 decoration: BoxDecoration(
                   color: primaryAccent,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.check_rounded,
-                  size: 16.sp,
+                  size: AppIconSizes.sm,
                   color: context.onPrimaryColor,
                 ),
               ),

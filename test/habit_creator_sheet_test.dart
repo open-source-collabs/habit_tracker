@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:habit_tracker/core/widgets/app_screen_util_init.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,9 +15,8 @@ Widget _buildTestableWidget(Widget child, {List<Override> overrides = const []})
 
   return ProviderScope(
     overrides: overrides,
-    child: ScreenUtilInit(
-      designSize: const Size(390, 844),
-      builder: (context, _) => MaterialApp(
+    child: AppScreenUtilInit(
+      builder: (context) => MaterialApp(
         theme: themeData,
         home: Scaffold(
           body: child,

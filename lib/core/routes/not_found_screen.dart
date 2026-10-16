@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../theme/app_dimensions.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_button.dart';
 import 'app_routes.dart';
@@ -9,10 +10,7 @@ import 'app_routes.dart';
 class NotFoundScreen extends StatelessWidget {
   final String? routeName;
 
-  const NotFoundScreen({
-    super.key,
-    this.routeName,
-  });
+  const NotFoundScreen({super.key, this.routeName});
 
   @override
   Widget build(BuildContext context) {
@@ -34,14 +32,16 @@ class NotFoundScreen extends StatelessWidget {
           child: Padding(
             padding: EdgeInsets.all(24.r),
             child: Container(
-              constraints: const BoxConstraints(maxWidth: 480),
-              padding: EdgeInsets.all(32.r.clamp(20.0, 36.0)),
+              constraints: const BoxConstraints(
+                maxWidth: AppSizes.dialogMaxWidth,
+              ),
+              padding: EdgeInsets.all(32.r),
               decoration: BoxDecoration(
                 color: context.cardBackgroundColor,
-                borderRadius: BorderRadius.circular(24.r.clamp(16.0, 24.0)),
+                borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(
                   color: context.cardBorderColor,
-                  width: 1.2,
+                  width: AppSizes.borderWidth,
                 ),
               ),
               child: Column(
@@ -55,7 +55,7 @@ class NotFoundScreen extends StatelessWidget {
                     ),
                     child: Icon(
                       Icons.explore_off_rounded,
-                      size: 40.sp.clamp(32.0, 48.0),
+                      size: AppIconSizes.hero,
                       color: primaryAccent,
                     ),
                   ),
@@ -88,7 +88,8 @@ class NotFoundScreen extends StatelessWidget {
                       if (Navigator.of(context).canPop()) {
                         Navigator.of(context).pop();
                       } else {
-                        Navigator.of(context).pushReplacementNamed(AppRoutes.dashboard);
+                        Navigator.of(context)
+                            .pushReplacementNamed(AppRoutes.dashboard);
                       }
                     },
                   ),

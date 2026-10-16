@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_dimensions.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/app_theme.dart';
 import '../utils/haptics.dart';
@@ -101,21 +102,20 @@ class _AppTextFieldState extends ConsumerState<AppTextField> {
   TextEditingController get _effectiveController =>
       widget.controller ?? _internalController!;
 
-  FocusNode get _effectiveFocusNode =>
-      widget.focusNode ?? _internalFocusNode!;
+  FocusNode get _effectiveFocusNode => widget.focusNode ?? _internalFocusNode!;
 
   late final AppTextFieldParams _params = AppTextFieldParams(
     id: 'textfield_${identityHashCode(this)}',
     initialObscure: widget.isPassword || widget.obscureText,
-    initialShowClear: (widget.controller?.text ?? widget.initialValue ?? '').isNotEmpty,
+    initialShowClear:
+        (widget.controller?.text ?? widget.initialValue ?? '').isNotEmpty,
   );
 
   @override
   void initState() {
     super.initState();
     if (widget.controller == null) {
-      _internalController =
-          TextEditingController(text: widget.initialValue);
+      _internalController = TextEditingController(text: widget.initialValue);
     }
     if (widget.focusNode == null) {
       _internalFocusNode = FocusNode();
@@ -201,9 +201,7 @@ class _AppTextFieldState extends ConsumerState<AppTextField> {
     final hasText = _effectiveController.text.isNotEmpty;
     final currentShow = ref.read(appTextFieldUiProvider(_params)).showClear;
     if (hasText != currentShow) {
-      ref
-          .read(appTextFieldUiProvider(_params).notifier)
-          .setShowClear(hasText);
+      ref.read(appTextFieldUiProvider(_params).notifier).setShowClear(hasText);
     }
   }
 
@@ -216,15 +214,15 @@ class _AppTextFieldState extends ConsumerState<AppTextField> {
 
     final accent = widget.accentColor ?? context.primaryAccent;
     final hasError = widget.errorText != null && widget.errorText!.isNotEmpty;
-    final radius = widget.borderRadius ?? 14.r.clamp(12.0, 16.0);
+    final radius = widget.borderRadius ?? AppRadius.chip;
 
     final Color borderColor = !widget.enabled
         ? context.cardBorderColor.withValues(alpha: 0.5)
         : hasError
-            ? AppColors.error
-            : isFocused
-                ? accent
-                : context.cardBorderColor;
+        ? AppColors.error
+        : isFocused
+        ? accent
+        : context.cardBorderColor;
 
     final Color backgroundColor = widget.enabled
         ? context.cardBackgroundColor
@@ -237,14 +235,15 @@ class _AppTextFieldState extends ConsumerState<AppTextField> {
         if (widget.labelText != null) ...[
           Text(
             widget.labelText!,
-            style: widget.labelStyle ??
+            style:
+                widget.labelStyle ??
                 AppTextStyles.labelSmall(
                   context,
                   color: hasError
                       ? AppColors.error
                       : isFocused
-                          ? accent
-                          : context.textMutedColor,
+                      ? accent
+                      : context.textMutedColor,
                 ),
           ),
           SizedBox(height: 5.h),
@@ -258,15 +257,18 @@ class _AppTextFieldState extends ConsumerState<AppTextField> {
             borderRadius: BorderRadius.circular(radius),
             border: Border.all(
               color: borderColor,
-              width: isFocused ? 1.6 : 1.2,
+              width: isFocused
+                  ? AppSizes.borderWidthFocused
+                  : AppSizes.borderWidth,
             ),
             boxShadow: isFocused && widget.enabled
                 ? [
                     BoxShadow(
-                      color: (hasError ? AppColors.error : accent)
-                          .withValues(alpha: 0.22),
-                      blurRadius: 10.r,
-                      offset: Offset(0, 2.h),
+                      color: (hasError ? AppColors.error : accent).withValues(
+                        alpha: 0.22,
+                      ),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
                     ),
                   ]
                 : const [],
@@ -304,7 +306,8 @@ class _AppTextFieldState extends ConsumerState<AppTextField> {
               enabled: widget.enabled,
               readOnly: widget.readOnly,
               autofocus: widget.autofocus,
-              style: widget.style ??
+              style:
+                  widget.style ??
                   AppTextStyles.bodyMedium(
                     context,
                     color: widget.enabled
@@ -316,26 +319,25 @@ class _AppTextFieldState extends ConsumerState<AppTextField> {
                 isDense: true,
                 filled: false,
                 fillColor: AppColors.transparent,
-                contentPadding: widget.contentPadding ??
-                    EdgeInsets.symmetric(
-                      horizontal: 14.w.clamp(12.0, 16.0),
-                      vertical: 11.h.clamp(9.0, 13.0),
-                    ),
+                contentPadding:
+                    widget.contentPadding ??
+                    EdgeInsets.symmetric(horizontal: 14.w, vertical: 11.h),
                 hintText: widget.hintText,
-                hintStyle: widget.hintStyle ??
+                hintStyle:
+                    widget.hintStyle ??
                     AppTextStyles.bodyMedium(
                       context,
                       color: context.textMutedColor,
                     ),
                 prefixIcon: widget.prefixIcon != null
                     ? Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10.w),
-                      child: widget.prefixIcon,
-                    )
+                        padding: EdgeInsets.symmetric(horizontal: 10.w),
+                        child: widget.prefixIcon,
+                      )
                     : null,
                 prefixIconConstraints: BoxConstraints(
-                  minWidth: 40.w.clamp(36.0, 44.0),
-                  minHeight: 20.h,
+                  minWidth: 40.w,
+                  minHeight: 20.w,
                 ),
                 suffixIcon: _buildSuffixIcon(
                   accent,
@@ -344,8 +346,8 @@ class _AppTextFieldState extends ConsumerState<AppTextField> {
                   showClear: showClear,
                 ),
                 suffixIconConstraints: BoxConstraints(
-                  minWidth: 40.w.clamp(36.0, 44.0),
-                  minHeight: 20.h,
+                  minWidth: 40.w,
+                  minHeight: 20.w,
                 ),
                 // Explicitly nullify all internal borders to prevent duplicate outline
                 border: InputBorder.none,
@@ -363,10 +365,7 @@ class _AppTextFieldState extends ConsumerState<AppTextField> {
           SizedBox(height: 4.h),
           Text(
             widget.errorText!,
-            style: AppTextStyles.bodySmall(
-              context,
-              color: AppColors.error,
-            ),
+            style: AppTextStyles.bodySmall(context, color: AppColors.error),
           ),
         ] else if (widget.helperText != null) ...[
           SizedBox(height: 4.h),
@@ -391,7 +390,10 @@ class _AppTextFieldState extends ConsumerState<AppTextField> {
     final List<Widget> icons = [];
 
     // Clear button with haptics
-    if (widget.showClearButton && showClear && widget.enabled && !widget.readOnly) {
+    if (widget.showClearButton &&
+        showClear &&
+        widget.enabled &&
+        !widget.readOnly) {
       icons.add(
         GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -404,7 +406,7 @@ class _AppTextFieldState extends ConsumerState<AppTextField> {
             padding: EdgeInsets.symmetric(horizontal: 8.w),
             child: Icon(
               Icons.cancel_rounded,
-              size: 18.sp,
+              size: AppIconSizes.md,
               color: context.textMutedColor,
             ),
           ),
@@ -427,7 +429,7 @@ class _AppTextFieldState extends ConsumerState<AppTextField> {
               obscureText
                   ? Icons.visibility_off_outlined
                   : Icons.visibility_outlined,
-              size: 18.sp,
+              size: AppIconSizes.md,
               color: isFocused ? accent : context.textMutedColor,
             ),
           ),
@@ -444,9 +446,6 @@ class _AppTextFieldState extends ConsumerState<AppTextField> {
 
     if (icons.isEmpty) return null;
     if (icons.length == 1) return icons.first;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: icons,
-    );
+    return Row(mainAxisSize: MainAxisSize.min, children: icons);
   }
 }

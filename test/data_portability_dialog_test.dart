@@ -1,8 +1,9 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:habit_tracker/core/widgets/app_screen_util_init.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -29,7 +30,8 @@ class _FakeHabitStorage implements HabitStorage {
   Future<List<String>> listBackups() async => [];
 
   @override
-  Future<AppPayloadModel?> restoreBackup(String backupName) async => storedPayload;
+  Future<AppPayloadModel?> restoreBackup(String backupName) async =>
+      storedPayload;
 
   @override
   Future<void> clear() async {
@@ -41,16 +43,11 @@ Widget _buildTestWidget(Widget child, {required _FakeHabitStorage storage}) {
   final themeData = ThemeFactory.createTheme(UserThemeModel.obsidianTwilight);
 
   return ProviderScope(
-    overrides: [
-      habitStorageProvider.overrideWithValue(storage),
-    ],
-    child: ScreenUtilInit(
-      designSize: const Size(390, 844),
-      builder: (context, _) => MaterialApp(
+    overrides: [habitStorageProvider.overrideWithValue(storage)],
+    child: AppScreenUtilInit(
+      builder: (context) => MaterialApp(
         theme: themeData,
-        home: Scaffold(
-          body: Center(child: child),
-        ),
+        home: Scaffold(body: Center(child: child)),
       ),
     ),
   );
@@ -67,17 +64,15 @@ void main() {
   });
 
   group('DataPortabilityDialog Widget Tests', () {
-    testWidgets('renders all export, import, and cloud sync controls',
-        (tester) async {
+    testWidgets('renders all export, import, and cloud sync controls', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1200, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
       await tester.pumpWidget(
-        _buildTestWidget(
-          const DataPortabilityDialog(),
-          storage: fakeStorage,
-        ),
+        _buildTestWidget(const DataPortabilityDialog(), storage: fakeStorage),
       );
       await tester.pumpAndSettle();
 
@@ -89,53 +84,53 @@ void main() {
       expect(find.text('Cloud Sync (iCloud & Google Drive)'), findsOneWidget);
     });
 
-    testWidgets('export button copies JSON payload to clipboard and displays confirmation',
-        (tester) async {
+    testWidgets(
+      'export button copies JSON payload to clipboard and displays confirmation',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 1600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() => tester.view.resetPhysicalSize());
+
+        String? clipboardContents;
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, (
+              methodCall,
+            ) async {
+              if (methodCall.method == 'Clipboard.setData') {
+                clipboardContents =
+                    (methodCall.arguments as Map)['text'] as String?;
+                return null;
+              }
+              return null;
+            });
+
+        await tester.pumpWidget(
+          _buildTestWidget(const DataPortabilityDialog(), storage: fakeStorage),
+        );
+        await tester.pumpAndSettle();
+
+        // Tap Copy button
+        await tester.tap(find.text('Copy Database JSON to Clipboard'));
+        await tester.pumpAndSettle();
+
+        expect(clipboardContents, isNotNull);
+        final decoded = jsonDecode(clipboardContents!) as Map<String, dynamic>;
+        expect(decoded.containsKey('habits'), isTrue);
+        expect(decoded.containsKey('userThemes'), isTrue);
+
+        expect(find.textContaining('Database JSON copied!'), findsOneWidget);
+      },
+    );
+
+    testWidgets('validates raw JSON text and allows zero-loss merge', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1200, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() => tester.view.resetPhysicalSize());
 
-      String? clipboardContents;
-      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(SystemChannels.platform, (methodCall) async {
-        if (methodCall.method == 'Clipboard.setData') {
-          clipboardContents = (methodCall.arguments as Map)['text'] as String?;
-          return null;
-        }
-        return null;
-      });
-
       await tester.pumpWidget(
-        _buildTestWidget(
-          const DataPortabilityDialog(),
-          storage: fakeStorage,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Tap Copy button
-      await tester.tap(find.text('Copy Database JSON to Clipboard'));
-      await tester.pumpAndSettle();
-
-      expect(clipboardContents, isNotNull);
-      final decoded = jsonDecode(clipboardContents!) as Map<String, dynamic>;
-      expect(decoded.containsKey('habits'), isTrue);
-      expect(decoded.containsKey('userThemes'), isTrue);
-
-      expect(find.textContaining('Database JSON copied!'), findsOneWidget);
-    });
-
-    testWidgets('validates raw JSON text and allows zero-loss merge',
-        (tester) async {
-      tester.view.physicalSize = const Size(1200, 1600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() => tester.view.resetPhysicalSize());
-
-      await tester.pumpWidget(
-        _buildTestWidget(
-          const DataPortabilityDialog(),
-          storage: fakeStorage,
-        ),
+        _buildTestWidget(const DataPortabilityDialog(), storage: fakeStorage),
       );
       await tester.pumpAndSettle();
 
@@ -185,10 +180,7 @@ void main() {
       addTearDown(() => tester.view.resetPhysicalSize());
 
       await tester.pumpWidget(
-        _buildTestWidget(
-          const DataPortabilityDialog(),
-          storage: fakeStorage,
-        ),
+        _buildTestWidget(const DataPortabilityDialog(), storage: fakeStorage),
       );
       await tester.pumpAndSettle();
 
@@ -196,7 +188,10 @@ void main() {
       await tester.enterText(textField, '{ invalid_json: 123');
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Invalid JSON database format'), findsOneWidget);
+      expect(
+        find.textContaining('Invalid JSON database format'),
+        findsOneWidget,
+      );
     });
   });
 }

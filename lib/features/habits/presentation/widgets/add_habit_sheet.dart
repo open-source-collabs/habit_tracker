@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_font_sizes.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
@@ -17,15 +20,12 @@ import '../providers/habit_provider.dart';
 class AddHabitSheet extends ConsumerStatefulWidget {
   final bool isDialog;
 
-  const AddHabitSheet({
-    super.key,
-    this.isDialog = false,
-  });
+  const AddHabitSheet({super.key, this.isDialog = false});
 
   /// Displays the habit creation form adaptively based on screen width.
   static Future<HabitModel?> show(BuildContext context) {
     AppHaptics.mediumImpact();
-    final isDesktop = MediaQuery.of(context).size.width >= 768.0;
+    final isDesktop = context.isDesktop;
 
     if (isDesktop) {
       return showDialog<HabitModel>(
@@ -50,10 +50,22 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
   final _subtitleController = TextEditingController();
 
   static const _routineItems = [
-    AppDropdownItem(value: 'General', label: 'General Routine', icon: Text('🎯')),
-    AppDropdownItem(value: 'Morning', label: 'Morning Routine', icon: Text('☀️')),
+    AppDropdownItem(
+      value: 'General',
+      label: 'General Routine',
+      icon: Text('🎯'),
+    ),
+    AppDropdownItem(
+      value: 'Morning',
+      label: 'Morning Routine',
+      icon: Text('☀️'),
+    ),
     AppDropdownItem(value: 'Focus', label: 'Deep Focus', icon: Text('⚡')),
-    AppDropdownItem(value: 'Health', label: 'Health & Hydration', icon: Text('💧')),
+    AppDropdownItem(
+      value: 'Health',
+      label: 'Health & Hydration',
+      icon: Text('💧'),
+    ),
     AppDropdownItem(value: 'Evening', label: 'Evening Calm', icon: Text('🌙')),
     AppDropdownItem(value: 'Fitness', label: 'Fitness & Gym', icon: Text('💪')),
   ];
@@ -151,7 +163,7 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
       message: 'Establish a new intentional routine to track daily.',
       icon: Icon(
         Icons.add_task_rounded,
-        size: 24.sp,
+        size: AppIconSizes.xl,
         color: context.primaryAccent,
       ),
       content: _buildFormFields(context),
@@ -223,8 +235,10 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
           autofocus: true,
           prefixIcon: Icon(
             Icons.edit_note_rounded,
-            size: 20.sp,
-            color: formState.titleError != null ? AppColors.error : context.primaryAccent,
+            size: AppIconSizes.lg,
+            color: formState.titleError != null
+                ? AppColors.error
+                : context.primaryAccent,
           ),
           onChanged: (val) {
             if (formState.titleError != null && val.trim().isNotEmpty) {
@@ -240,7 +254,7 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
           hintText: 'e.g. 15 minutes outdoors',
           prefixIcon: Icon(
             Icons.notes_rounded,
-            size: 18.sp,
+            size: AppIconSizes.md,
             color: context.textMutedColor,
           ),
         ),
@@ -254,17 +268,11 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
           },
         ),
         SizedBox(height: 10.h),
-        Text(
-          'SCHEDULE FREQUENCY',
-          style: AppTextStyles.labelSmall(context),
-        ),
+        Text('SCHEDULE FREQUENCY', style: AppTextStyles.labelSmall(context)),
         SizedBox(height: 6.h),
         _buildFrequencyChips(context, formState),
         SizedBox(height: 10.h),
-        Text(
-          'ACCENT COLOR',
-          style: AppTextStyles.labelSmall(context),
-        ),
+        Text('ACCENT COLOR', style: AppTextStyles.labelSmall(context)),
         SizedBox(height: 6.h),
         _buildAccentColorPicker(context, palette, formState),
       ],
@@ -272,7 +280,9 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
   }
 
   Widget _buildFrequencyChips(
-      BuildContext context, AddHabitFormState formState) {
+    BuildContext context,
+    AddHabitFormState formState,
+  ) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
@@ -304,7 +314,7 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
                         ? context.onPrimaryColor
                         : context.textPrimaryColor,
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    fontSize: 12.sp,
+                    fontSize: AppFontSizes.bodySmall,
                   ),
                 ),
               ),
@@ -323,17 +333,17 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
     final primary = accentColor ?? context.primaryAccent;
     return BoxDecoration(
       color: isSelected ? primary : context.cardBackgroundColor,
-      borderRadius: BorderRadius.circular(14.r),
+      borderRadius: BorderRadius.circular(AppRadius.chip),
       border: Border.all(
         color: isSelected ? primary : context.cardBorderColor,
-        width: 1.2,
+        width: AppSizes.borderWidth,
       ),
       boxShadow: isSelected
           ? [
               BoxShadow(
                 color: primary.withValues(alpha: 0.28),
-                blurRadius: 8.r,
-                offset: Offset(0, 2.h),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ]
           : const [],
@@ -341,60 +351,58 @@ class _AddHabitSheetState extends ConsumerState<AddHabitSheet> {
   }
 
   Widget _buildAccentColorPicker(
-      BuildContext context, List<Color> palette, AddHabitFormState formState) {
+    BuildContext context,
+    List<Color> palette,
+    AddHabitFormState formState,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(
-        palette.length,
-        (idx) {
-          final color = palette[idx];
-          final isSelected = formState.selectedAccent == idx;
-          final isBright = color.computeLuminance() > 0.55;
-          final checkmarkColor =
-              isBright ? AppColors.darkScaffold : AppColors.white;
+      children: List.generate(palette.length, (idx) {
+        final color = palette[idx];
+        final isSelected = formState.selectedAccent == idx;
+        final isBright = color.computeLuminance() > 0.55;
+        final checkmarkColor = isBright
+            ? AppColors.darkScaffold
+            : AppColors.white;
 
-          return GestureDetector(
-            onTap: () {
-              AppHaptics.selectionClick();
-              ref.read(addHabitFormProvider.notifier).setAccent(idx);
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOutCubic,
-              width: 36.r,
-              height: 36.r,
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-                border: isSelected
-                    ? Border.all(
-                        color: context.cardBackgroundColor,
-                        width: 2.5,
-                      )
-                    : null,
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: color.withValues(alpha: 0.5),
-                          blurRadius: 8.r,
-                          offset: Offset(0, 2.h),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: isSelected
-                  ? Center(
-                      child: Icon(
-                        Icons.check_rounded,
-                        size: 18.sp,
-                        color: checkmarkColor,
+        return GestureDetector(
+          onTap: () {
+            AppHaptics.selectionClick();
+            ref.read(addHabitFormProvider.notifier).setAccent(idx);
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            width: 36.r,
+            height: 36.r,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: isSelected
+                  ? Border.all(color: context.cardBackgroundColor, width: 2.5)
+                  : null,
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.5),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
                       ),
-                    )
+                    ]
                   : null,
             ),
-          );
-        },
-      ),
+            child: isSelected
+                ? Center(
+                    child: Icon(
+                      Icons.check_rounded,
+                      size: AppIconSizes.md,
+                      color: checkmarkColor,
+                    ),
+                  )
+                : null,
+          ),
+        );
+      }),
     );
   }
 }

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_font_sizes.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../../habits/data/models/habit_model.dart';
@@ -78,7 +80,7 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
           child: Text(
             'Top streaks',
             style: context.textTheme.titleMedium?.copyWith(
-              fontSize: 15.sp.clamp(14.0, 16.0),
+              fontSize: AppFontSizes.subtitle,
               fontWeight: FontWeight.w700,
               letterSpacing: -0.2,
               color: context.textPrimaryColor,
@@ -87,13 +89,12 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
         ),
         SizedBox(height: 8.h),
         SizedBox(
-          height: 94.h.clamp(88.0, 102.0),
+          height: 94.w,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
             itemCount: activities.length,
-            separatorBuilder: (context, index) =>
-                SizedBox(width: 10.w.clamp(8.0, 14.0)),
+            separatorBuilder: (context, index) => SizedBox(width: 10.w),
             itemBuilder: (context, index) {
               final act = activities[index];
               final isSelected =
@@ -118,11 +119,11 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 220),
                   curve: Curves.easeOutCubic,
-                  width: 116.w.clamp(108.0, 130.0),
-                  padding: EdgeInsets.all(10.r.clamp(8.0, 12.0)),
+                  width: 116.w,
+                  padding: EdgeInsets.all(10.r),
                   decoration: BoxDecoration(
                     color: bgColor,
-                    borderRadius: BorderRadius.circular(18.r.clamp(14.0, 20.0)),
+                    borderRadius: BorderRadius.circular(18.r),
                     border: Border.all(
                       color: isSelected
                           ? act.accentColor
@@ -133,8 +134,8 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                         ? [
                             BoxShadow(
                               color: act.accentColor.withValues(alpha: 0.35),
-                              blurRadius: 10.r,
-                              offset: Offset(0, 3.h),
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
                             ),
                           ]
                         : null,
@@ -152,7 +153,7 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: context.textTheme.titleSmall?.copyWith(
-                                fontSize: 12.sp.clamp(11.0, 13.0),
+                                fontSize: AppFontSizes.labelMedium,
                                 fontWeight: FontWeight.w700,
                                 color: context.textPrimaryColor,
                               ),
@@ -169,13 +170,13 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: context.textTheme.labelSmall?.copyWith(
-                                fontSize: 9.5.sp.clamp(8.5, 11.0),
+                                fontSize: AppFontSizes.tiny,
                                 fontWeight: FontWeight.w600,
                                 color: context.textSecondaryColor,
                               ),
                             ),
                           ),
-                          SizedBox(width: 4.w.clamp(2.0, 6.0)),
+                          SizedBox(width: 4.w),
                           Container(
                             padding: EdgeInsets.all(5.r),
                             decoration: BoxDecoration(
@@ -185,14 +186,14 @@ class FavoriteActivitiesCarousel extends ConsumerWidget {
                             child: act.icon != null
                                 ? Icon(
                                     act.icon,
-                                    size: 16.sp.clamp(14.0, 18.0),
+                                    size: AppIconSizes.sm,
                                     color: act.accentColor,
                                   )
                                 : Text(
                                     act.emoji,
                                     style: context.textTheme.bodySmall
                                         ?.copyWith(
-                                          fontSize: 13.sp.clamp(11.0, 15.0),
+                                          fontSize: AppFontSizes.caption,
                                         ),
                                   ),
                           ),

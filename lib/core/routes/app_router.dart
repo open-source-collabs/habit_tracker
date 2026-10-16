@@ -1,4 +1,5 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
@@ -7,6 +8,7 @@ import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/themes/presentation/screens/theme_studio_sheet.dart';
 import '../../presentation/widgets/data_portability_dialog.dart';
 import '../../presentation/widgets/habit_creator_sheet.dart';
+import '../theme/app_breakpoints.dart';
 import '../theme/app_colors.dart';
 import 'app_routes.dart';
 import 'not_found_screen.dart';
@@ -49,23 +51,17 @@ class AppRouter {
 
       case AppRoutes.createHabit:
         return _buildAdaptiveModalRoute<HabitModel?>(
-          (context) {
-            final isDesktop = MediaQuery.of(context).size.width >= 768.0;
-            return HabitCreatorSheet(isDialog: isDesktop);
-          },
+          (context) => HabitCreatorSheet(isDialog: context.isDesktop),
           settings,
         );
 
       case AppRoutes.editHabit:
         final args = settings.arguments as HabitRouteArgs?;
         return _buildAdaptiveModalRoute<HabitModel?>(
-          (context) {
-            final isDesktop = MediaQuery.of(context).size.width >= 768.0;
-            return HabitCreatorSheet(
-              initialHabit: args?.habit,
-              isDialog: isDesktop,
-            );
-          },
+          (context) => HabitCreatorSheet(
+            initialHabit: args?.habit,
+            isDialog: context.isDesktop,
+          ),
           settings,
         );
 
@@ -91,18 +87,12 @@ class AppRouter {
 
   /// Fallback handler for unmapped routes, returning the Bento [NotFoundScreen].
   static Route<dynamic> onUnknownRoute(RouteSettings settings) {
-    return _buildPageRoute(
-      NotFoundScreen(routeName: settings.name),
-      settings,
-    );
+    return _buildPageRoute(NotFoundScreen(routeName: settings.name), settings);
   }
 
   /// Builds a standard Material page route.
   static PageRoute<T> _buildPageRoute<T>(Widget page, RouteSettings settings) {
-    return MaterialPageRoute<T>(
-      builder: (_) => page,
-      settings: settings,
-    );
+    return MaterialPageRoute<T>(builder: (_) => page, settings: settings);
   }
 
   /// Builds an adaptive modal route that displays as a bottom sheet on mobile
@@ -111,10 +101,7 @@ class AppRouter {
     Widget Function(BuildContext) builder,
     RouteSettings settings,
   ) {
-    return _AdaptiveModalRoute<T>(
-      builder: builder,
-      settings: settings,
-    );
+    return _AdaptiveModalRoute<T>(builder: builder, settings: settings);
   }
 
   /// Builds an adaptive dialog route with subtle zoom and fade animation.
@@ -165,10 +152,7 @@ class AppRouter {
 class _AdaptiveModalRoute<T> extends PageRoute<T> {
   final WidgetBuilder builder;
 
-  _AdaptiveModalRoute({
-    required this.builder,
-    super.settings,
-  });
+  _AdaptiveModalRoute({required this.builder, super.settings});
 
   @override
   bool get opaque => false;
@@ -195,23 +179,16 @@ class _AdaptiveModalRoute<T> extends PageRoute<T> {
     Animation<double> secondaryAnimation,
   ) {
     final content = builder(context);
-    final isDesktop = MediaQuery.of(context).size.width >= 768.0;
 
-    if (isDesktop) {
+    if (context.isDesktop) {
       return Center(
-        child: Material(
-          type: MaterialType.transparency,
-          child: content,
-        ),
+        child: Material(type: MaterialType.transparency, child: content),
       );
     }
 
     return Align(
       alignment: Alignment.bottomCenter,
-      child: Material(
-        type: MaterialType.transparency,
-        child: content,
-      ),
+      child: Material(type: MaterialType.transparency, child: content),
     );
   }
 
@@ -227,9 +204,8 @@ class _AdaptiveModalRoute<T> extends PageRoute<T> {
       curve: Curves.easeOutCubic,
       reverseCurve: Curves.easeInCubic,
     );
-    final isDesktop = MediaQuery.of(context).size.width >= 768.0;
 
-    if (isDesktop) {
+    if (context.isDesktop) {
       return FadeTransition(
         opacity: curvedAnimation,
         child: ScaleTransition(

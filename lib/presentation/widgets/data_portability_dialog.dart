@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:habit_tracker/core/theme/app_colors.dart';
 
+import '../../core/theme/app_dimensions.dart';
+import '../../core/theme/app_font_sizes.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/haptics.dart';
@@ -142,8 +144,11 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
             backgroundColor: context.cardBackgroundColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14.r),
-              side: BorderSide(color: context.primaryAccent, width: 1.2),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
+              side: BorderSide(
+                color: context.primaryAccent,
+                width: AppSizes.borderWidth,
+              ),
             ),
           ),
         );
@@ -249,28 +254,28 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
       shadowColor: AppColors.transparent,
       surfaceTintColor: AppColors.transparent,
       shape: const RoundedRectangleBorder(side: BorderSide.none),
-      insetPadding: EdgeInsets.symmetric(
-        horizontal: 20.w.clamp(16.0, 24.0),
-        vertical: 24.h.clamp(16.0, 32.0),
-      ),
+      insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
       child: Material(
         color: AppColors.transparent,
         child: Center(
           child: Container(
             constraints: BoxConstraints(
-              maxWidth: 480.w.clamp(360.0, 520.0),
-              maxHeight: MediaQuery.of(context).size.height * 0.88,
+              maxWidth: AppSizes.dialogMaxWidth,
+              maxHeight: MediaQuery.sizeOf(context).height * 0.88,
             ),
-            padding: EdgeInsets.all(16.r.clamp(14.0, 18.0)),
+            padding: EdgeInsets.all(16.r),
             decoration: BoxDecoration(
               color: context.cardBackgroundColor,
-              borderRadius: BorderRadius.circular(20.r.clamp(16.0, 24.0)),
-              border: Border.all(color: context.cardBorderColor, width: 1.2),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              border: Border.all(
+                color: context.cardBorderColor,
+                width: AppSizes.borderWidth,
+              ),
               boxShadow: [
                 BoxShadow(
                   color: context.shadowColor,
-                  blurRadius: 20.r,
-                  offset: Offset(0, 6.h),
+                  blurRadius: 20,
+                  offset: Offset(0, 6),
                 ),
               ],
             ),
@@ -291,7 +296,7 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
                         child: Icon(
                           Icons.sync_rounded,
                           color: context.primaryAccent,
-                          size: 20.sp.clamp(18.0, 22.0),
+                          size: AppIconSizes.lg,
                         ),
                       ),
                       SizedBox(width: 10.w),
@@ -304,7 +309,7 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
                               style: AppTextStyles.titleMedium(context)
                                   .copyWith(
                                     fontWeight: FontWeight.w800,
-                                    fontSize: 15.sp.clamp(14.0, 17.0),
+                                    fontSize: AppFontSizes.subtitle,
                                   ),
                             ),
                             Text(
@@ -321,7 +326,7 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
                         icon: Icon(
                           Icons.close_rounded,
                           color: context.textSecondaryColor,
-                          size: 20.sp,
+                          size: AppIconSizes.lg,
                         ),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
@@ -331,15 +336,13 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
 
                   // Local Database Stats Card
                   Container(
-                    padding: EdgeInsets.all(10.r.clamp(8.0, 12.0)),
+                    padding: EdgeInsets.all(10.r),
                     decoration: BoxDecoration(
                       color: context.scaffoldBackgroundColor,
-                      borderRadius: BorderRadius.circular(
-                        14.r.clamp(10.0, 16.0),
-                      ),
+                      borderRadius: BorderRadius.circular(AppRadius.chip),
                       border: Border.all(
                         color: context.cardBorderColor,
-                        width: 1.2,
+                        width: AppSizes.borderWidth,
                       ),
                     ),
                     child: Row(
@@ -399,7 +402,7 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
                           Icon(
                             Icons.check_circle_rounded,
                             color: context.primaryAccent,
-                            size: 16.sp,
+                            size: AppIconSizes.sm,
                           ),
                           SizedBox(width: 8.w),
                           Expanded(
@@ -463,10 +466,10 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
                       padding: EdgeInsets.all(12.r),
                       decoration: BoxDecoration(
                         color: context.scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(14.r),
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                         border: Border.all(
                           color: context.primaryAccent,
-                          width: 1.2,
+                          width: AppSizes.borderWidth,
                         ),
                       ),
                       child: Column(
@@ -538,17 +541,17 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
                       ),
                       decoration: BoxDecoration(
                         color: context.scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(14.r),
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                         border: Border.all(
                           color: context.cardBorderColor,
-                          width: 1.2,
+                          width: AppSizes.borderWidth,
                         ),
                       ),
                       child: Row(
                         children: [
                           Icon(
                             Icons.cloud_queue_rounded,
-                            size: 18.sp,
+                            size: AppIconSizes.md,
                             color: context.primaryAccent,
                           ),
                           SizedBox(width: 10.w),
@@ -577,10 +580,10 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
                       padding: EdgeInsets.all(12.r),
                       decoration: BoxDecoration(
                         color: context.scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(14.r),
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                         border: Border.all(
                           color: context.cardBorderColor,
-                          width: 1.2,
+                          width: AppSizes.borderWidth,
                         ),
                       ),
                       child: Column(
@@ -618,10 +621,10 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
                       padding: EdgeInsets.all(12.r),
                       decoration: BoxDecoration(
                         color: context.scaffoldBackgroundColor,
-                        borderRadius: BorderRadius.circular(14.r),
+                        borderRadius: BorderRadius.circular(AppRadius.chip),
                         border: Border.all(
                           color: context.cardBorderColor,
-                          width: 1.2,
+                          width: AppSizes.borderWidth,
                         ),
                       ),
                       child: Column(
@@ -676,7 +679,7 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
           style: AppTextStyles.titleMedium(context).copyWith(
             fontWeight: FontWeight.w800,
             color: context.primaryAccent,
-            fontSize: 16.sp.clamp(14.0, 18.0),
+            fontSize: AppFontSizes.titleMedium,
           ),
         ),
         SizedBox(height: 2.h),
@@ -687,7 +690,7 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
                 context,
                 color: context.textMutedColor,
               ).copyWith(
-                fontSize: 10.sp.clamp(9.0, 11.0),
+                fontSize: AppFontSizes.micro,
                 letterSpacing: 0.8,
                 fontWeight: FontWeight.w700,
               ),

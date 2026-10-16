@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_dimensions.dart';
+import '../../core/theme/app_font_sizes.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/haptics.dart';
@@ -111,8 +113,18 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
   String _formatTooltipDate(DateTime d) {
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     final w = weekdays[(d.weekday - 1).clamp(0, 6)];
     final m = months[(d.month - 1).clamp(0, 11)];
@@ -126,7 +138,9 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
     final startDate = today.subtract(Duration(days: selectedRangeDays - 1));
 
     // Align to the Monday of the start week
-    final startMonday = startDate.subtract(Duration(days: startDate.weekday - 1));
+    final startMonday = startDate.subtract(
+      Duration(days: startDate.weekday - 1),
+    );
 
     // Count weeks to render
     final totalDaysBetween = today.difference(startMonday).inDays + 1;
@@ -145,13 +159,13 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
         : 0;
 
     return Container(
-      padding: EdgeInsets.all(12.r.clamp(10.0, 14.0)),
+      padding: EdgeInsets.all(12.r),
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(14.r.clamp(12.0, 16.0)),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
         border: Border.all(
           color: context.cardBorderColor,
-          width: 1.2,
+          width: AppSizes.borderWidth,
         ),
       ),
       child: Column(
@@ -184,7 +198,7 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: List.generate(weekColumns, (colIdx) {
                     return Padding(
-                      padding: const EdgeInsets.only(right: 3.0),
+                      padding: EdgeInsets.only(right: 3.w),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: List.generate(7, (rowIdx) {
@@ -193,7 +207,7 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
                           );
 
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 3.0),
+                            padding: EdgeInsets.only(bottom: 3.h),
                             child: _buildDaySquare(
                               context,
                               date: cellDate,
@@ -232,10 +246,7 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'ACTIVITY HEATMAP',
-              style: AppTextStyles.labelSmall(context),
-            ),
+            Text('ACTIVITY HEATMAP', style: AppTextStyles.labelSmall(context)),
             SizedBox(height: 2.h),
             Text(
               '$completedCount / $totalDays days completed ($percentage%)',
@@ -254,7 +265,7 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
               isDark: context.isDarkMode,
               opacity: 0.20,
             ),
-            borderRadius: BorderRadius.circular(8.r),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(
               color: widget.activeColor.withValues(alpha: 0.6),
               width: 1.0,
@@ -294,13 +305,13 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
       children: List.generate(7, (i) {
         return Container(
           width: 12.w,
-          height: 10.0, // Matches 10x10 day square
-          margin: const EdgeInsets.only(bottom: 3.0),
+          height: 10.r, // Matches 10x10 day square
+          margin: EdgeInsets.only(bottom: 3.h),
           alignment: Alignment.center,
           child: Text(
             labels[i],
             style: context.textTheme.labelSmall?.copyWith(
-              fontSize: 8.sp,
+              fontSize: AppFontSizes.nano,
               color: context.textMutedColor,
               fontWeight: FontWeight.w600,
             ),
@@ -321,10 +332,7 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
     final isFuture = date.isAfter(today);
 
     if (isBeforeStart || isFuture) {
-      return const SizedBox(
-        width: 10.0,
-        height: 10.0,
-      );
+      return SizedBox(width: 10.r, height: 10.r);
     }
 
     final key = _formatDateKey(date);
@@ -335,7 +343,7 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
         : '${_formatTooltipDate(date)}: Incomplete';
 
     final decoration = BoxDecoration(
-      borderRadius: BorderRadius.circular(3.0),
+      borderRadius: BorderRadius.circular(3.r),
       color: isCompleted
           ? widget.activeColor
           : context.cardBorderColor.withValues(alpha: 0.35),
@@ -362,13 +370,13 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
       verticalOffset: 12.0,
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(8.r),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: context.cardBorderColor, width: 1.0),
         boxShadow: [
           BoxShadow(
             color: context.shadowColor,
-            blurRadius: 8.r,
-            offset: Offset(0, 2.h),
+            blurRadius: 8,
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -383,12 +391,8 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
                 widget.onDaySelected!(date);
               }
             : null,
-        borderRadius: BorderRadius.circular(3.0),
-        child: Container(
-          width: 10.0,
-          height: 10.0,
-          decoration: decoration,
-        ),
+        borderRadius: BorderRadius.circular(3.r),
+        child: Container(width: 10.r, height: 10.r, decoration: decoration),
       ),
     );
   }
@@ -431,7 +435,7 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
                           opacity: 0.22,
                         )
                       : context.cardBackgroundColor,
-                  borderRadius: BorderRadius.circular(6.r),
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
                   border: Border.all(
                     color: isSelected
                         ? widget.activeColor
@@ -443,8 +447,10 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
                   '${days}D',
                   style: context.textTheme.labelSmall?.copyWith(
                     fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                    color: isSelected ? widget.activeColor : context.textSecondaryColor,
-                    fontSize: 9.sp,
+                    color: isSelected
+                        ? widget.activeColor
+                        : context.textSecondaryColor,
+                    fontSize: AppFontSizes.tiny,
                   ),
                 ),
               ),

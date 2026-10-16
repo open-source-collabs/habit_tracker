@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:habit_tracker/core/theme/app_colors.dart';
+import 'package:habit_tracker/core/theme/app_dimensions.dart';
 import 'package:habit_tracker/core/theme/app_text_styles.dart';
 
 import '../theme/app_theme.dart';
@@ -74,7 +75,7 @@ class _AppDropdownState<T> extends ConsumerState<AppDropdown<T>> {
       backgroundColor: context.cardBackgroundColor,
       isScrollControlled: true,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22.r.clamp(16.0, 24.0))),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22.r)),
       ),
       builder: (sheetContext) {
         return _DropdownSelectionSheet<T>(
@@ -119,25 +120,22 @@ class _AppDropdownState<T> extends ConsumerState<AppDropdown<T>> {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeOutCubic,
-            padding: EdgeInsets.symmetric(
-              horizontal: 14.w.clamp(12.0, 16.0),
-              vertical: 10.h.clamp(8.0, 12.0),
-            ),
+            padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
             decoration: BoxDecoration(
               color: context.cardBackgroundColor,
-              borderRadius: BorderRadius.circular(14.r.clamp(12.0, 16.0)),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
               border: Border.all(
-                color: isOpen
-                    ? context.primaryAccent
-                    : context.cardBorderColor,
-                width: isOpen ? 1.6 : 1.2,
+                color: isOpen ? context.primaryAccent : context.cardBorderColor,
+                width: isOpen
+                    ? AppSizes.borderWidthFocused
+                    : AppSizes.borderWidth,
               ),
               boxShadow: isOpen
                   ? [
                       BoxShadow(
                         color: context.primaryAccent.withValues(alpha: 0.22),
-                        blurRadius: 10.r,
-                        offset: Offset(0, 2.h),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
                       ),
                     ]
                   : const [],
@@ -173,7 +171,7 @@ class _AppDropdownState<T> extends ConsumerState<AppDropdown<T>> {
                   curve: Curves.easeOutCubic,
                   child: Icon(
                     Icons.keyboard_arrow_down_rounded,
-                    size: 22.sp,
+                    size: 22.r,
                     color: isOpen
                         ? context.primaryAccent
                         : context.textMutedColor,
@@ -217,7 +215,7 @@ class _DropdownSelectionSheet<T> extends StatelessWidget {
             Center(
               child: Container(
                 width: 40.w,
-                height: 4.5.h,
+                height: 4.5.w,
                 decoration: BoxDecoration(
                   color: context.cardBorderColor,
                   borderRadius: BorderRadius.circular(3.r),
@@ -240,7 +238,7 @@ class _DropdownSelectionSheet<T> extends StatelessWidget {
                 IconButton(
                   icon: Icon(
                     Icons.close_rounded,
-                    size: 20.sp,
+                    size: AppIconSizes.lg,
                     color: context.textMutedColor,
                   ),
                   onPressed: () => Navigator.pop(context),
@@ -272,12 +270,13 @@ class _DropdownSelectionSheet<T> extends StatelessWidget {
                         color: isSelected
                             ? context.primaryAccent.withValues(alpha: 0.14)
                             : AppColors.transparent,
-                        borderRadius: BorderRadius.circular(12.r),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         border: isSelected
                             ? Border.all(
-                                color: context.primaryAccent
-                                    .withValues(alpha: 0.35),
-                                width: 1.2,
+                                color: context.primaryAccent.withValues(
+                                  alpha: 0.35,
+                                ),
+                                width: AppSizes.borderWidth,
                               )
                             : null,
                       ),
@@ -293,16 +292,17 @@ class _DropdownSelectionSheet<T> extends StatelessWidget {
                               children: [
                                 Text(
                                   item.label,
-                                  style: AppTextStyles.bodyMedium(
-                                    context,
-                                    color: isSelected
-                                        ? context.primaryAccent
-                                        : context.textPrimaryColor,
-                                  ).copyWith(
-                                    fontWeight: isSelected
-                                        ? FontWeight.w700
-                                        : FontWeight.w500,
-                                  ),
+                                  style:
+                                      AppTextStyles.bodyMedium(
+                                        context,
+                                        color: isSelected
+                                            ? context.primaryAccent
+                                            : context.textPrimaryColor,
+                                      ).copyWith(
+                                        fontWeight: isSelected
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                      ),
                                 ),
                                 if (item.subtitle != null) ...[
                                   SizedBox(height: 2.h),
@@ -320,7 +320,7 @@ class _DropdownSelectionSheet<T> extends StatelessWidget {
                           if (isSelected)
                             Icon(
                               Icons.check_rounded,
-                              size: 18.sp,
+                              size: AppIconSizes.md,
                               color: context.primaryAccent,
                             ),
                         ],

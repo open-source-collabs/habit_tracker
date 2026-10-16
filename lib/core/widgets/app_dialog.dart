@@ -1,8 +1,10 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_dimensions.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/app_theme.dart';
 import 'app_button.dart';
@@ -39,7 +41,8 @@ class AppDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveIconBg = iconBackgroundColor ??
+    final effectiveIconBg =
+        iconBackgroundColor ??
         (isDestructive
             ? AppColors.error.withValues(alpha: 0.15)
             : context.primaryAccent.withValues(alpha: 0.15));
@@ -50,23 +53,26 @@ class AppDialog extends StatelessWidget {
       shadowColor: AppColors.transparent,
       surfaceTintColor: AppColors.transparent,
       shape: const RoundedRectangleBorder(side: BorderSide.none),
-      insetPadding: EdgeInsets.symmetric(horizontal: 20.w.clamp(16.0, 24.0), vertical: 20.h.clamp(16.0, 24.0)),
+      insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 20.h),
       child: Center(
         child: Container(
           constraints: BoxConstraints(
-            maxWidth: 420.w.clamp(320.0, 460.0),
-            maxHeight: MediaQuery.of(context).size.height * 0.88,
+            maxWidth: 420,
+            maxHeight: MediaQuery.sizeOf(context).height * 0.88,
           ),
-          padding: EdgeInsets.all(16.r.clamp(14.0, 20.0)),
+          padding: EdgeInsets.all(16.r),
           decoration: BoxDecoration(
             color: context.cardBackgroundColor,
-            borderRadius: BorderRadius.circular(20.r.clamp(16.0, 24.0)),
-            border: Border.all(color: context.cardBorderColor, width: 1.2),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(
+              color: context.cardBorderColor,
+              width: AppSizes.borderWidth,
+            ),
             boxShadow: [
               BoxShadow(
                 color: context.shadowColor,
-                blurRadius: 20.r,
-                offset: Offset(0, 6.h),
+                blurRadius: 20,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
@@ -90,10 +96,7 @@ class AppDialog extends StatelessWidget {
                 ),
                 SizedBox(height: 10.h),
               ],
-              Text(
-                title,
-                style: AppTextStyles.titleLarge(context),
-              ),
+              Text(title, style: AppTextStyles.titleLarge(context)),
               if (message != null) ...[
                 SizedBox(height: 4.h),
                 Text(
@@ -117,8 +120,8 @@ class AppDialog extends StatelessWidget {
               Wrap(
                 alignment: WrapAlignment.end,
                 crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 10.w.clamp(8.0, 14.0),
-                runSpacing: 8.h.clamp(6.0, 12.0),
+                spacing: 10.w,
+                runSpacing: 8.h,
                 children: [
                   AppButton(
                     text: cancelText,
@@ -213,12 +216,19 @@ Future<bool> showAppConfirmDialog({
       confirmText: confirmText,
       cancelText: cancelText,
       isDestructive: isDestructive,
-      icon: icon ??
+      icon:
+          icon ??
           (isDestructive
-              ? Icon(Icons.delete_outline_rounded,
-                  color: AppColors.error, size: 24.sp)
-              : Icon(Icons.help_outline_rounded,
-                  color: context.primaryAccent, size: 24.sp)),
+              ? Icon(
+                  Icons.delete_outline_rounded,
+                  color: AppColors.error,
+                  size: AppIconSizes.xl,
+                )
+              : Icon(
+                  Icons.help_outline_rounded,
+                  color: context.primaryAccent,
+                  size: AppIconSizes.xl,
+                )),
       onConfirm: () => Navigator.of(ctx).pop(true),
       onCancel: () => Navigator.of(ctx).pop(false),
     ),

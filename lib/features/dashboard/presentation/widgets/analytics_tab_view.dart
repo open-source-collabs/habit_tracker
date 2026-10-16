@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../../core/theme/app_breakpoints.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_font_sizes.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../presentation/widgets/heatmap_grid.dart';
@@ -18,7 +21,7 @@ class AnalyticsTabView extends ConsumerWidget {
     final stats = ref.watch(dailyHabitStatsProvider);
     final primaryAccent = context.primaryAccent;
     final secondaryAccent = context.secondaryAccent;
-    final isDesktop = MediaQuery.of(context).size.width >= 768.0;
+    final isDesktop = context.isDesktop;
 
     // Aggregate check-ins across all habits
     final combinedCheckIns = <String, bool>{};
@@ -35,13 +38,14 @@ class AnalyticsTabView extends ConsumerWidget {
     final completionPct = (stats.completionRate * 100).round();
     final selectedDate = ref.watch(selectedDateProvider);
     final now = DateTime.now();
-    final isToday = selectedDate.year == now.year &&
+    final isToday =
+        selectedDate.year == now.year &&
         selectedDate.month == now.month &&
         selectedDate.day == now.day;
 
     return ListView(
       padding: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 24.0 : 16.w.clamp(14.0, 20.0),
+        horizontal: isDesktop ? 24.w : 16.w,
         vertical: 10.h,
       ),
       children: [
@@ -51,7 +55,7 @@ class AnalyticsTabView extends ConsumerWidget {
           style: context.textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
-            fontSize: 11.sp.clamp(10.0, 12.0),
+            fontSize: AppFontSizes.labelSmall,
             color: context.textMutedColor,
           ),
         ),
@@ -70,7 +74,7 @@ class AnalyticsTabView extends ConsumerWidget {
                 icon: Icons.percent_rounded,
               ),
             ),
-            SizedBox(width: 10.w.clamp(8.0, 14.0)),
+            SizedBox(width: 10.w),
             Expanded(
               child: _MetricCard(
                 title: 'MAX STREAK',
@@ -86,7 +90,7 @@ class AnalyticsTabView extends ConsumerWidget {
 
         // Consistency Heatmap Card
         AppCard(
-          padding: EdgeInsets.all(14.r.clamp(12.0, 18.0)),
+          padding: EdgeInsets.all(14.r),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -94,7 +98,7 @@ class AnalyticsTabView extends ConsumerWidget {
                 children: [
                   Icon(
                     Icons.calendar_month_rounded,
-                    size: 18.sp.clamp(16.0, 20.0),
+                    size: AppIconSizes.md,
                     color: primaryAccent,
                   ),
                   SizedBox(width: 8.w),
@@ -103,7 +107,7 @@ class AnalyticsTabView extends ConsumerWidget {
                     style: context.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: context.textPrimaryColor,
-                      fontSize: 14.sp.clamp(13.0, 16.0),
+                      fontSize: AppFontSizes.titleSmall,
                     ),
                   ),
                 ],
@@ -124,7 +128,7 @@ class AnalyticsTabView extends ConsumerWidget {
 
         // Habit performance summary
         AppCard(
-          padding: EdgeInsets.all(14.r.clamp(12.0, 18.0)),
+          padding: EdgeInsets.all(14.r),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -133,7 +137,7 @@ class AnalyticsTabView extends ConsumerWidget {
                 style: context.textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.1,
-                  fontSize: 11.sp.clamp(10.0, 12.0),
+                  fontSize: AppFontSizes.labelSmall,
                   color: context.textMutedColor,
                 ),
               ),
@@ -152,14 +156,16 @@ class AnalyticsTabView extends ConsumerWidget {
                 )
               else
                 ...habits.map((habit) {
-                  final completions = habit.checkIns.values.where((v) => v).length;
+                  final completions = habit.checkIns.values
+                      .where((v) => v)
+                      .length;
                   return Padding(
                     padding: EdgeInsets.symmetric(vertical: 4.h),
                     child: Row(
                       children: [
                         Container(
-                          width: 8,
-                          height: 8,
+                          width: 8.r,
+                          height: 8.r,
                           decoration: BoxDecoration(
                             color: primaryAccent,
                             shape: BoxShape.circle,
@@ -172,7 +178,7 @@ class AnalyticsTabView extends ConsumerWidget {
                             style: context.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: context.textPrimaryColor,
-                              fontSize: 13.sp.clamp(12.0, 14.0),
+                              fontSize: AppFontSizes.caption,
                             ),
                           ),
                         ),
@@ -216,7 +222,7 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      padding: EdgeInsets.all(12.r.clamp(10.0, 16.0)),
+      padding: EdgeInsets.all(12.r),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -228,15 +234,11 @@ class _MetricCard extends StatelessWidget {
                 style: context.textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.0,
-                  fontSize: 10.sp.clamp(9.0, 11.0),
+                  fontSize: AppFontSizes.micro,
                   color: context.textMutedColor,
                 ),
               ),
-              Icon(
-                icon,
-                size: 16.sp.clamp(14.0, 18.0),
-                color: accentColor,
-              ),
+              Icon(icon, size: AppIconSizes.sm, color: accentColor),
             ],
           ),
           SizedBox(height: 6.h),
@@ -244,7 +246,7 @@ class _MetricCard extends StatelessWidget {
             value,
             style: context.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w800,
-              fontSize: 20.sp.clamp(16.0, 24.0),
+              fontSize: AppFontSizes.headlineMedium,
               color: context.textPrimaryColor,
             ),
           ),
@@ -253,7 +255,7 @@ class _MetricCard extends StatelessWidget {
             subtitle,
             style: context.textTheme.labelSmall?.copyWith(
               color: context.textMutedColor,
-              fontSize: 11.sp.clamp(10.0, 12.0),
+              fontSize: AppFontSizes.labelSmall,
             ),
           ),
         ],

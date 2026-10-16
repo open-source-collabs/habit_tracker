@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/routes/routes.dart';
+import '../../../../core/theme/app_breakpoints.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_font_sizes.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/date_format.dart';
 import '../../../../core/utils/haptics.dart';
@@ -29,18 +32,13 @@ import '../widgets/themes_tab_view.dart';
 class DashboardScreen extends ConsumerStatefulWidget {
   final int initialTabIndex;
 
-  const DashboardScreen({
-    super.key,
-    this.initialTabIndex = 0,
-  });
+  const DashboardScreen({super.key, this.initialTabIndex = 0});
 
   @override
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  static const double _kDesktopBreakpoint = 768.0;
-
   @override
   void initState() {
     super.initState();
@@ -94,8 +92,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 children: [
                   LayoutBuilder(
                     builder: (context, constraints) {
-                      final isDesktop =
-                          constraints.maxWidth >= _kDesktopBreakpoint;
+                      final isDesktop = AppBreakpoints.isDesktopWidth(
+                        constraints.maxWidth,
+                      );
 
                       return habitsAsync.when(
                         loading: () => Center(
@@ -193,7 +192,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     return AppBar(
       actions: [
         Padding(
-          padding: const EdgeInsets.only(right: 12),
+          padding: EdgeInsets.only(right: 12.w),
           child: AppIconButton(
             icon: Icons.settings_outlined,
             tooltip: 'Settings',
@@ -214,14 +213,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   overflow: TextOverflow.ellipsis,
                   style: context.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.w800,
-                    fontSize: 20.sp,
+                    fontSize: AppFontSizes.headlineMedium,
                     letterSpacing: -0.4,
                     color: context.textPrimaryColor,
                   ),
                 ),
               ),
               SizedBox(width: 6.w),
-              Text('👋', style: TextStyle(fontSize: 18.sp)),
+              Text('👋', style: TextStyle(fontSize: AppFontSizes.titleLarge)),
             ],
           ),
           SizedBox(height: 2.h),
@@ -231,7 +230,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             overflow: TextOverflow.ellipsis,
             style: context.textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w600,
-              fontSize: 12.sp,
+              fontSize: AppFontSizes.labelMedium,
               color: context.textMutedColor,
             ),
           ),
@@ -249,7 +248,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     required DateTime selectedDate,
   }) {
     return ListView(
-      padding: EdgeInsets.symmetric(horizontal: 16.w.clamp(14.0, 20.0), vertical: 10.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
       children: [
         // 7-Day Interactive Calendar Strip
         CalendarStrip(
@@ -279,7 +278,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           style: context.textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
-            fontSize: 10.5.sp.clamp(9.5, 12.0),
+            fontSize: AppFontSizes.micro,
             color: context.textMutedColor,
           ),
         ),
@@ -316,22 +315,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         Expanded(
           flex: 5,
           child: SingleChildScrollView(
-            padding: EdgeInsets.all(18.r.clamp(14.0, 20.0)),
+            padding: EdgeInsets.all(18.r),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 CalendarStrip(
                   onAddTap: () => _showAddHabitDialog(context, activeTheme),
                 ),
-                SizedBox(height: 12.h.clamp(10.0, 16.0)),
+                SizedBox(height: 12.h),
                 const ConsistencyChart(),
-                SizedBox(height: 12.h.clamp(10.0, 16.0)),
+                SizedBox(height: 12.h),
                 const FavoriteActivitiesCarousel(),
-                SizedBox(height: 12.h.clamp(10.0, 16.0)),
+                SizedBox(height: 12.h),
                 const BentoStatsCard(),
-                SizedBox(height: 12.h.clamp(10.0, 16.0)),
+                SizedBox(height: 12.h),
                 _buildStreakChampionTile(context),
-                SizedBox(height: 100.h.clamp(80.0, 110.0)),
+                SizedBox(height: 100.h),
               ],
             ),
           ),
@@ -341,30 +340,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         Expanded(
           flex: 6,
           child: ListView(
-            padding: EdgeInsets.all(18.r.clamp(14.0, 20.0)),
+            padding: EdgeInsets.all(18.r),
             children: [
               _buildFilterChips(context, routineGroups, activeFilter),
-              SizedBox(height: 10.h.clamp(8.0, 14.0)),
+              SizedBox(height: 10.h),
               Text(
                 _habitsSectionTitle(activeFilter),
                 style: context.textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.2,
-                  fontSize: 10.5.sp.clamp(9.5, 12.0),
+                  fontSize: AppFontSizes.micro,
                   color: context.textMutedColor,
                 ),
               ),
-              SizedBox(height: 8.h.clamp(6.0, 12.0)),
+              SizedBox(height: 8.h),
               if (filteredHabits.isEmpty)
                 _buildEmptyState(context, activeFilter)
               else
                 ...filteredHabits.map((habit) {
                   return Padding(
-                    padding: EdgeInsets.only(bottom: 10.h.clamp(8.0, 14.0)),
+                    padding: EdgeInsets.only(bottom: 10.h),
                     child: _buildHabitCard(habit, selectedDate),
                   );
                 }),
-              SizedBox(height: 100.h.clamp(80.0, 110.0)),
+              SizedBox(height: 100.h),
             ],
           ),
         ),
@@ -400,14 +399,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     ? context.onPrimaryColor
                     : context.textPrimaryColor,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 12.sp,
+                fontSize: AppFontSizes.labelMedium,
               ),
               side: BorderSide(
                 color: isSelected ? primaryAccent : context.cardBorderColor,
-                width: 1.2,
+                width: AppSizes.borderWidth,
               ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14.r),
+                borderRadius: BorderRadius.circular(AppRadius.chip),
               ),
             ),
           );
@@ -424,16 +423,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         : (accents.isNotEmpty ? accents.first : context.primaryAccent);
 
     return Container(
-      padding: EdgeInsets.all(14.r.clamp(12.0, 16.0)),
+      padding: EdgeInsets.all(14.r),
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(20.r.clamp(16.0, 22.0)),
-        border: Border.all(color: context.cardBorderColor, width: 1.2),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(
+          color: context.cardBorderColor,
+          width: AppSizes.borderWidth,
+        ),
         boxShadow: [
           BoxShadow(
             color: context.shadowColor,
-            blurRadius: 8.r,
-            offset: Offset(0, 2.h),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -448,10 +450,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             child: Icon(
               Icons.emoji_events_rounded,
               color: accent,
-              size: 24.sp.clamp(20.0, 26.0),
+              size: AppIconSizes.xl,
             ),
           ),
-          SizedBox(width: 12.w.clamp(10.0, 16.0)),
+          SizedBox(width: 12.w),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,18 +463,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   style: context.textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.1,
-                    fontSize: 11.sp.clamp(10.0, 12.0),
+                    fontSize: AppFontSizes.labelSmall,
                     color: context.textMutedColor,
                   ),
                 ),
-                SizedBox(height: 4.h.clamp(2.0, 6.0)),
+                SizedBox(height: 4.h),
                 Text(
                   stats.longestActiveStreak > 0
                       ? '${stats.longestActiveStreak} Days Streak Master'
                       : 'Keep going to build your championship streak!',
                   style: context.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    fontSize: 13.sp.clamp(12.0, 15.0),
+                    fontSize: AppFontSizes.caption,
                     color: context.textPrimaryColor,
                   ),
                 ),
@@ -485,7 +487,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   String _habitsSectionTitle(String activeFilter) =>
-      activeFilter == kArchivedHabitsFilter ? 'ARCHIVED HABITS' : 'ACTIVE HABITS';
+      activeFilter == kArchivedHabitsFilter
+      ? 'ARCHIVED HABITS'
+      : 'ACTIVE HABITS';
 
   Widget _buildHabitCard(HabitModel habit, DateTime selectedDate) {
     return BentoHabitCard(
@@ -517,7 +521,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final confirmed = await showAppConfirmDialog(
       context: context,
       title: 'Delete "${habit.title}"?',
-      message: 'This removes the habit and its entire check-in history. '
+      message:
+          'This removes the habit and its entire check-in history. '
           'To pause it and keep its history, archive it instead.',
       confirmText: 'Delete',
       isDestructive: true,
@@ -550,13 +555,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       padding: EdgeInsets.all(32.r),
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(24.r.clamp(16.0, 24.0)),
-        border: Border.all(color: context.cardBorderColor, width: 1.2),
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        border: Border.all(
+          color: context.cardBorderColor,
+          width: AppSizes.borderWidth,
+        ),
       ),
       child: Center(
         child: Column(
           children: [
-            Text('🎯', style: TextStyle(fontSize: 32.sp.clamp(26.0, 36.0))),
+            Text('🎯', style: TextStyle(fontSize: AppFontSizes.displayLarge)),
             SizedBox(height: 10.h),
             Text(
               activeFilter == kArchivedHabitsFilter

@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_breakpoints.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_font_sizes.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../../presentation/widgets/data_portability_dialog.dart';
@@ -18,11 +21,11 @@ class SyncTabView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final habits = ref.watch(habitListProvider).valueOrNull ?? [];
     final primaryAccent = context.primaryAccent;
-    final isDesktop = MediaQuery.of(context).size.width >= 768.0;
+    final isDesktop = context.isDesktop;
 
     return ListView(
       padding: EdgeInsets.symmetric(
-        horizontal: isDesktop ? 24.0 : 16.w.clamp(14.0, 20.0),
+        horizontal: isDesktop ? 24.w : 16.w,
         vertical: 10.h,
       ),
       children: [
@@ -32,7 +35,7 @@ class SyncTabView extends ConsumerWidget {
           style: context.textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
-            fontSize: 11.sp.clamp(10.0, 12.0),
+            fontSize: AppFontSizes.labelSmall,
             color: context.textMutedColor,
           ),
         ),
@@ -40,7 +43,7 @@ class SyncTabView extends ConsumerWidget {
 
         // Cloud Sync Hub Card
         AppCard(
-          padding: EdgeInsets.all(14.r.clamp(12.0, 18.0)),
+          padding: EdgeInsets.all(14.r),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -59,7 +62,7 @@ class SyncTabView extends ConsumerWidget {
                     child: Icon(
                       Icons.cloud_sync_rounded,
                       color: primaryAccent,
-                      size: 22.sp.clamp(18.0, 24.0),
+                      size: 22.r,
                     ),
                   ),
                   SizedBox(width: 10.w),
@@ -72,7 +75,7 @@ class SyncTabView extends ConsumerWidget {
                           style: context.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                             color: context.textPrimaryColor,
-                            fontSize: 15.sp.clamp(14.0, 17.0),
+                            fontSize: AppFontSizes.subtitle,
                           ),
                         ),
                         SizedBox(height: 2.h),
@@ -105,7 +108,7 @@ class SyncTabView extends ConsumerWidget {
           style: context.textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w800,
             letterSpacing: 1.1,
-            fontSize: 11.sp.clamp(10.0, 12.0),
+            fontSize: AppFontSizes.labelSmall,
             color: context.textMutedColor,
           ),
         ),
@@ -124,11 +127,13 @@ class SyncTabView extends ConsumerWidget {
         _ProviderStatusTile(
           icon: Icons.cloud_done_rounded,
           title: 'Apple iCloud Sync',
-          subtitle: defaultTargetPlatform == TargetPlatform.iOS ||
+          subtitle:
+              defaultTargetPlatform == TargetPlatform.iOS ||
                   defaultTargetPlatform == TargetPlatform.macOS
               ? 'Native iCloud ubiquity container active'
               : 'Available on iOS and macOS devices',
-          statusLabel: defaultTargetPlatform == TargetPlatform.iOS ||
+          statusLabel:
+              defaultTargetPlatform == TargetPlatform.iOS ||
                   defaultTargetPlatform == TargetPlatform.macOS
               ? 'Supported'
               : 'Platform Dependent',
@@ -139,7 +144,7 @@ class SyncTabView extends ConsumerWidget {
 
         // Local Database Stats
         AppCard(
-          padding: EdgeInsets.all(14.r.clamp(12.0, 18.0)),
+          padding: EdgeInsets.all(14.r),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -148,7 +153,7 @@ class SyncTabView extends ConsumerWidget {
                 style: context.textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.1,
-                  fontSize: 11.sp.clamp(10.0, 12.0),
+                  fontSize: AppFontSizes.labelSmall,
                   color: context.textMutedColor,
                 ),
               ),
@@ -225,7 +230,7 @@ class _ProviderStatusTile extends StatelessWidget {
     return AppCard(
       isInteractive: true,
       onTap: onTap,
-      padding: EdgeInsets.all(12.r.clamp(10.0, 14.0)),
+      padding: EdgeInsets.all(12.r),
       child: Row(
         children: [
           Container(
@@ -238,11 +243,7 @@ class _ProviderStatusTile extends StatelessWidget {
               ),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              icon,
-              size: 18.sp.clamp(16.0, 20.0),
-              color: accentColor,
-            ),
+            child: Icon(icon, size: AppIconSizes.md, color: accentColor),
           ),
           SizedBox(width: 10.w),
           Expanded(
@@ -254,7 +255,7 @@ class _ProviderStatusTile extends StatelessWidget {
                   style: context.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: context.textPrimaryColor,
-                    fontSize: 14.sp.clamp(13.0, 15.0),
+                    fontSize: AppFontSizes.titleSmall,
                   ),
                 ),
                 SizedBox(height: 2.h),
@@ -267,10 +268,7 @@ class _ProviderStatusTile extends StatelessWidget {
               ],
             ),
           ),
-          AppBadge(
-            label: statusLabel,
-            color: accentColor,
-          ),
+          AppBadge(label: statusLabel, color: accentColor),
         ],
       ),
     );

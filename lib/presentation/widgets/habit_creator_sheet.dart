@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../core/services/notification_service.dart';
+import '../../core/theme/app_breakpoints.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_dimensions.dart';
+import '../../core/theme/app_font_sizes.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/haptics.dart';
@@ -35,24 +38,20 @@ class HabitCreatorSheet extends ConsumerStatefulWidget {
     HabitModel? initialHabit,
   }) {
     AppHaptics.mediumImpact();
-    final isDesktop = MediaQuery.of(context).size.width >= 768.0;
+    final isDesktop = context.isDesktop;
 
     if (isDesktop) {
       return showDialog<HabitModel>(
         context: context,
         barrierDismissible: true,
-        builder: (ctx) => HabitCreatorSheet(
-          initialHabit: initialHabit,
-          isDialog: true,
-        ),
+        builder: (ctx) =>
+            HabitCreatorSheet(initialHabit: initialHabit, isDialog: true),
       );
     } else {
       return showAppBottomSheet<HabitModel>(
         context: context,
-        builder: (ctx) => HabitCreatorSheet(
-          initialHabit: initialHabit,
-          isDialog: false,
-        ),
+        builder: (ctx) =>
+            HabitCreatorSheet(initialHabit: initialHabit, isDialog: false),
       );
     }
   }
@@ -71,9 +70,30 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
   late TabController _iconTabController;
 
   static const List<String> _curatedEmojis = [
-    '☀️', '💧', '🏃', '🧘', '⚡', '📖', '💪', '🌙',
-    '🥑', '🎯', '⏰', '🧠', '🎨', '🌿', '☕', '🍎',
-    '🏆', '🔥', '🚀', '📚', '🚴', '🏊', '✍️', '🎵',
+    '☀️',
+    '💧',
+    '🏃',
+    '🧘',
+    '⚡',
+    '📖',
+    '💪',
+    '🌙',
+    '🥑',
+    '🎯',
+    '⏰',
+    '🧠',
+    '🎨',
+    '🌿',
+    '☕',
+    '🍎',
+    '🏆',
+    '🔥',
+    '🚀',
+    '📚',
+    '🚴',
+    '🏊',
+    '✍️',
+    '🎵',
   ];
 
   static const List<String> _defaultRoutines = [
@@ -95,11 +115,15 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
     _customRoutineController = TextEditingController();
     _customEmojiController = TextEditingController();
 
-    final isIcon = initial?.iconCode != null &&
+    final isIcon =
+        initial?.iconCode != null &&
         HabitIconRegistry.icons.containsKey(initial?.iconCode);
 
-    _iconTabController =
-        TabController(length: 2, vsync: this, initialIndex: isIcon ? 1 : 0);
+    _iconTabController = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: isIcon ? 1 : 0,
+    );
 
     _iconTabController.addListener(() {
       if (_iconTabController.indexIsChanging) {
@@ -149,8 +173,9 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
   Future<void> _handleSubmit() async {
     final title = _titleController.text.trim();
     final formState = ref.read(habitCreatorFormProvider(widget.initialHabit));
-    final formNotifier =
-        ref.read(habitCreatorFormProvider(widget.initialHabit).notifier);
+    final formNotifier = ref.read(
+      habitCreatorFormProvider(widget.initialHabit).notifier,
+    );
 
     if (title.isEmpty) {
       AppHaptics.heavyImpact();
@@ -158,12 +183,14 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
       return;
     }
 
-    final routine = formState.isCreatingCustomRoutine &&
+    final routine =
+        formState.isCreatingCustomRoutine &&
             _customRoutineController.text.trim().isNotEmpty
         ? _customRoutineController.text.trim()
         : formState.selectedRoutine;
 
-    final habitId = widget.initialHabit?.id ??
+    final habitId =
+        widget.initialHabit?.id ??
         'habit_${DateTime.now().millisecondsSinceEpoch}';
 
     final reminderStr = formState.reminderEnabled
@@ -221,17 +248,26 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
   Widget _buildBottomSheetLayout(BuildContext context) {
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.90,
+        maxHeight: MediaQuery.sizeOf(context).height * 0.90,
       ),
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(24.r.clamp(16.0, 24.0)),
+          top: Radius.circular(AppRadius.card),
         ),
         border: Border(
-          top: BorderSide(color: context.cardBorderColor, width: 1.2),
-          left: BorderSide(color: context.cardBorderColor, width: 1.2),
-          right: BorderSide(color: context.cardBorderColor, width: 1.2),
+          top: BorderSide(
+            color: context.cardBorderColor,
+            width: AppSizes.borderWidth,
+          ),
+          left: BorderSide(
+            color: context.cardBorderColor,
+            width: AppSizes.borderWidth,
+          ),
+          right: BorderSide(
+            color: context.cardBorderColor,
+            width: AppSizes.borderWidth,
+          ),
         ),
       ),
       child: Column(
@@ -241,8 +277,8 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
           Center(
             child: Container(
               margin: EdgeInsets.only(top: 8.h, bottom: 6.h),
-              width: 40.w.clamp(36.0, 48.0),
-              height: 4.h.clamp(3.0, 5.0),
+              width: 40.w,
+              height: 4.h,
               decoration: BoxDecoration(
                 color: context.textMutedColor.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2.r),
@@ -252,7 +288,7 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
           _buildHeader(context),
           Expanded(
             child: SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 16.w.clamp(14.0, 20.0)),
+              padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: _buildFormContent(context),
             ),
           ),
@@ -265,18 +301,18 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
   Widget _buildDialogLayout(BuildContext context) {
     return Dialog(
       backgroundColor: context.cardBackgroundColor,
-      insetPadding: EdgeInsets.symmetric(
-        horizontal: 20.w.clamp(16.0, 32.0),
-        vertical: 24.h.clamp(16.0, 36.0),
-      ),
+      insetPadding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20.r.clamp(16.0, 24.0)),
-        side: BorderSide(color: context.cardBorderColor, width: 1.2),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        side: BorderSide(
+          color: context.cardBorderColor,
+          width: AppSizes.borderWidth,
+        ),
       ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: 580,
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
+          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -284,7 +320,7 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
             _buildHeader(context),
             Flexible(
               child: SingleChildScrollView(
-                padding: EdgeInsets.symmetric(horizontal: 20.w.clamp(16.0, 24.0)),
+                padding: EdgeInsets.symmetric(horizontal: 20.w),
                 child: _buildFormContent(context),
               ),
             ),
@@ -301,20 +337,20 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
     final formState = ref.watch(habitCreatorFormProvider(widget.initialHabit));
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16.w.clamp(14.0, 20.0), 6.h, 14.w, 10.h),
+      padding: EdgeInsets.fromLTRB(16.w, 6.h, 14.w, 10.h),
       child: Row(
         children: [
           // Visual Avatar Preview
           Container(
-            width: 38.r.clamp(34.0, 42.0),
-            height: 38.r.clamp(34.0, 42.0),
+            width: 38.r,
+            height: 38.r,
             decoration: BoxDecoration(
               color: AppColors.pastelSurface(
                 activeColor,
                 isDark: context.isDarkMode,
                 opacity: 0.22,
               ),
-              borderRadius: BorderRadius.circular(14.r),
+              borderRadius: BorderRadius.circular(AppRadius.chip),
               border: Border.all(
                 color: activeColor.withValues(alpha: 0.6),
                 width: 1.5,
@@ -324,13 +360,13 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
               child: formState.isEmojiSelected
                   ? Text(
                       formState.selectedEmoji,
-                      style: TextStyle(fontSize: 22.sp.clamp(18.0, 24.0)),
+                      style: TextStyle(fontSize: AppFontSizes.headlineLarge),
                     )
                   : Icon(
                       HabitIconRegistry.getIcon(formState.selectedIconCode) ??
                           Icons.star_rounded,
                       color: activeColor,
-                      size: 22.sp.clamp(18.0, 24.0),
+                      size: 22.r,
                     ),
             ),
           ),
@@ -362,7 +398,7 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
             icon: Icon(
               Icons.close_rounded,
               color: context.textMutedColor,
-              size: 20.sp,
+              size: AppIconSizes.lg,
             ),
             tooltip: 'Close',
           ),
@@ -436,8 +472,9 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
     final palette = context.accentPalette;
     final activeColor = _getActiveSelectedColor(context);
     final formState = ref.watch(habitCreatorFormProvider(widget.initialHabit));
-    final formNotifier =
-        ref.read(habitCreatorFormProvider(widget.initialHabit).notifier);
+    final formNotifier = ref.read(
+      habitCreatorFormProvider(widget.initialHabit).notifier,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -459,14 +496,15 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
         ),
         SizedBox(height: 10.h),
         Wrap(
-          spacing: 12.w.clamp(8.0, 14.0),
+          spacing: 12.w,
           runSpacing: 10.h,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             // Theme palette swatches
             ...List.generate(palette.length, (idx) {
               final color = palette[idx];
-              final isSelected = formState.customColor == null &&
+              final isSelected =
+                  formState.customColor == null &&
                   formState.selectedAccentIndex == idx;
               return GestureDetector(
                 onTap: () {
@@ -475,8 +513,8 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
-                  width: 34.r.clamp(30.0, 38.0),
-                  height: 34.r.clamp(30.0, 38.0),
+                  width: 34.r,
+                  height: 34.r,
                   decoration: BoxDecoration(
                     color: color,
                     shape: BoxShape.circle,
@@ -490,8 +528,8 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                         ? [
                             BoxShadow(
                               color: color.withValues(alpha: 0.5),
-                              blurRadius: 8.r,
-                              offset: Offset(0, 2.h),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
                           ]
                         : null,
@@ -500,9 +538,9 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                       ? Center(
                           child: Icon(
                             Icons.check_rounded,
-                            size: 18.sp,
-                            color: ThemeData.estimateBrightnessForColor(
-                                        color) ==
+                            size: AppIconSizes.md,
+                            color:
+                                ThemeData.estimateBrightnessForColor(color) ==
                                     Brightness.dark
                                 ? AppColors.white
                                 : AppColors.obsidianTwilight,
@@ -517,7 +555,8 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
             GestureDetector(
               onTap: () async {
                 AppHaptics.mediumImpact();
-                final initialColor = formState.customColor ??
+                final initialColor =
+                    formState.customColor ??
                     palette.firstOrNull ??
                     context.primaryAccent;
                 final picked = await ColorPickerDialog.show(
@@ -530,8 +569,7 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                 }
               },
               child: Container(
-                padding:
-                    EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
                 decoration: BoxDecoration(
                   color: formState.customColor != null
                       ? formState.customColor!.withValues(alpha: 0.18)
@@ -573,8 +611,8 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                           ? '#${AppColors.colorToHex(formState.customColor!).toUpperCase()}'
                           : 'Custom',
                       style: context.textTheme.labelSmall?.copyWith(
-                        color: formState.customColor ??
-                            context.textPrimaryColor,
+                        color:
+                            formState.customColor ?? context.textPrimaryColor,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -591,8 +629,9 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
   Widget _buildIconAndEmojiSection(BuildContext context) {
     final activeColor = _getActiveSelectedColor(context);
     final formState = ref.watch(habitCreatorFormProvider(widget.initialHabit));
-    final formNotifier =
-        ref.read(habitCreatorFormProvider(widget.initialHabit).notifier);
+    final formNotifier = ref.read(
+      habitCreatorFormProvider(widget.initialHabit).notifier,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -601,12 +640,12 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
         SizedBox(height: 10.h),
         // Tab Header
         Container(
-          height: 38.h.clamp(34.0, 42.0),
+          height: 38.w,
           decoration: BoxDecoration(
             color: context.isDarkMode
                 ? context.surfaceElevatedColor
                 : context.cardBorderColor.withValues(alpha: 0.35),
-            borderRadius: BorderRadius.circular(12.r),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(color: context.cardBorderColor, width: 1.0),
           ),
           child: TabBar(
@@ -618,8 +657,8 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
               boxShadow: [
                 BoxShadow(
                   color: context.shadowColor,
-                  blurRadius: 4.r,
-                  offset: Offset(0, 1.h),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
                 ),
               ],
             ),
@@ -640,7 +679,7 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
 
         // Tab Content
         SizedBox(
-          height: 130.h.clamp(120.0, 150.0),
+          height: 130.w,
           child: TabBarView(
             controller: _iconTabController,
             children: [
@@ -651,10 +690,11 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                   Expanded(
                     child: SingleChildScrollView(
                       child: Wrap(
-                        spacing: 8.w.clamp(6.0, 10.0),
+                        spacing: 8.w,
                         runSpacing: 8.h,
                         children: _curatedEmojis.map((emoji) {
-                          final isSelected = formState.isEmojiSelected &&
+                          final isSelected =
+                              formState.isEmojiSelected &&
                               formState.selectedEmoji == emoji;
                           return GestureDetector(
                             onTap: () {
@@ -662,8 +702,8 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                               formNotifier.selectEmoji(emoji);
                             },
                             child: Container(
-                              width: 36.r.clamp(32.0, 40.0),
-                              height: 36.r.clamp(32.0, 40.0),
+                              width: 36.r,
+                              height: 36.r,
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? activeColor.withValues(alpha: 0.22)
@@ -673,14 +713,17 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                                   color: isSelected
                                       ? activeColor
                                       : context.cardBorderColor,
-                                  width: isSelected ? 1.6 : 1.0,
+                                  width: isSelected
+                                      ? AppSizes.borderWidthFocused
+                                      : 1.0,
                                 ),
                               ),
                               child: Center(
                                 child: Text(
                                   emoji,
                                   style: TextStyle(
-                                      fontSize: 18.sp.clamp(16.0, 22.0)),
+                                    fontSize: AppFontSizes.titleLarge,
+                                  ),
                                 ),
                               ),
                             ),
@@ -694,7 +737,7 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                     children: [
                       Expanded(
                         child: SizedBox(
-                          height: 34.h,
+                          height: 34.w,
                           child: TextField(
                             controller: _customEmojiController,
                             style: context.textTheme.bodyMedium?.copyWith(
@@ -702,26 +745,35 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                             ),
                             decoration: InputDecoration(
                               hintText: 'Type any custom emoji...',
-                              hintStyle:
-                                  context.textTheme.bodySmall?.copyWith(
+                              hintStyle: context.textTheme.bodySmall?.copyWith(
                                 color: context.textMutedColor,
                               ),
                               contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 10.w, vertical: 6.h),
+                                horizontal: 10.w,
+                                vertical: 6.h,
+                              ),
                               filled: true,
                               fillColor: context.cardBackgroundColor,
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.r),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                                 borderSide: BorderSide(
-                                    color: context.cardBorderColor),
+                                  color: context.cardBorderColor,
+                                ),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.r),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                                 borderSide: BorderSide(
-                                    color: context.cardBorderColor),
+                                  color: context.cardBorderColor,
+                                ),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8.r),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                                 borderSide: BorderSide(color: activeColor),
                               ),
                             ),
@@ -742,12 +794,13 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
               // Material Icon Tab
               SingleChildScrollView(
                 child: Wrap(
-                  spacing: 8.w.clamp(6.0, 10.0),
+                  spacing: 8.w,
                   runSpacing: 8.h,
                   children: HabitIconRegistry.icons.entries.map((entry) {
                     final code = entry.key;
                     final iconData = entry.value;
-                    final isSelected = !formState.isEmojiSelected &&
+                    final isSelected =
+                        !formState.isEmojiSelected &&
                         formState.selectedIconCode == code;
                     return GestureDetector(
                       onTap: () {
@@ -755,23 +808,29 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                         formNotifier.selectIcon(code);
                       },
                       child: Container(
-                        width: 36.r.clamp(32.0, 40.0),
-                        height: 36.r.clamp(32.0, 40.0),
+                        width: 36.r,
+                        height: 36.r,
                         decoration: BoxDecoration(
                           color: isSelected
                               ? activeColor.withValues(alpha: 0.22)
                               : context.cardBackgroundColor,
                           borderRadius: BorderRadius.circular(10.r),
                           border: Border.all(
-                            color: isSelected ? activeColor : context.cardBorderColor,
-                            width: isSelected ? 1.6 : 1.0,
+                            color: isSelected
+                                ? activeColor
+                                : context.cardBorderColor,
+                            width: isSelected
+                                ? AppSizes.borderWidthFocused
+                                : 1.0,
                           ),
                         ),
                         child: Center(
                           child: Icon(
                             iconData,
-                            size: 19.sp,
-                            color: isSelected ? activeColor : context.textPrimaryColor,
+                            size: 19.r,
+                            color: isSelected
+                                ? activeColor
+                                : context.textPrimaryColor,
                           ),
                         ),
                       ),
@@ -793,7 +852,10 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('FREQUENCY CONFIGURATOR', style: AppTextStyles.labelSmall(context)),
+        Text(
+          'FREQUENCY CONFIGURATOR',
+          style: AppTextStyles.labelSmall(context),
+        ),
         SizedBox(height: 10.h),
         // Mode Selector: Every Day | Specific Days | Times per Week
         Row(
@@ -828,7 +890,8 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
         // Sub-configurator depending on type
         if (formState.frequencyType == HabitFrequencyType.specificWeekdays) ...[
           _buildSpecificWeekdaysSelector(context, activeColor),
-        ] else if (formState.frequencyType == HabitFrequencyType.timesPerWeek) ...[
+        ] else if (formState.frequencyType ==
+            HabitFrequencyType.timesPerWeek) ...[
           _buildTimesPerWeekStepper(context, activeColor),
         ],
       ],
@@ -841,8 +904,9 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
     required Color activeColor,
   }) {
     final formState = ref.watch(habitCreatorFormProvider(widget.initialHabit));
-    final formNotifier =
-        ref.read(habitCreatorFormProvider(widget.initialHabit).notifier);
+    final formNotifier = ref.read(
+      habitCreatorFormProvider(widget.initialHabit).notifier,
+    );
     final isSelected = formState.frequencyType == type;
 
     return GestureDetector(
@@ -855,9 +919,13 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
         padding: EdgeInsets.symmetric(vertical: 8.h),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.pastelSurface(activeColor, isDark: context.isDarkMode, opacity: 0.22)
+              ? AppColors.pastelSurface(
+                  activeColor,
+                  isDark: context.isDarkMode,
+                  opacity: 0.22,
+                )
               : context.cardBackgroundColor,
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: isSelected ? activeColor : context.cardBorderColor,
             width: isSelected ? 1.5 : 1.0,
@@ -882,10 +950,14 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
     );
   }
 
-  Widget _buildSpecificWeekdaysSelector(BuildContext context, Color activeColor) {
+  Widget _buildSpecificWeekdaysSelector(
+    BuildContext context,
+    Color activeColor,
+  ) {
     final formState = ref.watch(habitCreatorFormProvider(widget.initialHabit));
-    final formNotifier =
-        ref.read(habitCreatorFormProvider(widget.initialHabit).notifier);
+    final formNotifier = ref.read(
+      habitCreatorFormProvider(widget.initialHabit).notifier,
+    );
     const dayLabels = [
       {'val': 1, 'name': 'Mon'},
       {'val': 2, 'name': 'Tue'},
@@ -904,7 +976,9 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
           children: [
             Text(
               'Select active days:',
-              style: context.textTheme.bodySmall?.copyWith(color: context.textMutedColor),
+              style: context.textTheme.bodySmall?.copyWith(
+                color: context.textMutedColor,
+              ),
             ),
             Row(
               children: [
@@ -958,11 +1032,15 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                     duration: const Duration(milliseconds: 160),
                     padding: EdgeInsets.symmetric(vertical: 8.h),
                     decoration: BoxDecoration(
-                      color: isDaySelected ? activeColor : context.cardBackgroundColor,
+                      color: isDaySelected
+                          ? activeColor
+                          : context.cardBackgroundColor,
                       borderRadius: BorderRadius.circular(10.r),
                       border: Border.all(
-                        color: isDaySelected ? activeColor : context.cardBorderColor,
-                        width: 1.2,
+                        color: isDaySelected
+                            ? activeColor
+                            : context.cardBorderColor,
+                        width: AppSizes.borderWidth,
                       ),
                     ),
                     child: Center(
@@ -971,9 +1049,12 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                         style: context.textTheme.labelSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: isDaySelected
-                              ? (ThemeData.estimateBrightnessForColor(activeColor) == Brightness.dark
-                                  ? AppColors.white
-                                  : AppColors.obsidianTwilight)
+                              ? (ThemeData.estimateBrightnessForColor(
+                                          activeColor,
+                                        ) ==
+                                        Brightness.dark
+                                    ? AppColors.white
+                                    : AppColors.obsidianTwilight)
                               : context.textSecondaryColor,
                         ),
                       ),
@@ -990,15 +1071,19 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
 
   Widget _buildTimesPerWeekStepper(BuildContext context, Color activeColor) {
     final formState = ref.watch(habitCreatorFormProvider(widget.initialHabit));
-    final formNotifier =
-        ref.read(habitCreatorFormProvider(widget.initialHabit).notifier);
+    final formNotifier = ref.read(
+      habitCreatorFormProvider(widget.initialHabit).notifier,
+    );
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(14.r),
-        border: Border.all(color: context.cardBorderColor, width: 1.2),
+        borderRadius: BorderRadius.circular(AppRadius.chip),
+        border: Border.all(
+          color: context.cardBorderColor,
+          width: AppSizes.borderWidth,
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1021,7 +1106,7 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                     : null,
                 icon: const Icon(Icons.remove_circle_outline_rounded),
                 color: activeColor,
-                iconSize: 24.sp,
+                iconSize: AppIconSizes.xl,
               ),
               Container(
                 constraints: BoxConstraints(minWidth: 44.w),
@@ -1044,7 +1129,7 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                     : null,
                 icon: const Icon(Icons.add_circle_outline_rounded),
                 color: activeColor,
-                iconSize: 24.sp,
+                iconSize: AppIconSizes.xl,
               ),
             ],
           ),
@@ -1057,9 +1142,13 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
     final activeColor = _getActiveSelectedColor(context);
     final userGroups = ref.watch(routineGroupsProvider);
     final formState = ref.watch(habitCreatorFormProvider(widget.initialHabit));
-    final formNotifier =
-        ref.read(habitCreatorFormProvider(widget.initialHabit).notifier);
-    final allGroups = <String>{..._defaultRoutines, ...userGroups}.where((g) => g != 'All').toList();
+    final formNotifier = ref.read(
+      habitCreatorFormProvider(widget.initialHabit).notifier,
+    );
+    final allGroups = <String>{
+      ..._defaultRoutines,
+      ...userGroups,
+    }.where((g) => g != 'All').toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1074,7 +1163,9 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                 formNotifier.toggleCustomRoutine();
               },
               child: Text(
-                formState.isCreatingCustomRoutine ? 'Choose from list' : '+ Custom Group',
+                formState.isCreatingCustomRoutine
+                    ? 'Choose from list'
+                    : '+ Custom Group',
                 style: context.textTheme.labelSmall?.copyWith(
                   color: activeColor,
                   fontWeight: FontWeight.w600,
@@ -1093,7 +1184,7 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
           ),
         ] else ...[
           Wrap(
-            spacing: 8.w.clamp(6.0, 10.0),
+            spacing: 8.w,
             runSpacing: 8.h,
             children: allGroups.map((group) {
               final isSelected = formState.selectedRoutine == group;
@@ -1104,12 +1195,19 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 160),
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 7.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12.w,
+                    vertical: 7.h,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.pastelSurface(activeColor, isDark: context.isDarkMode, opacity: 0.22)
+                        ? AppColors.pastelSurface(
+                            activeColor,
+                            isDark: context.isDarkMode,
+                            opacity: 0.22,
+                          )
                         : context.cardBackgroundColor,
-                    borderRadius: BorderRadius.circular(12.r),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(
                       color: isSelected ? activeColor : context.cardBorderColor,
                       width: isSelected ? 1.5 : 1.0,
@@ -1118,8 +1216,12 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                   child: Text(
                     group,
                     style: context.textTheme.labelMedium?.copyWith(
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                      color: isSelected ? activeColor : context.textPrimaryColor,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      color: isSelected
+                          ? activeColor
+                          : context.textPrimaryColor,
                     ),
                   ),
                 ),
@@ -1134,15 +1236,19 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
   Widget _buildReminderSection(BuildContext context) {
     final activeColor = _getActiveSelectedColor(context);
     final formState = ref.watch(habitCreatorFormProvider(widget.initialHabit));
-    final formNotifier =
-        ref.read(habitCreatorFormProvider(widget.initialHabit).notifier);
+    final formNotifier = ref.read(
+      habitCreatorFormProvider(widget.initialHabit).notifier,
+    );
 
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: context.cardBorderColor, width: 1.2),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: context.cardBorderColor,
+          width: AppSizes.borderWidth,
+        ),
       ),
       child: Column(
         children: [
@@ -1153,8 +1259,10 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                 children: [
                   Icon(
                     Icons.notifications_active_rounded,
-                    size: 20.sp,
-                    color: formState.reminderEnabled ? activeColor : context.textMutedColor,
+                    size: AppIconSizes.lg,
+                    color: formState.reminderEnabled
+                        ? activeColor
+                        : context.textMutedColor,
                   ),
                   SizedBox(width: 10.w),
                   Column(
@@ -1222,15 +1330,29 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                     }
                   },
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12.w,
+                      vertical: 6.h,
+                    ),
                     decoration: BoxDecoration(
-                      color: AppColors.pastelSurface(activeColor, isDark: context.isDarkMode, opacity: 0.22),
+                      color: AppColors.pastelSurface(
+                        activeColor,
+                        isDark: context.isDarkMode,
+                        opacity: 0.22,
+                      ),
                       borderRadius: BorderRadius.circular(10.r),
-                      border: Border.all(color: activeColor, width: 1.2),
+                      border: Border.all(
+                        color: activeColor,
+                        width: AppSizes.borderWidth,
+                      ),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.access_time_rounded, size: 16.sp, color: activeColor),
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: AppIconSizes.sm,
+                          color: activeColor,
+                        ),
                         SizedBox(width: 6.w),
                         Text(
                           formState.reminderTime.format(context),
@@ -1253,7 +1375,7 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
 
   Widget _buildFooterButtons(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(16.w.clamp(14.0, 20.0), 10.h, 16.w.clamp(14.0, 20.0), 12.h),
+      padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 12.h),
       decoration: BoxDecoration(
         color: context.cardBackgroundColor,
         border: Border(
@@ -1274,7 +1396,9 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
           Expanded(
             flex: 2,
             child: AppButton(
-              text: widget.initialHabit != null ? 'Update Habit' : 'Create Habit',
+              text: widget.initialHabit != null
+                  ? 'Update Habit'
+                  : 'Create Habit',
               variant: AppButtonVariant.primary,
               size: AppButtonSize.md,
               glow: true,

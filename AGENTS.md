@@ -14,7 +14,7 @@ This document provides system-level instructions, design system mandates, and ar
    - ❌ `TextStyle(fontSize: 16, color: Colors.white, fontFamily: 'Inter')`
    - ❌ `const TextStyle(fontWeight: FontWeight.bold)`
 3. **Never apply arbitrary border radius or elevation:**
-   - ❌ `BorderRadius.circular(10)` when the design system specifies Bento tokens (`16.r`, `20.r`, `24.r`).
+   - ❌ `BorderRadius.circular(10)` when the design system specifies Bento tokens (`AppRadius.lg`, `AppRadius.xl`, `AppRadius.card`).
    - ❌ `elevation: 4` (The app uses flat 0 elevation with subtle borders `context.cardBorderColor` and soft ambient blur shadows).
 
 ### ✅ Canonical Substitutions
@@ -38,24 +38,34 @@ This document provides system-level instructions, design system mandates, and ar
 ## 2. ScreenUtil & Responsive Architecture
 
 ### Core Configurations
-- **Design Base Size**: `Size(390, 844)` (Mobile 20:9 ratio).
-- **Desktop Breakpoint**: `768.0` logical pixels.
+- **Design Base Size**: `AppDesign.size` = `Size(390, 844)`. Every dimension is authored in **mobile design units** measured on this artboard.
+- **Desktop Breakpoint**: `AppBreakpoints.desktop` (`768.0` logical px). Check it with `context.isDesktop` (or `AppBreakpoints.isDesktopWidth(constraints.maxWidth)` inside a `LayoutBuilder`) — never a raw `>= 768`.
   - `< 768px`: Single-column mobile feed with `ListView`.
   - `≥ 768px`: Dual-column Bento grid with `Expanded(flex: 5)` (Left Analytics/Controls) and `Expanded(flex: 6)` (Right Habits Feed).
 
-### Multi-Column Desktop Scaling Rule (CRITICAL)
-> **Warning**: When running on desktop/web (e.g. 1200px viewport), `ScreenUtil.scaleWidth` is `1200 / 390 = 3.08x`.
-> In a multi-column desktop layout, the left column has only `~450px` available width.
-> If UI elements in multi-column rows (such as bar charts, calendar day pills, and fixed cards) use unbounded `.w` or `.sp`, their width balloons 300% and will overflow the column by hundreds of pixels.
+### Central Scaling Policy (CRITICAL)
+The root widget is `AppScreenUtilInit` (`lib/core/widgets/app_screen_util_init.dart`) — use it in tests too, never a raw `ScreenUtilInit`. It applies `AppDesign.designSizeFor`:
+- **Mobile**: scale = screen / artboard, bounded to `[AppDesign.minScale, AppDesign.maxScale]` (0.8–1.15) per axis.
+- **Desktop/Web**: scale is exactly **1.0** — design units render 1:1, so Bento columns never balloon.
 
-**Rules for Widgets in Constrained Columns or Rows:**
-1. **Row Items & Bars**:
-   - Wrap each item in `Expanded` or use fixed pixel dimensions (`width: 38`, `width: 28`, `height: 120`).
-   - Wrap dynamic text labels in `FittedBox(fit: BoxFit.scaleDown, child: Text(...))`.
-2. **Carousel Cards**:
-   - Provide explicit width and height constraints (e.g. `130.w.clamp(120.0, 150.0)` × `118` height).
-3. **Paddings and Radii**:
-   - Clamp scaling tokens: `20.r.clamp(16.0, 24.0)` or use constant standard paddings (`const EdgeInsets.all(20)`).
+**Never clamp a scaled value in a widget** (`20.r.clamp(16, 24)` is prohibited — `test/screen_scale_policy_test.dart` enforces it). The bounds live in one place.
+
+### Unit Rules
+| Value | Use |
+| :--- | :--- |
+| Horizontal padding / gaps, widths | `N.w` |
+| Vertical whitespace (padding / gaps) | `N.h` |
+| Fixed heights of components holding text/icons (buttons, tiles, chips) | `N.w` (stays proportional to text) or `AppSizes.buttonHeight*` |
+| `EdgeInsets.all`, square boxes, avatars, dots | `N.r` |
+| Corner radii | `AppRadius.*` (`xs 6 · sm 8 · md 12 · chip 14 · lg 16 · xl 20 · card 24 · sheet 28`), else `N.r` |
+| Icon sizes | `AppIconSizes.*` (`xs 14 · sm 16 · md 18 · lg 20 · xl 24 · hero 40`), else `N.r` |
+| Font sizes | `AppTextStyles.*` / `context.textTheme.*`; overrides via `AppFontSizes.*` |
+| Border widths, shadows, opacity, elevation, flex, `AppSizes.minTapTarget` | **Never scaled** (`AppSizes.borderWidth` = 1.2) |
+| `ThemeData` (built outside ScreenUtil) | Raw `*Value` constants (`AppRadius.cardValue`, `AppFontSizes.bodyMediumValue`); `ThemeFactory.applyScreenScale` rescales text at runtime |
+
+**Widgets in Constrained Columns or Rows** still need layout protection: wrap row items in `Expanded`, wrap dynamic labels in `FittedBox(fit: BoxFit.scaleDown, ...)`.
+
+**Exception**: `lib/core/widgets_kit/habit_widget_snapshot_view.dart` renders the home-screen widget off-screen to an image and keeps fixed pixel values.
 
 ---
 

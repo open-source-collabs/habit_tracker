@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/data/app_data_repository.dart';
 import '../../../../core/routes/app_navigator.dart';
@@ -32,14 +33,14 @@ class SettingsScreen extends ConsumerWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 640),
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16.r),
             children: [
               const _SectionLabel('PROFILE'),
-              const AppCard(
-                padding: EdgeInsets.all(16),
-                child: _DisplayNameForm(),
+              AppCard(
+                padding: EdgeInsets.all(16.r),
+                child: const _DisplayNameForm(),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
               const _SectionLabel('HABITS'),
               _SettingsTile(
                 icon: Icons.archive_outlined,
@@ -58,7 +59,7 @@ class SettingsScreen extends ConsumerWidget {
                         Navigator.of(context).pop();
                       },
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
               const _SectionLabel('DATA & BACKUP'),
               _SettingsTile(
                 icon: Icons.import_export_rounded,
@@ -68,11 +69,11 @@ class SettingsScreen extends ConsumerWidget {
                     'from another device.',
                 onTap: () => AppNavigator.toDataPortability(context),
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20.h),
               const _SectionLabel('PRIVACY'),
-              const AppCard(
-                padding: EdgeInsets.all(16),
-                child: _PrivacySummary(),
+              AppCard(
+                padding: EdgeInsets.all(16.r),
+                child: const _PrivacySummary(),
               ),
             ],
           ),
@@ -90,7 +91,7 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      padding: EdgeInsets.only(left: 4.w, bottom: 8.h),
       child: Text(
         text,
         style: context.textTheme.labelSmall?.copyWith(
@@ -124,11 +125,11 @@ class _SettingsTile extends StatelessWidget {
       child: AppCard(
         isInteractive: enabled,
         onTap: onTap,
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16.r),
         child: Row(
           children: [
             Icon(icon, color: context.primaryAccent),
-            const SizedBox(width: 14),
+            SizedBox(width: 14.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +141,7 @@ class _SettingsTile extends StatelessWidget {
                       color: context.textPrimaryColor,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2.h),
                   Text(
                     subtitle,
                     style: context.textTheme.bodySmall?.copyWith(
@@ -216,7 +217,7 @@ class _DisplayNameFormState extends ConsumerState<_DisplayNameForm> {
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _save(),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12.h),
         Align(
           alignment: Alignment.centerRight,
           child: AppButton(
@@ -246,7 +247,7 @@ class _PrivacySummary extends ConsumerWidget {
         Row(
           children: [
             Icon(Icons.lock_outline_rounded, color: context.primaryAccent),
-            const SizedBox(width: 10),
+            SizedBox(width: 10.w),
             Text(
               'No account. No tracking.',
               style: context.textTheme.titleSmall?.copyWith(
@@ -256,7 +257,7 @@ class _PrivacySummary extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10.h),
         Text(
           'Your habits are stored on this device. Nothing is sent to us: '
           'there is no server and no analytics. Sync only ever uses your own '
@@ -264,7 +265,7 @@ class _PrivacySummary extends ConsumerWidget {
           style: bodyStyle,
         ),
         if (deviceId != null) ...[
-          const SizedBox(height: 12),
+          SizedBox(height: 12.h),
           Text(
             'This device: '
             '${deviceId.length > 8 ? deviceId.substring(0, 8) : deviceId}',
