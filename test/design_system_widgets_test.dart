@@ -112,6 +112,31 @@ void main() {
       expect(find.text('With Icons'), findsOneWidget);
     });
 
+    testWidgets('AppButton icons match the label color in every variant', (
+      tester,
+    ) async {
+      for (final variant in AppButtonVariant.values) {
+        await tester.pumpWidget(
+          _buildTestableWidget(
+            AppButton(
+              text: 'Sync',
+              variant: variant,
+              leadingIcon: const Icon(Icons.sync_rounded),
+              trailingIcon: const Icon(Icons.chevron_right_rounded),
+              onPressed: () {},
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final labelColor = tester.widget<Text>(find.text('Sync')).style?.color;
+        for (final icon in [Icons.sync_rounded, Icons.chevron_right_rounded]) {
+          final iconColor = IconTheme.of(tester.element(find.byIcon(icon))).color;
+          expect(iconColor, labelColor, reason: '$variant $icon');
+        }
+      }
+    });
+
     testWidgets('AppIconButton triggers callback and renders icon', (tester) async {
       bool clicked = false;
 

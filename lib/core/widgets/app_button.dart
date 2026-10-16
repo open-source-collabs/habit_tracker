@@ -187,6 +187,12 @@ class _AppButtonState extends State<AppButton>
         ? AppTextStyles.labelMedium(context, color: foregroundColor)
         : AppTextStyles.labelLarge(context, color: foregroundColor);
 
+    // Icons inherit the label's color and size so they always read as one unit.
+    final iconTheme = IconThemeData(
+      color: foregroundColor,
+      size: widget.size == AppButtonSize.sm ? AppIconSizes.sm : AppIconSizes.md,
+    );
+
     return AnimatedOpacity(
       duration: const Duration(milliseconds: 180),
       opacity: widget.isDisabled ? 0.45 : 1.0,
@@ -220,45 +226,48 @@ class _AppButtonState extends State<AppButton>
                 border: border,
                 boxShadow: shadows,
               ),
-              child: Row(
-                mainAxisSize: widget.fullWidth
-                    ? MainAxisSize.max
-                    : MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  if (widget.isLoading) ...[
-                    SizedBox(
-                      width: AppIconSizes.md,
-                      height: AppIconSizes.md,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          foregroundColor,
+              child: IconTheme.merge(
+                data: iconTheme,
+                child: Row(
+                  mainAxisSize: widget.fullWidth
+                      ? MainAxisSize.max
+                      : MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    if (widget.isLoading) ...[
+                      SizedBox(
+                        width: AppIconSizes.md,
+                        height: AppIconSizes.md,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            foregroundColor,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+                    ] else if (widget.leadingIcon != null) ...[
+                      widget.leadingIcon!,
+                      SizedBox(width: 8.w),
+                    ],
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          widget.text,
+                          style: textStyle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
-                    SizedBox(width: 10.w),
-                  ] else if (widget.leadingIcon != null) ...[
-                    widget.leadingIcon!,
-                    SizedBox(width: 8.w),
+                    if (widget.trailingIcon != null && !widget.isLoading) ...[
+                      SizedBox(width: 8.w),
+                      widget.trailingIcon!,
+                    ],
                   ],
-                  Flexible(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        widget.text,
-                        style: textStyle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                  if (widget.trailingIcon != null && !widget.isLoading) ...[
-                    SizedBox(width: 8.w),
-                    widget.trailingIcon!,
-                  ],
-                ],
+                ),
               ),
             ),
           ),
