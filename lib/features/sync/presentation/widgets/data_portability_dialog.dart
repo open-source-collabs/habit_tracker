@@ -6,20 +6,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:habit_tracker/core/theme/app_colors.dart';
 
-import '../../core/theme/app_dimensions.dart';
-import '../../core/theme/app_font_sizes.dart';
-import '../../core/theme/app_text_styles.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/utils/haptics.dart';
-import '../../core/widgets/app_badge.dart';
-import '../../core/widgets/app_button.dart';
-import '../../core/widgets/app_dialog.dart';
-import '../../core/widgets/app_text_field.dart';
-import '../../features/sync/domain/merge_engine.dart';
-import '../../features/habits/presentation/providers/habit_provider.dart';
-import '../../features/settings/presentation/providers/profile_provider.dart';
-import '../../features/themes/data/models/app_payload_model.dart';
-import '../../features/themes/presentation/providers/theme_provider.dart';
+import '../../../../core/theme/app_dimensions.dart';
+import '../../../../core/theme/app_font_sizes.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/haptics.dart';
+import '../../../../core/widgets/app_badge.dart';
+import '../../../../core/widgets/app_button.dart';
+import '../../../../core/widgets/app_dialog.dart';
+import '../../../../core/widgets/app_text_field.dart';
+import '../../../habits/presentation/providers/habit_provider.dart';
+import '../../../settings/presentation/providers/profile_provider.dart';
+import '../../../themes/data/models/app_payload_model.dart';
+import '../../../themes/presentation/providers/theme_provider.dart';
+import '../../domain/merge_engine.dart';
 import '../providers/data_portability_provider.dart';
 
 /// Modal dialog for 1-tap manual JSON export, conflict-free import/restore,
@@ -133,7 +133,7 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
           SnackBar(
             content: Text(
               successDescription,
-              style: TextStyle(
+              style: context.textTheme.bodyMedium?.copyWith(
                 color: context.textPrimaryColor,
                 fontWeight: FontWeight.w600,
               ),
@@ -234,7 +234,7 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
                 BoxShadow(
                   color: context.shadowColor,
                   blurRadius: 20,
-                  offset: Offset(0, 6),
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
@@ -272,7 +272,7 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
                                   ),
                             ),
                             Text(
-                              '1-tap manual JSON export/import and cloud sync',
+                              'Export, restore, or merge your data as JSON',
                               style: AppTextStyles.labelSmall(
                                 context,
                                 color: context.textMutedColor,
@@ -281,12 +281,10 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: Icon(
-                          Icons.close_rounded,
-                          color: context.textSecondaryColor,
-                          size: AppIconSizes.lg,
-                        ),
+                      AppIconButton(
+                        icon: Icons.close_rounded,
+                        tooltip: 'Close',
+                        color: context.textSecondaryColor,
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],

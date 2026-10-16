@@ -3,16 +3,16 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:habit_tracker/core/data/app_data_repository.dart';
 import 'package:habit_tracker/core/theme/app_colors.dart';
 import 'package:habit_tracker/core/theme/app_theme_extension.dart';
 import 'package:habit_tracker/core/theme/theme_factory.dart';
 import 'package:habit_tracker/core/utils/haptics.dart';
-import 'package:habit_tracker/features/themes/data/models/dynamic_theme_model.dart';
-import 'package:habit_tracker/features/themes/presentation/providers/theme_provider.dart';
-import 'package:habit_tracker/core/data/app_data_repository.dart';
 import 'package:habit_tracker/features/habits/data/storage/habit_storage.dart';
 import 'package:habit_tracker/features/habits/data/storage/web_habit_storage.dart';
+import 'package:habit_tracker/features/themes/data/models/dynamic_theme_model.dart';
 import 'package:habit_tracker/features/themes/data/storage/legacy_theme_preferences.dart';
+import 'package:habit_tracker/features/themes/presentation/providers/theme_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Keeps theme persistence off the real disk.
@@ -69,7 +69,7 @@ void main() {
 
   group('UserThemeModel', () {
     test('JSON serialization round-trip succeeds', () {
-      final original = UserThemeModel.obsidianTwilight;
+      const original = UserThemeModel.obsidianTwilight;
       final json = original.toJson();
       final reconstructed = UserThemeModel.fromJson(json);
 
@@ -134,11 +134,11 @@ void main() {
 
   group('AppHaptics Safety', () {
     test('executes all tactile methods without uncaught exceptions', () async {
-      await expectLater(AppHaptics.lightImpact(), completes);
-      await expectLater(AppHaptics.selectionClick(), completes);
-      await expectLater(AppHaptics.mediumImpact(), completes);
-      await expectLater(AppHaptics.heavyImpact(), completes);
-      await expectLater(AppHaptics.vibrate(), completes);
+      expect(AppHaptics.lightImpact, returnsNormally);
+      expect(AppHaptics.selectionClick, returnsNormally);
+      expect(AppHaptics.mediumImpact, returnsNormally);
+      expect(AppHaptics.heavyImpact, returnsNormally);
+      expect(AppHaptics.vibrate, returnsNormally);
     });
   });
 

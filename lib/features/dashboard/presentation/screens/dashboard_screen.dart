@@ -9,21 +9,21 @@ import '../../../../core/theme/app_font_sizes.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/date_format.dart';
 import '../../../../core/utils/haptics.dart';
-import '../../../settings/presentation/providers/profile_provider.dart';
+import '../../../../core/widgets/widgets.dart';
 import '../../../habits/data/models/habit_model.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
 import '../../../habits/presentation/widgets/data_load_error_view.dart';
 import '../../../habits/presentation/widgets/habit_card.dart';
+import '../../../settings/presentation/providers/profile_provider.dart';
+import '../../../sync/presentation/screens/sync_tab_view.dart';
 import '../../../themes/data/models/dynamic_theme_model.dart';
 import '../../../themes/presentation/providers/theme_provider.dart';
-import '../../../../core/widgets/widgets.dart';
 import '../providers/dashboard_provider.dart';
 import '../widgets/analytics_tab_view.dart';
 import '../widgets/bento_stats_card.dart';
 import '../widgets/calendar_strip.dart';
 import '../widgets/consistency_chart.dart';
 import '../widgets/favorite_activities_carousel.dart';
-import '../../../sync/presentation/screens/sync_tab_view.dart';
 import '../widgets/themes_tab_view.dart';
 
 /// Responsive Dashboard Screen adapting dynamically to screen width.
@@ -220,7 +220,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
               SizedBox(width: 6.w),
-              Text('👋', style: TextStyle(fontSize: AppFontSizes.titleLarge)),
+              Text(
+                '👋',
+                style: context.textTheme.titleLarge?.copyWith(
+                  fontSize: AppFontSizes.titleLarge,
+                ),
+              ),
             ],
           ),
           SizedBox(height: 2.h),
@@ -564,7 +569,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Center(
         child: Column(
           children: [
-            Text('🎯', style: TextStyle(fontSize: AppFontSizes.displayLarge)),
+            Text(
+              '🎯',
+              style: context.textTheme.displayLarge?.copyWith(
+                fontSize: AppFontSizes.displayLarge,
+              ),
+            ),
             SizedBox(height: 10.h),
             Text(
               activeFilter == kArchivedHabitsFilter

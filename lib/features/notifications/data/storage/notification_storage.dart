@@ -20,7 +20,7 @@ class NotificationStorage {
       final prefs = await SharedPreferences.getInstance();
       final jsonStr = prefs.getString(_kStorageKey);
       if (jsonStr != null && jsonStr.isNotEmpty) {
-        final Map<String, dynamic> decoded = json.decode(jsonStr);
+        final decoded = json.decode(jsonStr) as Map<String, dynamic>;
         return NotificationSettingsModel.fromJson(decoded);
       }
     } catch (e) {

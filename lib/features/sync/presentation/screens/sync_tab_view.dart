@@ -9,10 +9,10 @@ import '../../../../core/theme/app_font_sizes.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/date_format.dart';
 import '../../../../core/widgets/widgets.dart';
-import '../../../../presentation/widgets/data_portability_dialog.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
 import '../../data/cloud_sync_backend.dart';
 import '../providers/sync_controller.dart';
+import '../widgets/data_portability_dialog.dart';
 
 /// Sync tab: optional sync through the user's own iCloud or Google Drive,
 /// manual JSON backup, and what's stored on this device.

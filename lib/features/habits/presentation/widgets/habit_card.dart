@@ -10,7 +10,7 @@ import '../../../../core/utils/haptics.dart';
 import '../../data/models/habit_model.dart';
 import '../providers/habit_provider.dart';
 import 'habit_extensions.dart';
-import '../../../../presentation/widgets/heatmap_grid.dart';
+import 'heatmap_grid.dart';
 
 /// Tactile Bento Habit Card adapting dynamically to the active Riverpod theme.
 /// Features a 0.96 spring press-down animation, glowing completion shadow,
@@ -270,7 +270,7 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                                       : Text(
                                           widget.habit.displayEmoji,
                                           key: const ValueKey('unchecked'),
-                                          style: TextStyle(
+                                          style: context.textTheme.titleLarge?.copyWith(
                                             fontSize: AppFontSizes.titleLarge,
                                           ),
                                         ),

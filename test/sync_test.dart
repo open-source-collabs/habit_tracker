@@ -3,10 +3,6 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:habit_tracker/core/data/app_data_repository.dart';
 import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
 import 'package:habit_tracker/features/habits/data/storage/web_habit_storage.dart';
@@ -19,6 +15,9 @@ import 'package:habit_tracker/features/sync/domain/sync_engine.dart';
 import 'package:habit_tracker/features/sync/presentation/providers/sync_controller.dart';
 import 'package:habit_tracker/features/themes/data/models/app_payload_model.dart';
 import 'package:habit_tracker/features/themes/data/models/dynamic_theme_model.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// An in-memory "cloud": the single sync file shared by fake devices.
 class _FakeCloud implements CloudSyncBackend {
@@ -378,7 +377,7 @@ void main() {
         if (request.method == 'GET' && request.url.path.endsWith('/files')) {
           return http.Response(
             jsonEncode({
-              'files': fileExists ? [{'id': 'file_1'}] : [],
+              'files': fileExists ? [{'id': 'file_1'}] : <Object>[],
             }),
             200,
           );

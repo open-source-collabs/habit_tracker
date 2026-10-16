@@ -1,12 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:habit_tracker/core/services/notification_service.dart';
 import 'package:habit_tracker/core/services/reminder_schedule.dart';
 import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
 import 'package:habit_tracker/features/habits/data/storage/web_habit_storage.dart';
 import 'package:habit_tracker/features/habits/presentation/providers/habit_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 HabitModel _habit({
   String id = 'habit_1',
@@ -87,7 +86,7 @@ void main() {
 
     test('weekday habits get one weekly reminder per scheduled day', () {
       final slots = ReminderSchedule.slotsFor(
-        _habit(frequency: HabitFrequency.specificWeekdays(const [5, 1, 3, 3])),
+        _habit(frequency: const HabitFrequency.specificWeekdays([5, 1, 3, 3])),
       );
       final base = ReminderSchedule.baseId('habit_1');
 
@@ -97,7 +96,7 @@ void main() {
 
     test('all seven weekdays collapse into a daily reminder', () {
       final slots = ReminderSchedule.slotsFor(
-        _habit(frequency: HabitFrequency.specificWeekdays(const [1, 2, 3, 4, 5, 6, 7])),
+        _habit(frequency: const HabitFrequency.specificWeekdays([1, 2, 3, 4, 5, 6, 7])),
       );
       expect(slots.single.weekday, isNull);
     });

@@ -104,6 +104,18 @@ abstract final class AppColors {
   static List<Color> get unmodifiableHabitPalette =>
       List.unmodifiable(habitPalette);
 
+  /// Full hue wheel (red → yellow → green → cyan → blue → purple → red)
+  /// used for "custom color" swatches and hue sweep gradients.
+  static const List<Color> hueSpectrum = [
+    Color(0xFFF44336), // red
+    Color(0xFFFFEB3B), // yellow
+    Color(0xFF4CAF50), // green
+    Color(0xFF00BCD4), // cyan
+    Color(0xFF2196F3), // blue
+    Color(0xFF9C27B0), // purple
+    Color(0xFFF44336), // red (closes the sweep)
+  ];
+
   /// Computes a pastel container surface for habit chips and activity cards.
   /// In light themes, creates a soft watercolor tint. In dark themes, creates an ambient glow.
   static Color pastelSurface(

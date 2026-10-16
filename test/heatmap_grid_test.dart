@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:habit_tracker/core/widgets/app_screen_util_init.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:habit_tracker/core/theme/app_colors.dart';
 import 'package:habit_tracker/core/theme/theme_factory.dart';
+import 'package:habit_tracker/core/widgets/app_screen_util_init.dart';
 import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
+import 'package:habit_tracker/features/habits/presentation/widgets/heatmap_grid.dart';
 import 'package:habit_tracker/features/themes/data/models/dynamic_theme_model.dart';
-import 'package:habit_tracker/presentation/widgets/heatmap_grid.dart';
 
 Widget _buildTestableHeatmap(Widget child) {
   final themeData = ThemeFactory.createTheme(UserThemeModel.obsidianTwilight);

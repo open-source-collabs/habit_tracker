@@ -7,8 +7,8 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_font_sizes.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/widgets.dart';
-import '../../../../presentation/widgets/heatmap_grid.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
+import '../../../habits/presentation/widgets/heatmap_grid.dart';
 
 /// Comprehensive Analytics tab view featuring the 30/60/90-day consistency
 /// heatmap, completion ratios, streak metrics, and routine group insights.

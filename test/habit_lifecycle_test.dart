@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:habit_tracker/app.dart';
 import 'package:habit_tracker/core/data/app_data_repository.dart';
 import 'package:habit_tracker/core/data/device_identity.dart';
 import 'package:habit_tracker/core/services/notification_service.dart';
-import 'package:habit_tracker/features/sync/domain/merge_engine.dart';
 import 'package:habit_tracker/features/dashboard/presentation/widgets/favorite_activities_carousel.dart';
 import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
 import 'package:habit_tracker/features/habits/data/storage/web_habit_storage.dart';
 import 'package:habit_tracker/features/habits/presentation/providers/habit_provider.dart';
 import 'package:habit_tracker/features/settings/presentation/providers/profile_provider.dart';
+import 'package:habit_tracker/features/sync/domain/merge_engine.dart';
 import 'package:habit_tracker/features/themes/data/models/app_payload_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Records reminder side effects instead of calling the platform plugin.
 class _FakeNotifications implements NotificationService {

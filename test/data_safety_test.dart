@@ -3,8 +3,6 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:habit_tracker/core/data/app_data_repository.dart';
 import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
 import 'package:habit_tracker/features/habits/data/storage/habit_storage.dart';
@@ -12,6 +10,7 @@ import 'package:habit_tracker/features/habits/data/storage/io_habit_storage.dart
 import 'package:habit_tracker/features/habits/data/storage/web_habit_storage.dart';
 import 'package:habit_tracker/features/habits/presentation/providers/habit_provider.dart';
 import 'package:habit_tracker/features/themes/data/models/app_payload_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Storage whose saves can be held open, to observe write ordering.
 class _RecordingStorage implements HabitStorage {

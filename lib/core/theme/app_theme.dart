@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../features/themes/data/models/dynamic_theme_model.dart';
 import 'app_colors.dart';
 import 'app_theme_extension.dart';
-import '../../features/themes/data/models/dynamic_theme_model.dart';
 import 'theme_factory.dart';
 
 /// Pre-configured base themes and theme helpers.

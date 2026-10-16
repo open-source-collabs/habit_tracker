@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:habit_tracker/core/widgets/app_screen_util_init.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_tracker/core/routes/routes.dart';
 import 'package:habit_tracker/core/theme/theme_factory.dart';
+import 'package:habit_tracker/core/widgets/app_screen_util_init.dart';
 import 'package:habit_tracker/features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
 import 'package:habit_tracker/features/habits/data/storage/habit_storage.dart';
 import 'package:habit_tracker/features/habits/presentation/providers/habit_provider.dart';
+import 'package:habit_tracker/features/habits/presentation/widgets/habit_creator_sheet.dart';
+import 'package:habit_tracker/features/sync/presentation/widgets/data_portability_dialog.dart';
 import 'package:habit_tracker/features/themes/data/models/app_payload_model.dart';
 import 'package:habit_tracker/features/themes/data/models/dynamic_theme_model.dart';
-import 'package:habit_tracker/presentation/widgets/data_portability_dialog.dart';
-import 'package:habit_tracker/presentation/widgets/habit_creator_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _FakeHabitStorage implements HabitStorage {
@@ -183,7 +183,7 @@ void main() {
 
       expect(find.byType(HabitCreatorSheet), findsOneWidget);
 
-      AppNavigator.pop(navContext);
+      AppNavigator.pop<void>(navContext);
       await tester.pumpAndSettle();
       expect(find.byType(HabitCreatorSheet), findsNothing);
     });
@@ -215,7 +215,7 @@ void main() {
 
         expect(find.byType(DataPortabilityDialog), findsOneWidget);
 
-        AppNavigator.pop(navContext);
+        AppNavigator.pop<void>(navContext);
         await tester.pumpAndSettle();
         expect(find.byType(DataPortabilityDialog), findsNothing);
       },

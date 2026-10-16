@@ -41,7 +41,7 @@ void main() {
       final habit = HabitModel(
         id: 'h_2',
         title: 'Gym Workout',
-        frequency: HabitFrequency.specificWeekdays([
+        frequency: const HabitFrequency.specificWeekdays([
           DateTime.monday,
           DateTime.wednesday,
           DateTime.friday,
@@ -171,7 +171,7 @@ void main() {
         final habit = HabitModel(
           id: 'h_weekdays',
           title: 'Strength Training',
-          frequency: HabitFrequency.specificWeekdays([
+          frequency: const HabitFrequency.specificWeekdays([
             DateTime.monday,
             DateTime.wednesday,
             DateTime.friday,
@@ -350,7 +350,7 @@ void main() {
         expect(backups, contains('backup_1.json'));
         expect(backups.length, 1);
 
-        var b1Content = await File('${testDir.path}/backup_1.json')
+        final b1Content = await File('${testDir.path}/backup_1.json')
             .readAsString();
         expect(AppPayloadModel.fromRawJson(b1Content).lastModifiedBy, 'save_1');
         expect((await storage.loadPayload())!.lastModifiedBy, 'save_2');
@@ -361,7 +361,7 @@ void main() {
         expect(backups, containsAll(['backup_1.json', 'backup_2.json']));
         expect(backups.length, 2);
 
-        var b2Content = await File('${testDir.path}/backup_2.json')
+        final b2Content = await File('${testDir.path}/backup_2.json')
             .readAsString();
         expect(AppPayloadModel.fromRawJson(b2Content).lastModifiedBy, 'save_1');
 
@@ -374,7 +374,7 @@ void main() {
         );
         expect(backups.length, 3);
 
-        var b3Content = await File('${testDir.path}/backup_3.json')
+        final b3Content = await File('${testDir.path}/backup_3.json')
             .readAsString();
         expect(AppPayloadModel.fromRawJson(b3Content).lastModifiedBy, 'save_1');
         expect((await storage.loadPayload())!.lastModifiedBy, 'save_4');

@@ -4,22 +4,7 @@ import '../../habits/data/models/habit_model.dart';
 import '../../themes/data/models/app_payload_model.dart';
 import '../../themes/data/models/dynamic_theme_model.dart';
 
-/// Merges two copies of the app payload (e.g. this device's and the copy in
-/// the user's cloud) into one that both devices can adopt.
-///
-/// Properties the sync design relies on (all covered by tests):
-/// - **Commutative and idempotent** in content: merging A into B or B into A
-///   yields the same habits, themes, and tombstones; merging twice changes
-///   nothing.
-/// - **Per-day check-ins**: each day resolves independently by its change
-///   time (`checkInChangedAt`), so a check on one device and an un-check on
-///   another resolve to whichever happened last. Days without a recorded time
-///   (data from before schema v2) count as earliest; if neither side has a
-///   time, a check on either side wins, so legacy history is never lost.
-/// - **Deletions propagate**: a tombstone removes a habit or theme unless it
-///   was modified after the deletion (a later edit elsewhere keeps it).
-/// - **Metadata** (title, frequency, colors, …) resolves to the newest
-///   `lastModifiedAt`.
+
 abstract final class MergeEngine {
   static AppPayloadModel merge({
     required AppPayloadModel local,

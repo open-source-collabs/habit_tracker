@@ -2,11 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../features/themes/data/models/dynamic_theme_model.dart';
 import 'app_colors.dart';
 import 'app_dimensions.dart';
 import 'app_font_sizes.dart';
 import 'app_theme_extension.dart';
-import '../../features/themes/data/models/dynamic_theme_model.dart';
 
 /// Pure factory for transforming any [UserThemeModel] into a complete [ThemeData]
 /// with dynamic typography, card geometry, and [AppThemeExtension].
@@ -169,7 +169,7 @@ abstract final class ThemeFactory {
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: primaryAccent,
         foregroundColor: AppColors.white,
-        elevation: 4,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.xlValue),
         ),

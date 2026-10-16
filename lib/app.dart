@@ -2,17 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:habit_tracker/core/theme/theme_factory.dart';
 
 import 'core/routes/routes.dart';
 import 'core/services/notification_service.dart';
-import 'features/dashboard/presentation/providers/dashboard_provider.dart';
-import 'features/notifications/presentation/providers/notification_provider.dart';
-import 'features/sync/presentation/providers/sync_controller.dart';
-import 'core/theme/theme_factory.dart';
 import 'core/widgets/app_screen_util_init.dart';
 import 'core/widgets_kit/habit_widget_sync_service.dart';
 import 'core/widgets_kit/widgets_kit_interop.dart';
+import 'features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'features/habits/presentation/providers/habit_provider.dart';
+import 'features/notifications/presentation/providers/notification_provider.dart';
+import 'features/sync/presentation/providers/sync_controller.dart';
 import 'features/themes/presentation/providers/theme_provider.dart';
 
 /// Root application widget configuring screen utilities, dynamic theme switching,

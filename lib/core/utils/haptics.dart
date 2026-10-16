@@ -1,57 +1,40 @@
+import 'dart:async';
+
 import 'package:flutter/services.dart';
 
 /// Ergonomic, cross-platform safe wrappers for tactile micro-interactions.
+///
+/// Fire-and-forget: callers never wait on the platform channel, and failures
+/// (e.g. desktop without a haptic engine) are swallowed.
 abstract final class AppHaptics {
   /// Global switch to enable/disable haptic vibrations across the app
   static bool enabled = true;
 
   /// Light tactile tap (e.g. habit completion check-off, counter increment, toggle)
-  static Future<void> lightImpact() async {
-    if (!enabled) return;
-    try {
-      await HapticFeedback.lightImpact();
-    } catch (_) {
-      // Ignored safely on platforms without haptic engine support (e.g. desktop)
-    }
-  }
+  static void lightImpact() => _play(HapticFeedback.lightImpact);
 
   /// Subtle click feeling (e.g. font family toggle, tab switch, slider step)
-  static Future<void> selectionClick() async {
-    if (!enabled) return;
-    try {
-      await HapticFeedback.selectionClick();
-    } catch (_) {
-      // Ignored safely
-    }
-  }
+  static void selectionClick() => _play(HapticFeedback.selectionClick);
 
   /// Medium impact feedback (e.g. theme application, bottom sheet dismiss)
-  static Future<void> mediumImpact() async {
-    if (!enabled) return;
-    try {
-      await HapticFeedback.mediumImpact();
-    } catch (_) {
-      // Ignored safely
-    }
-  }
+  static void mediumImpact() => _play(HapticFeedback.mediumImpact);
 
   /// Heavy feedback (e.g. streak milestones, habit creation celebrations)
-  static Future<void> heavyImpact() async {
-    if (!enabled) return;
-    try {
-      await HapticFeedback.heavyImpact();
-    } catch (_) {
-      // Ignored safely
-    }
-  }
+  static void heavyImpact() => _play(HapticFeedback.heavyImpact);
 
   /// Standard alert vibration
-  static Future<void> vibrate() async {
+  static void vibrate() => _play(HapticFeedback.vibrate);
+
+  static void _play(Future<void> Function() feedback) {
     if (!enabled) return;
+    unawaited(_safely(feedback));
+  }
+
+  static Future<void> _safely(Future<void> Function() feedback) async {
     try {
-      await HapticFeedback.vibrate();
+      await feedback();
     } catch (_) {
-      // Ignored safely
+      // Ignored safely on platforms without haptic engine support.
     }
   }
 }

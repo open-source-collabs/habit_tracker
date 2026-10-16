@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/themes/data/models/app_payload_model.dart';
+import '../../../themes/data/models/app_payload_model.dart';
 
 /// State representation for Data Portability & Sync workflows.
 class DataPortabilityState {

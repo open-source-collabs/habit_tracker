@@ -28,7 +28,7 @@ class ColorPickerDialog extends ConsumerStatefulWidget {
     required Color initialColor,
     String title = 'Select Color',
   }) {
-    return showDialog<Color>(
+    return showAppDialog<Color>(
       context: context,
       builder: (context) =>
           ColorPickerDialog(initialColor: initialColor, title: title),
@@ -96,6 +96,11 @@ class _ColorPickerDialogState extends ConsumerState<ColorPickerDialog> {
     final hslColor = ref.watch(colorPickerProvider(widget.initialColor));
     final currentColor = hslColor.toColor();
 
+    // Raw Dialog surface (token-styled) rather than AppDialog: AppDialog's
+    // fixed outline/primary footer can't tint the confirm button with the live
+    // picked color or adapt its label contrast, and it has no header close
+    // control. It is still presented through showAppDialog for the shared
+    // frosted-backdrop transition.
     return Dialog(
       backgroundColor: context.cardBackgroundColor,
       shape: RoundedRectangleBorder(
@@ -127,10 +132,14 @@ class _ColorPickerDialogState extends ConsumerState<ColorPickerDialog> {
                       letterSpacing: -0.3,
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(Icons.close, size: AppIconSizes.lg),
-                    onPressed: () => Navigator.of(context).pop(),
+                  AppIconButton(
+                    icon: Icons.close,
+                    tooltip: 'Close',
+                    iconSize: AppIconSizes.lg,
                     color: context.textMutedColor,
+                    backgroundColor: context.transparent,
+                    border: false,
+                    onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
@@ -153,7 +162,7 @@ class _ColorPickerDialogState extends ConsumerState<ColorPickerDialog> {
                         BoxShadow(
                           color: currentColor.withValues(alpha: 0.35),
                           blurRadius: 10,
-                          offset: Offset(0, 3),
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
@@ -296,35 +305,29 @@ class _ColorPickerDialogState extends ConsumerState<ColorPickerDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
+                  AppButton(
+                    text: 'Cancel',
+                    variant: AppButtonVariant.ghost,
+                    customColor: context.textMutedColor,
                     onPressed: () => Navigator.of(context).pop(),
-                    child: Text(
-                      'Cancel',
-                      style: context.textTheme.labelLarge?.copyWith(
-                        color: context.textMutedColor,
-                      ),
-                    ),
                   ),
                   SizedBox(width: 8.w),
-                  FilledButton(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: currentColor,
-                      foregroundColor: hslColor.lightness > 0.6
-                          ? context.textPrimaryColor
-                          : context.onPrimaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 10.h,
+                  // AppButton's primary variant labels with onPrimary; swap
+                  // it for the primary text color on light picks so the label
+                  // stays legible on the live-color fill.
+                  Theme(
+                    data: context.theme.copyWith(
+                      colorScheme: context.colorScheme.copyWith(
+                        onPrimary: hslColor.lightness > 0.6
+                            ? context.textPrimaryColor
+                            : context.onPrimaryColor,
                       ),
                     ),
-                    onPressed: () {
-                      AppHaptics.lightImpact();
-                      Navigator.of(context).pop(currentColor);
-                    },
-                    child: const Text('Apply Color'),
+                    child: AppButton(
+                      text: 'Apply Color',
+                      customColor: currentColor,
+                      onPressed: () => Navigator.of(context).pop(currentColor),
+                    ),
                   ),
                 ],
               ),

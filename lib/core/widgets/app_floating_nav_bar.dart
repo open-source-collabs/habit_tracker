@@ -295,7 +295,7 @@ class _NavBarTabButtonState extends State<_NavBarTabButton>
                                 ? '99+'
                                 : '${item.badgeCount}',
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: context.textTheme.labelSmall?.copyWith(
                               color: context.onPrimaryColor,
                               fontSize: AppFontSizes.tiny,
                               fontWeight: FontWeight.w700,
@@ -433,7 +433,7 @@ class _CenterActionButtonState extends State<_CenterActionButton>
                       maxHeight: 0,
                       child: Text(
                         widget.tooltip,
-                        style: const TextStyle(fontSize: 0),
+                        style: context.textTheme.labelSmall?.copyWith(fontSize: 0),
                       ),
                     ),
                   ),

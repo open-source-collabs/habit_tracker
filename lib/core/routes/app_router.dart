@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/habits/data/models/habit_model.dart';
+import '../../features/habits/presentation/widgets/habit_creator_sheet.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
+import '../../features/sync/presentation/widgets/data_portability_dialog.dart';
 import '../../features/themes/presentation/screens/theme_studio_sheet.dart';
-import '../../presentation/widgets/data_portability_dialog.dart';
-import '../../presentation/widgets/habit_creator_sheet.dart';
 import '../theme/app_breakpoints.dart';
 import '../theme/app_colors.dart';
 import 'app_routes.dart';

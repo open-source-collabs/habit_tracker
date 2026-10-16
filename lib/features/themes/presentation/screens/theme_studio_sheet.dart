@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
-import '../../../../core/theme/app_font_sizes.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/theme_factory.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../../../core/widgets/widgets.dart';
@@ -12,6 +12,12 @@ import '../../data/models/dynamic_theme_model.dart';
 import '../providers/theme_provider.dart';
 import '../providers/theme_studio_provider.dart';
 import '../widgets/color_picker_dialog.dart';
+import '../widgets/theme_studio/theme_studio_accent_palette.dart';
+import '../widgets/theme_studio/theme_studio_action_buttons.dart';
+import '../widgets/theme_studio/theme_studio_chips_bar.dart';
+import '../widgets/theme_studio/theme_studio_font_selector.dart';
+import '../widgets/theme_studio/theme_studio_preview_card.dart';
+import '../widgets/theme_studio/theme_studio_surfaces_palette.dart';
 
 /// Interactive bottom sheet for creating, customizing, duplicating, and saving themes.
 class ThemeStudioSheet extends ConsumerStatefulWidget {
@@ -20,6 +26,10 @@ class ThemeStudioSheet extends ConsumerStatefulWidget {
   /// Displays the Theme Studio modal bottom sheet
   static Future<void> show(BuildContext context) {
     AppHaptics.mediumImpact();
+    // Raw showModalBottomSheet on purpose: the studio paints its own
+    // draggable surface in the *draft* theme's colors, so the modal itself
+    // must stay transparent. showAppBottomSheet hard-codes the app's card
+    // color, which would fill the area above the DraggableScrollableSheet.
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -37,7 +47,8 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
       ref.watch(themeStudioWorkingThemeNotifierProvider);
   late TextEditingController _nameController;
 
-  static const List<String> _fontRegistry = ['PlusJakartaSans', 'Inter'];
+  ThemeStudioWorkingThemeNotifier get _studio =>
+      ref.read(themeStudioWorkingThemeNotifierProvider.notifier);
 
   @override
   void initState() {
@@ -104,9 +115,9 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
         SnackBar(
           content: Text(
             'Theme "${updatedTheme.name}" saved & applied!',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: context.textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
-              color: Theme.of(context).colorScheme.onPrimary,
+              color: context.onPrimaryColor,
             ),
           ),
           backgroundColor: updatedTheme.accentPalette.isNotEmpty
@@ -182,7 +193,7 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
               width: AppSizes.borderWidth,
             ),
             boxShadow: [
-              BoxShadow(
+              const BoxShadow(
                 color: AppColors.overlay50,
                 blurRadius: 30,
                 offset: Offset(0, -6),
@@ -208,30 +219,38 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Theme Studio',
-                          style: previewThemeData.textTheme.titleLarge
-                              ?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: -0.4,
-                              ),
-                        ),
-                        SizedBox(height: 2.h),
-                        Text(
-                          'Design, customize, and persist dynamic themes',
-                          style: previewThemeData.textTheme.bodySmall?.copyWith(
-                            color: _workingTheme.textPrimary.withValues(
-                              alpha: 0.6,
-                            ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Theme Studio',
+                            style: previewThemeData.textTheme.titleLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.4,
+                                ),
                           ),
-                        ),
-                      ],
+                          SizedBox(height: 2.h),
+                          Text(
+                            'Design, customize, and persist dynamic themes',
+                            style: previewThemeData.textTheme.bodySmall
+                                ?.copyWith(
+                                  color: _workingTheme.textPrimary.withValues(
+                                    alpha: 0.6,
+                                  ),
+                                ),
+                          ),
+                        ],
+                      ),
                     ),
-                    IconButton(
-                      icon: Icon(Icons.close, color: _workingTheme.textPrimary),
+                    AppIconButton(
+                      icon: Icons.close,
+                      tooltip: 'Close',
+                      color: _workingTheme.textPrimary,
+                      backgroundColor: AppColors.transparent,
+                      border: false,
+                      iconSize: AppIconSizes.xl,
                       onPressed: () => Navigator.of(context).pop(),
                     ),
                   ],
@@ -249,11 +268,20 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                   ),
                   children: [
                     // Theme Selector Chips & New Button
-                    _buildThemeChipsBar(themeState),
+                    ThemeStudioChipsBar(
+                      themes: themeState.allThemes,
+                      workingTheme: _workingTheme,
+                      onSelectTheme: _onSelectTheme,
+                      onCreateNew: _createNewTheme,
+                    ),
                     SizedBox(height: 10.h),
 
                     // LIVE PREVIEW CARD
-                    _buildLivePreviewCard(previewThemeData, activeAccent),
+                    ThemeStudioPreviewCard(
+                      theme: _workingTheme,
+                      previewTheme: previewThemeData,
+                      activeAccent: activeAccent,
+                    ),
                     SizedBox(height: 12.h),
 
                     // Theme Name Field
@@ -261,19 +289,45 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
                     SizedBox(height: 10.h),
 
                     // OFFLINE FONT SELECTOR
-                    _buildFontSelector(previewThemeData),
+                    ThemeStudioFontSelector(
+                      theme: _workingTheme,
+                      previewTheme: previewThemeData,
+                      onFontSelected: _updateFont,
+                    ),
                     SizedBox(height: 12.h),
 
                     // SURFACES & BORDER PALETTE
-                    _buildSurfacesPalette(previewThemeData),
+                    ThemeStudioSurfacesPalette(
+                      theme: _workingTheme,
+                      previewTheme: previewThemeData,
+                      onPickColor: _pickColor,
+                      onScaffoldBgChanged: (c) => _studio.updateScaffoldBg(c),
+                      onCardBgChanged: (c) => _studio.updateCardBg(c),
+                      onCardBorderChanged: (c) => _studio.updateCardBorder(c),
+                      onTextPrimaryChanged: (c) => _studio.updateTextPrimary(c),
+                    ),
                     SizedBox(height: 12.h),
 
                     // CUSTOM HABIT ACCENT PALETTE
-                    _buildHabitAccentsSection(previewThemeData),
+                    ThemeStudioAccentPalette(
+                      theme: _workingTheme,
+                      previewTheme: previewThemeData,
+                      onPickColor: _pickColor,
+                      onAccentChanged: (i, c) =>
+                          _studio.updatePaletteColor(i, c),
+                      onResetPalette: () => _studio.resetPalette(),
+                    ),
                     SizedBox(height: 14.h),
 
                     // ACTION BUTTONS
-                    _buildActionButtons(activeAccent),
+                    ThemeStudioActionButtons(
+                      previewTheme: previewThemeData,
+                      activeAccent: activeAccent,
+                      canDelete: !_workingTheme.isBuiltIn,
+                      onSave: _saveTheme,
+                      onDuplicate: _duplicateTheme,
+                      onDelete: _deleteTheme,
+                    ),
                     SizedBox(height: 24.h),
                   ],
                 ),
@@ -285,628 +339,19 @@ class _ThemeStudioSheetState extends ConsumerState<ThemeStudioSheet> {
     );
   }
 
-  Widget _buildThemeChipsBar(UserThemeState themeState) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          ...themeState.allThemes.map((theme) {
-            final isSelected = _workingTheme.id == theme.id;
-            return Padding(
-              padding: EdgeInsets.only(right: 8.w),
-              child: ChoiceChip(
-                label: Text(theme.name),
-                selected: isSelected,
-                onSelected: (_) => _onSelectTheme(theme),
-                selectedColor: _workingTheme.cardBg,
-                backgroundColor: _workingTheme.scaffoldBg,
-                labelStyle: TextStyle(
-                  color: isSelected
-                      ? _workingTheme.textPrimary
-                      : _workingTheme.textPrimary.withValues(alpha: 0.6),
-                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  fontSize: AppFontSizes.caption,
-                ),
-                side: BorderSide(
-                  color: isSelected
-                      ? (_workingTheme.accentPalette.isNotEmpty
-                            ? _workingTheme.accentPalette.first
-                            : _workingTheme.cardBorder)
-                      : _workingTheme.cardBorder,
-                  width: isSelected ? 1.5 : 1,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                ),
-              ),
-            );
-          }),
-          ActionChip(
-            avatar: Icon(
-              Icons.add,
-              size: AppIconSizes.sm,
-              color: _workingTheme.textPrimary,
-            ),
-            label: const Text('New Custom'),
-            onPressed: _createNewTheme,
-            backgroundColor: _workingTheme.cardBg,
-            labelStyle: TextStyle(
-              color: _workingTheme.textPrimary,
-              fontWeight: FontWeight.w600,
-              fontSize: AppFontSizes.caption,
-            ),
-            side: BorderSide(color: _workingTheme.cardBorder, width: 1),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLivePreviewCard(ThemeData previewTheme, Color activeAccent) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'LIVE PREVIEW',
-              style: TextStyle(
-                fontFamily: _workingTheme.fontFamily,
-                fontSize: AppFontSizes.labelSmall,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2,
-                color: _workingTheme.textPrimary.withValues(alpha: 0.5),
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 3.h),
-              decoration: BoxDecoration(
-                color: activeAccent.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: activeAccent.withValues(alpha: 0.3)),
-              ),
-              child: Text(
-                _workingTheme.fontFamily,
-                style: TextStyle(
-                  fontFamily: _workingTheme.fontFamily,
-                  fontSize: AppFontSizes.labelSmall,
-                  fontWeight: FontWeight.w700,
-                  color: activeAccent,
-                ),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 10.h),
-
-        Container(
-          padding: EdgeInsets.all(14.r),
-          decoration: BoxDecoration(
-            color: _workingTheme.cardBg,
-            borderRadius: BorderRadius.circular(18.r),
-            border: Border.all(
-              color: activeAccent,
-              width: AppSizes.borderWidth,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: activeAccent.withValues(alpha: 0.35),
-                blurRadius: 16,
-                spreadRadius: 0,
-                offset: Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 10.w,
-                      vertical: 4.h,
-                    ),
-                    decoration: BoxDecoration(
-                      color: activeAccent.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(10.r),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.local_fire_department,
-                          size: 15.r,
-                          color: activeAccent,
-                        ),
-                        SizedBox(width: 4.w),
-                        Text(
-                          '14 DAY STREAK',
-                          style: TextStyle(
-                            fontFamily: _workingTheme.fontFamily,
-                            fontSize: AppFontSizes.labelSmall,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5,
-                            color: activeAccent,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    width: 32.r,
-                    height: 32.r,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: activeAccent,
-                      boxShadow: [
-                        BoxShadow(
-                          color: activeAccent.withValues(alpha: 0.4),
-                          blurRadius: 6,
-                        ),
-                      ],
-                    ),
-                    child: Icon(
-                      Icons.check,
-                      color: previewTheme.colorScheme.onPrimary,
-                      size: AppIconSizes.md,
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 8.h),
-              Text(
-                'Morning Mindfulness & Flow',
-                style: previewTheme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.3,
-                  color: _workingTheme.textPrimary,
-                  fontSize: AppFontSizes.headlineSmall,
-                ),
-              ),
-              SizedBox(height: 4.h),
-              Text(
-                '20 mins • Completed today at 7:30 AM',
-                style: previewTheme.textTheme.bodyMedium?.copyWith(
-                  color: _workingTheme.textPrimary.withValues(alpha: 0.7),
-                  fontSize: AppFontSizes.bodySmall,
-                ),
-              ),
-              SizedBox(height: 10.h),
-              Row(
-                children: _workingTheme.accentPalette.map((color) {
-                  return Container(
-                    margin: EdgeInsets.only(right: 6.w),
-                    width: 14.r,
-                    height: 14.r,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildThemeNameField(ThemeData previewTheme) {
     return AppTextField(
       controller: _nameController,
       labelText: 'Theme Name',
       accentColor: previewTheme.colorScheme.primary,
-      style: TextStyle(
+      // TextField merges this onto the ambient bodyLarge, as before.
+      style: context.textTheme.bodyLarge?.copyWith(
         fontFamily: _workingTheme.fontFamily,
         color: _workingTheme.textPrimary,
         fontWeight: FontWeight.w600,
       ),
-      onChanged: (val) {
-        ref
-            .read(themeStudioWorkingThemeNotifierProvider.notifier)
-            .updateTheme((current) => current.copyWith(name: val));
-      },
-    );
-  }
-
-  Widget _buildFontSelector(ThemeData previewTheme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'OFFLINE FONT REGISTRY (2 PROFESSIONAL FONTS)',
-          style: TextStyle(
-            fontFamily: _workingTheme.fontFamily,
-            fontSize: AppFontSizes.labelSmall,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.1,
-            color: _workingTheme.textPrimary.withValues(alpha: 0.5),
-          ),
-        ),
-        SizedBox(height: 10.h),
-        Row(
-          children: _fontRegistry.map((font) {
-            final isSelected = _workingTheme.fontFamily == font;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => _updateFont(font),
-                child: Container(
-                  margin: EdgeInsets.only(
-                    right: font == _fontRegistry.first ? 10.w : 0,
-                  ),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 14.w,
-                    vertical: 14.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _workingTheme.cardBg,
-                    borderRadius: BorderRadius.circular(18.r),
-                    border: Border.all(
-                      color: isSelected
-                          ? (_workingTheme.accentPalette.isNotEmpty
-                                ? _workingTheme.accentPalette.first
-                                : _workingTheme.cardBorder)
-                          : _workingTheme.cardBorder,
-                      width: isSelected ? 1.8 : AppSizes.borderWidth,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            font == 'PlusJakartaSans'
-                                ? 'Plus Jakarta Sans'
-                                : 'Inter',
-                            style: TextStyle(
-                              fontFamily: font,
-                              fontSize: AppFontSizes.caption,
-                              fontWeight: FontWeight.w700,
-                              color: _workingTheme.textPrimary,
-                            ),
-                          ),
-                          if (isSelected)
-                            Icon(
-                              Icons.check_circle,
-                              size: AppIconSizes.sm,
-                              color: _workingTheme.accentPalette.isNotEmpty
-                                  ? _workingTheme.accentPalette.first
-                                  : AppColors.neonLavender,
-                            ),
-                        ],
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        font == 'PlusJakartaSans'
-                            ? 'Tactile Geometric Sans'
-                            : 'Modern Precision Sans',
-                        style: TextStyle(
-                          fontFamily: font,
-                          fontSize: AppFontSizes.labelSmall,
-                          color: _workingTheme.textPrimary.withValues(
-                            alpha: 0.6,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSurfacesPalette(ThemeData previewTheme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'SURFACES & BORDER PALETTE',
-          style: TextStyle(
-            fontFamily: _workingTheme.fontFamily,
-            fontSize: AppFontSizes.labelSmall,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.1,
-            color: _workingTheme.textPrimary.withValues(alpha: 0.5),
-          ),
-        ),
-        SizedBox(height: 10.h),
-        _buildColorTile(
-          title: 'Scaffold Background',
-          subtitle: _workingTheme.scaffoldBgHex,
-          color: _workingTheme.scaffoldBg,
-          onTap: () => _pickColor(
-            title: 'Scaffold Background',
-            currentColor: _workingTheme.scaffoldBg,
-            onSelected: (col) => ref
-                .read(themeStudioWorkingThemeNotifierProvider.notifier)
-                .updateScaffoldBg(col),
-          ),
-        ),
-        SizedBox(height: 8.h),
-        _buildColorTile(
-          title: 'Card Surface',
-          subtitle: _workingTheme.cardBgHex,
-          color: _workingTheme.cardBg,
-          onTap: () => _pickColor(
-            title: 'Card Surface',
-            currentColor: _workingTheme.cardBg,
-            onSelected: (col) => ref
-                .read(themeStudioWorkingThemeNotifierProvider.notifier)
-                .updateCardBg(col),
-          ),
-        ),
-        SizedBox(height: 8.h),
-        _buildColorTile(
-          title: 'Card Border Tint',
-          subtitle: _workingTheme.cardBorderHex,
-          color: _workingTheme.cardBorder,
-          onTap: () => _pickColor(
-            title: 'Card Border Tint',
-            currentColor: _workingTheme.cardBorder,
-            onSelected: (col) => ref
-                .read(themeStudioWorkingThemeNotifierProvider.notifier)
-                .updateCardBorder(col),
-          ),
-        ),
-        SizedBox(height: 8.h),
-        _buildColorTile(
-          title: 'Text Primary',
-          subtitle: _workingTheme.textPrimaryHex,
-          color: _workingTheme.textPrimary,
-          onTap: () => _pickColor(
-            title: 'Text Primary',
-            currentColor: _workingTheme.textPrimary,
-            onSelected: (col) => ref
-                .read(themeStudioWorkingThemeNotifierProvider.notifier)
-                .updateTextPrimary(col),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildColorTile({
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          color: _workingTheme.cardBg,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(
-            color: _workingTheme.cardBorder,
-            width: AppSizes.borderWidth,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 32.r,
-              height: 32.r,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(10.r),
-                border: Border.all(
-                  color: _workingTheme.textPrimary.withValues(alpha: 0.2),
-                ),
-              ),
-            ),
-            SizedBox(width: 14.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontFamily: _workingTheme.fontFamily,
-                      fontSize: AppFontSizes.caption,
-                      fontWeight: FontWeight.w600,
-                      color: _workingTheme.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: AppFontSizes.labelSmall,
-                      color: _workingTheme.textPrimary.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.edit,
-              size: AppIconSizes.sm,
-              color: _workingTheme.textPrimary.withValues(alpha: 0.4),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHabitAccentsSection(ThemeData previewTheme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'HABIT ACCENT PALETTE',
-              style: TextStyle(
-                fontFamily: _workingTheme.fontFamily,
-                fontSize: AppFontSizes.labelSmall,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.1,
-                color: _workingTheme.textPrimary.withValues(alpha: 0.5),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                AppHaptics.lightImpact();
-                ref
-                    .read(themeStudioWorkingThemeNotifierProvider.notifier)
-                    .resetPalette();
-              },
-              child: Text(
-                'Reset to Preset',
-                style: TextStyle(
-                  fontSize: AppFontSizes.labelMedium,
-                  fontWeight: FontWeight.w600,
-                  color: _workingTheme.accentPalette.isNotEmpty
-                      ? _workingTheme.accentPalette.first
-                      : AppColors.neonLavender,
-                ),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 6.h),
-        Wrap(
-          spacing: 10.w,
-          runSpacing: 10.h,
-          children: List.generate(_workingTheme.accentPalette.length, (index) {
-            final color = _workingTheme.accentPalette[index];
-            return InkWell(
-              onTap: () => _pickColor(
-                title: 'Accent Color #${index + 1}',
-                currentColor: color,
-                onSelected: (newColor) {
-                  ref
-                      .read(themeStudioWorkingThemeNotifierProvider.notifier)
-                      .updatePaletteColor(index, newColor);
-                },
-              ),
-              borderRadius: BorderRadius.circular(AppRadius.chip),
-              child: Container(
-                width: 44.r,
-                height: 44.r,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                  border: Border.all(
-                    color: _workingTheme.textPrimary.withValues(alpha: 0.2),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.colorize,
-                  color: AppColors.white.withValues(alpha: 0.8),
-                  size: AppIconSizes.sm,
-                ),
-              ),
-            );
-          }),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActionButtons(Color activeAccent) {
-    return Column(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          height: AppSizes.buttonHeightMd,
-          child: FilledButton.icon(
-            icon: const Icon(Icons.palette),
-            label: Text(
-              'Save & Apply Theme',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.onPrimary,
-              ),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: activeAccent,
-              foregroundColor: Theme.of(context).colorScheme.onPrimary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.chip),
-              ),
-            ),
-            onPressed: _saveTheme,
-          ),
-        ),
-        SizedBox(height: 10.h),
-
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton.icon(
-                icon: Icon(Icons.copy, size: AppIconSizes.sm),
-                label: const Text('Duplicate'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _workingTheme.textPrimary,
-                  side: BorderSide(
-                    color: _workingTheme.cardBorder,
-                    width: AppSizes.borderWidth,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.chip),
-                  ),
-                ),
-                onPressed: _duplicateTheme,
-              ),
-            ),
-            if (!_workingTheme.isBuiltIn) ...[
-              SizedBox(width: 10.w),
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: Icon(
-                    Icons.delete_outline,
-                    size: AppIconSizes.sm,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
-                  label: Text(
-                    'Delete',
-                    style: Theme.of(context).textTheme.labelLarge
-                        ?.copyWith(color: Theme.of(context).colorScheme.error),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(
-                      color: Theme.of(context).colorScheme.error,
-                      width: AppSizes.borderWidth,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.chip),
-                    ),
-                  ),
-                  onPressed: _deleteTheme,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ],
+      onChanged: (val) =>
+          _studio.updateTheme((current) => current.copyWith(name: val)),
     );
   }
 }

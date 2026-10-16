@@ -22,7 +22,7 @@ class WidgetsKitInterop {
           handleWidgetClick(uri, ref);
         }
       },
-      onError: (e) {
+      onError: (Object e) {
         debugPrint('WidgetsKitInterop: Error on widgetClicked stream: $e');
       },
     );

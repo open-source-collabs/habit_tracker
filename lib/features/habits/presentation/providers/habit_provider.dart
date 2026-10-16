@@ -51,7 +51,7 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
       habits = _generateStarterHabits();
       unawaited(_persist(habits));
     } else {
-      Future.microtask(() => _syncWidgets(habits));
+      unawaited(Future.microtask(() => _syncWidgets(habits)));
     }
     return habits;
   }
@@ -265,7 +265,7 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
         id: 'habit_focus_sprint',
         title: 'Deep Focus Sprint',
         subtitle: '90 mins uninterrupted coding or deep work',
-        frequency: HabitFrequency.specificWeekdays(const [
+        frequency: const HabitFrequency.specificWeekdays([
           DateTime.monday,
           DateTime.tuesday,
           DateTime.wednesday,
