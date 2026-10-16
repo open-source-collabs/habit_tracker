@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
+
 import 'app_colors.dart';
 import 'app_theme_extension.dart';
 import '../../features/themes/data/models/dynamic_theme_model.dart';
 import 'theme_factory.dart';
 
-
 /// Pre-configured base themes and theme helpers.
 abstract final class AppTheme {
   /// Default Dusk dark theme (Obsidian Twilight)
-  static final ThemeData darkTheme =
-      ThemeFactory.createTheme(UserThemeModel.obsidianTwilight);
+  static final ThemeData darkTheme = ThemeFactory.createTheme(
+    UserThemeModel.obsidianTwilight,
+  );
 
   /// Default Dawn light theme (Porcelain Sunrise)
-  static final ThemeData lightTheme =
-      ThemeFactory.createTheme(UserThemeModel.porcelainSunrise);
+  static final ThemeData lightTheme = ThemeFactory.createTheme(
+    UserThemeModel.porcelainSunrise,
+  );
 }
 
 /// Convenience extension on [BuildContext] to access custom tokens effortlessly.
@@ -61,14 +63,12 @@ extension ThemeExtensionHelper on BuildContext {
   Color get textPrimaryColor => colorScheme.onSurface;
 
   /// Secondary subdued text color
-  Color get textSecondaryColor => isDarkMode
-      ? AppColors.textSecondary
-      : AppColors.textSecondaryLight;
+  Color get textSecondaryColor =>
+      isDarkMode ? AppColors.textSecondary : AppColors.textSecondaryLight;
 
   /// Muted or helper text color
-  Color get textMutedColor => isDarkMode
-      ? AppColors.textMuted
-      : AppColors.textMutedLight;
+  Color get textMutedColor =>
+      isDarkMode ? AppColors.textMuted : AppColors.textMutedLight;
 
   /// Semantic transparent color
   Color get transparent => AppColors.transparent;

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'app_colors.dart';
 
 /// Flutter [ThemeExtension] enabling dynamic access to card borders,
@@ -37,16 +38,14 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     double borderRadius = 24.0,
     double borderWidth = 1.2,
   }) {
-    final effectiveBorderColor =
-        (isActive && accentColor != null) ? accentColor : cardBorder;
+    final effectiveBorderColor = (isActive && accentColor != null)
+        ? accentColor
+        : cardBorder;
 
     return BoxDecoration(
       color: cardColor,
       borderRadius: BorderRadius.circular(borderRadius),
-      border: Border.all(
-        color: effectiveBorderColor,
-        width: borderWidth,
-      ),
+      border: Border.all(color: effectiveBorderColor, width: borderWidth),
       boxShadow: (isActive && accentColor != null)
           ? [cardGlowShadow(accentColor)]
           : const [],
@@ -64,10 +63,7 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     return BoxDecoration(
       color: backgroundColor,
       borderRadius: BorderRadius.circular(borderRadius),
-      border: Border.all(
-        color: borderColor ?? cardBorder,
-        width: borderWidth,
-      ),
+      border: Border.all(color: borderColor ?? cardBorder, width: borderWidth),
     );
   }
 
@@ -104,7 +100,8 @@ class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
     if (other is! AppThemeExtension) return this;
     return AppThemeExtension(
       cardBorder: Color.lerp(cardBorder, other.cardBorder, t) ?? cardBorder,
-      surfaceElevated: Color.lerp(surfaceElevated, other.surfaceElevated, t) ??
+      surfaceElevated:
+          Color.lerp(surfaceElevated, other.surfaceElevated, t) ??
           surfaceElevated,
       accentPalette: t < 0.5 ? accentPalette : other.accentPalette,
     );

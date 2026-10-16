@@ -97,10 +97,12 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
   Future<void> createHabit(HabitModel habit) async {
     final currentList = state.valueOrNull;
     if (currentList == null) return;
+    final notifications = ref.read(notificationServiceProvider);
     final updatedHabit = habit.copyWith(lastModifiedAt: DateTime.now());
     final updatedList = [...currentList, updatedHabit];
 
     state = AsyncData(updatedList);
+    unawaited(notifications.syncHabitReminder(updatedHabit));
     await _persist(updatedList);
   }
 
@@ -111,11 +113,13 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
     final index = currentList.indexWhere((h) => h.id == habit.id);
     if (index == -1) return;
 
+    final notifications = ref.read(notificationServiceProvider);
     final updatedHabit = habit.copyWith(lastModifiedAt: DateTime.now());
     final updatedList = List<HabitModel>.from(currentList);
     updatedList[index] = updatedHabit;
 
     state = AsyncData(updatedList);
+    unawaited(notifications.syncHabitReminder(updatedHabit));
     await _persist(updatedList);
   }
 
@@ -175,9 +179,12 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
     await _persist(updatedList);
   }
 
-  /// Restores and persists an imported collection of habits atomically.
+  /// Restores and persists an imported collection of habits atomically, and
+  /// reconciles reminders with it (habits that disappeared lose theirs).
   Future<void> restoreHabits(List<HabitModel> habits) async {
+    final notifications = ref.read(notificationServiceProvider);
     state = AsyncData(habits);
+    unawaited(notifications.rescheduleAll(habits));
     await _persist(habits);
   }
 

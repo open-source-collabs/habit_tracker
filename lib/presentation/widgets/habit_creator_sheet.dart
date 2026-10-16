@@ -215,18 +215,7 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
       isArchived: widget.initialHabit?.isArchived ?? false,
     );
 
-    // Schedule native alarm asynchronously if enabled
-    if (formState.reminderEnabled) {
-      NotificationService.instance.scheduleHabitReminder(
-        habitId: habit.id,
-        habitTitle: habit.title,
-        time: formState.reminderTime,
-        frequency: habit.frequency,
-      );
-    } else if (widget.initialHabit?.reminderTime != null) {
-      NotificationService.instance.cancelHabitReminder(habit.id);
-    }
-
+    // The habit notifier schedules or cancels the reminder to match.
     if (widget.initialHabit != null) {
       ref.read(habitListProvider.notifier).updateHabit(habit);
     } else {
@@ -1291,6 +1280,10 @@ class _HabitCreatorSheetState extends ConsumerState<HabitCreatorSheet>
                 onChanged: (val) {
                   AppHaptics.selectionClick();
                   formNotifier.setReminderEnabled(val);
+                  // Ask at the moment it matters, not on first launch.
+                  if (val) {
+                    ref.read(notificationServiceProvider).requestPermission();
+                  }
                 },
               ),
             ],

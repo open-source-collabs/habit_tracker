@@ -17,7 +17,7 @@ abstract final class DigestNotificationIds {
 
 /// Provider querying the platform's active notification permission status.
 final notificationPermissionStatusProvider = FutureProvider.autoDispose<bool>((ref) async {
-  return await NotificationService.instance.checkPermissionStatus();
+  return await ref.watch(notificationServiceProvider).checkPermissionStatus();
 });
 
 /// Computes all user habits that currently have a scheduled reminder time.
@@ -40,10 +40,14 @@ final activeRemindersCountProvider = Provider<int>((ref) {
 
 /// State notifier managing global notification preferences and digest scheduling.
 class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsModel> {
+  NotificationService get _service => ref.read(notificationServiceProvider);
+
   @override
   Future<NotificationSettingsModel> build() async {
     final storage = ref.watch(notificationStorageProvider);
+    final service = ref.watch(notificationServiceProvider);
     final settings = await storage.loadSettings();
+    service.remindersEnabled = settings.masterEnabled;
 
     // Schedule digests if master and individual flags are enabled
     if (settings.masterEnabled) {
@@ -64,9 +68,10 @@ class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsMod
     final updated = current.copyWith(masterEnabled: enabled);
     state = AsyncData(updated);
     await ref.read(notificationStorageProvider).saveSettings(updated);
+    _service.remindersEnabled = enabled;
 
     if (!enabled) {
-      await NotificationService.instance.cancelAll();
+      await _service.cancelAll();
     } else {
       // Re-schedule enabled digests and habit reminders
       if (updated.morningKickoffEnabled) {
@@ -93,7 +98,7 @@ class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsMod
     if (updated.masterEnabled && updated.morningKickoffEnabled) {
       _scheduleMorningKickoff(updated.morningTime);
     } else {
-      await NotificationService.instance.cancelDigest(DigestNotificationIds.morningKickoff);
+      await _service.cancelDigest(DigestNotificationIds.morningKickoff);
     }
   }
 
@@ -111,7 +116,7 @@ class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsMod
     if (updated.masterEnabled && updated.eveningStreakSaverEnabled) {
       _scheduleEveningStreakSaver(updated.eveningTime);
     } else {
-      await NotificationService.instance.cancelDigest(DigestNotificationIds.eveningStreakSaver);
+      await _service.cancelDigest(DigestNotificationIds.eveningStreakSaver);
     }
   }
 
@@ -133,7 +138,7 @@ class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsMod
 
   /// Dispatches an immediate test notification to verify delivery on device.
   Future<void> sendTestNotification() async {
-    await NotificationService.instance.showInstantNotification(
+    await _service.showInstantNotification(
       id: DigestNotificationIds.testNotification,
       title: 'Habit Tracker Test Alert 🔔',
       body: 'Offline alarms are active and delivering perfectly on your device!',
@@ -167,7 +172,7 @@ class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsMod
 
   /// Prompts the user for notification permissions and refreshes provider.
   Future<bool> requestPermission() async {
-    final granted = await NotificationService.instance.requestPermission();
+    final granted = await _service.requestPermission();
     ref.invalidate(notificationPermissionStatusProvider);
     return granted;
   }
@@ -176,7 +181,7 @@ class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsMod
 
   void _scheduleMorningKickoff(TimeOfDay time) {
     unawaited(
-      NotificationService.instance.scheduleDailyDigest(
+      _service.scheduleDailyDigest(
         id: DigestNotificationIds.morningKickoff,
         title: 'Morning Kickoff 🌅',
         body: 'Check your scheduled habits and seize today\'s momentum!',
@@ -188,7 +193,7 @@ class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsMod
 
   void _scheduleEveningStreakSaver(TimeOfDay time) {
     unawaited(
-      NotificationService.instance.scheduleDailyDigest(
+      _service.scheduleDailyDigest(
         id: DigestNotificationIds.eveningStreakSaver,
         title: 'Streak Saver Alert 🔥',
         body: 'Don\'t break the chain! Review your uncompleted habits before tonight.',
@@ -200,20 +205,30 @@ class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsMod
 
   void _rescheduleAllHabits() {
     final habits = ref.read(habitListProvider).valueOrNull ?? [];
-    for (final habit in habits) {
-      if (habit.reminderTime != null && habit.reminderTime!.isNotEmpty) {
-        final parts = habit.reminderTime!.split(':');
-        if (parts.length == 2) {
-          final h = int.tryParse(parts[0]) ?? 8;
-          final m = int.tryParse(parts[1]) ?? 0;
-          NotificationService.instance.scheduleHabitReminder(
-            habitId: habit.id,
-            habitTitle: habit.title,
-            time: TimeOfDay(hour: h, minute: m),
-            frequency: habit.frequency,
-          );
-        }
-      }
+    unawaited(_service.rescheduleAll(habits));
+  }
+}
+
+/// Restores every scheduled notification at app start: applies the user's
+/// notification settings (which schedules digests), then reconciles habit
+/// reminders with the stored habits. Also used after importing data.
+final reminderSyncProvider = Provider<ReminderSync>(ReminderSync.new);
+
+class ReminderSync {
+  ReminderSync(this._ref);
+
+  final Ref _ref;
+
+  Future<void> restoreAll() async {
+    final service = _ref.read(notificationServiceProvider);
+    try {
+      await service.init();
+      await _ref.read(notificationSettingsProvider.future);
+      final habits = await _ref.read(habitListProvider.future);
+      await service.rescheduleAll(habits);
+    } catch (e) {
+      // Unreadable habit data or no notification support: nothing to restore.
+      debugPrint('ReminderSync: reminders not restored: $e');
     }
   }
 }

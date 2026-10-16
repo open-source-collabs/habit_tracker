@@ -55,7 +55,8 @@ abstract final class AppColors {
 
   // Dawn (Light Mode)
   static const Color porcelainBg = Color(0xFFF8F9FD);
-  static const Color porcelainCard = white; // Canonical alias to white (zero duplicate hex)
+  static const Color porcelainCard =
+      white; // Canonical alias to white (zero duplicate hex)
   static const Color porcelainBorder = Color(0xFFE2E8F0);
 
   // ===========================================================================

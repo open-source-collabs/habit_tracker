@@ -19,6 +19,7 @@ dependencies:
   http: ^1.2.2
   path_provider: ^2.1.6
   widgets_kit: ^0.1.1
+  flutter_timezone: ^5.1.1
 
 dev_dependencies:
   flutter_test:

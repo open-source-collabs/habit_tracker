@@ -8,6 +8,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
+import '../../../notifications/presentation/widgets/notification_settings_card.dart';
 import '../providers/profile_provider.dart';
 
 /// App settings: profile, archived habits, data & backup, and privacy.
@@ -59,6 +60,9 @@ class SettingsScreen extends ConsumerWidget {
                         Navigator.of(context).pop();
                       },
               ),
+              SizedBox(height: 20.h),
+              const _SectionLabel('NOTIFICATIONS'),
+              const NotificationSettingsCard(),
               SizedBox(height: 20.h),
               const _SectionLabel('DATA & BACKUP'),
               _SettingsTile(

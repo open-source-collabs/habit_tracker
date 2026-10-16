@@ -28,6 +28,30 @@ class _FakeNotifications implements NotificationService {
   Future<void> syncHabitReminder(HabitModel habit) async => synced.add(habit);
 
   @override
+  Future<void> rescheduleAll(List<HabitModel> habits) async {}
+
+  @override
+  bool remindersEnabled = true;
+
+  @override
+  Stream<String> get notificationTaps => const Stream.empty();
+
+  @override
+  Future<void> init() async {}
+
+  @override
+  Future<String?> takeLaunchPayload() async => null;
+
+  @override
+  Future<bool> checkPermissionStatus() async => true;
+
+  @override
+  Future<void> cancelAll() async {}
+
+  @override
+  Future<void> cancelDigest(int id) async {}
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
