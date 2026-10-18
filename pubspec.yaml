@@ -1,5 +1,5 @@
 name: habit_tracker
-description: "A new Flutter project."
+description: "Track Free - Minimalist Bento habit tracker with privacy-first offline SQLite storage and cloud backup."
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -22,6 +22,9 @@ dependencies:
   flutter_timezone: ^5.1.1
   google_sign_in: ^7.2.0
   icloud_storage: ^2.2.0
+  sqflite: ^2.4.1
+  sqflite_common_ffi: ^2.3.4
+  path: ^1.9.0
 
 dev_dependencies:
   flutter_test:

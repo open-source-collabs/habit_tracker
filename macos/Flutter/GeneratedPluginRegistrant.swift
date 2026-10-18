@@ -10,6 +10,7 @@ import flutter_timezone
 import google_sign_in_ios
 import icloud_storage
 import shared_preferences_foundation
+import sqflite_darwin
 import widgets_kit
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
@@ -18,5 +19,6 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   GoogleSignInPlugin.register(with: registry.registrar(forPlugin: "GoogleSignInPlugin"))
   IcloudStoragePlugin.register(with: registry.registrar(forPlugin: "IcloudStoragePlugin"))
   SharedPreferencesPlugin.register(with: registry.registrar(forPlugin: "SharedPreferencesPlugin"))
+  SqflitePlugin.register(with: registry.registrar(forPlugin: "SqflitePlugin"))
   WidgetsKitPlugin.register(with: registry.registrar(forPlugin: "WidgetsKitPlugin"))
 }
