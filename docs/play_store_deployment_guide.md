@@ -9,7 +9,7 @@ This guide provides end-to-end instructions for signing, building, and publishin
 - [x] **Target SDK**: Configured to API 35 (Android 15), exceeding Google Play's API 34 minimum.
 - [x] **Minimum SDK**: Configured to API 21 (covers 99.5%+ of active devices).
 - [x] **R8 / ProGuard Minification**: Enabled with `proguard-rules.pro` optimizing code and shrinking APK/bundle size.
-- [x] **Adaptive Launcher Icon**: Configured in `mipmap-anydpi-v26/` with Bento checkmark and streak emblem.
+- [x] **Adaptive Launcher Icon**: "Bento Check" mark in `mipmap-anydpi-v26/` (foreground, background and Android 13 monochrome layers). Store icon: `assets/branding/store/play_store_icon_512.png`. Regenerate all raster icons with `flutter test tool/generate_brand_assets.dart` (see `assets/branding/README.md`).
 - [x] **Permissions**: `POST_NOTIFICATIONS`, `SCHEDULE_EXACT_ALARM`, `RECEIVE_BOOT_COMPLETED`, `VIBRATE`, and `INTERNET`.
 - [x] **Security**: Cleartext traffic disabled (`usesCleartextTraffic="false"`) and `allowBackup="false"`.
 

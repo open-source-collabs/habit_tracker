@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 108 108">
+  <!-- Track Free "Bento Check" app icon. Geometry: lib/core/widgets/app_logo.dart -->
+  <defs>
+    <radialGradient id="glow-a" gradientUnits="userSpaceOnUse" cx="54" cy="54" r="40">
+      <stop offset="0" stop-color="#8B5CF6" stop-opacity="0.18"/><stop offset="1" stop-color="#8B5CF6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="108" height="108" fill="#0F1016"/>
+  <rect width="108" height="108" fill="url(#glow-a)"/>
+  <g transform="translate(54 54) scale(1.4) translate(-54 -54)">
+    <defs>
+      <linearGradient id="check-m" gradientUnits="userSpaceOnUse" x1="39" y1="55" x2="67.5" y2="55">
+        <stop offset="0" stop-color="#8B5CF6"/><stop offset="1" stop-color="#10B981"/>
+      </linearGradient>
+      <mask id="gap-m" maskUnits="userSpaceOnUse" x="0" y="0" width="108" height="108">
+        <rect width="108" height="108" fill="#fff"/>
+        <path d="M74,27 Q75.05,32.95 81,34 Q75.05,35.05 74,41 Q72.95,35.05 67,34 Q72.95,32.95 74,27 Z" fill="#000" stroke="#000" stroke-width="2.8" stroke-linejoin="round"/>
+      </mask>
+    </defs>
+    <g mask="url(#gap-m)">
+      <path d="M41.5,30 H66.5 A11.5,11.5 0 0 1 78,41.5 V66.5 A11.5,11.5 0 0 1 66.5,78 H41.5 A11.5,11.5 0 0 1 30,66.5 V41.5 A11.5,11.5 0 0 1 41.5,30 Z" fill="#181924" stroke="#8B5CF6" stroke-width="2.4"/>
+      <path d="M39,55 L48.5,64.5 L67.5,45.5" fill="none" stroke="url(#check-m)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <path d="M74,27 Q75.05,32.95 81,34 Q75.05,35.05 74,41 Q72.95,35.05 67,34 Q72.95,32.95 74,27 Z" fill="#FFAE33"/>
+  </g>
+</svg>

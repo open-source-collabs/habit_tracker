@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="256" viewBox="0 0 520 128">
+  <!-- Track Free horizontal lockup. Typeface: Plus Jakarta Sans Bold (convert text to outlines before print). -->
+  <g transform="translate(0 10)">
+    <g transform="translate(54 54) scale(1.95) translate(-54 -54)">
+    <defs>
+      <linearGradient id="check-w" gradientUnits="userSpaceOnUse" x1="39" y1="55" x2="67.5" y2="55">
+        <stop offset="0" stop-color="#8B5CF6"/><stop offset="1" stop-color="#10B981"/>
+      </linearGradient>
+      <mask id="gap-w" maskUnits="userSpaceOnUse" x="0" y="0" width="108" height="108">
+        <rect width="108" height="108" fill="#fff"/>
+        <path d="M74,27 Q75.05,32.95 81,34 Q75.05,35.05 74,41 Q72.95,35.05 67,34 Q72.95,32.95 74,27 Z" fill="#000" stroke="#000" stroke-width="2.8" stroke-linejoin="round"/>
+      </mask>
+    </defs>
+    <g mask="url(#gap-w)">
+      <path d="M41.5,30 H66.5 A11.5,11.5 0 0 1 78,41.5 V66.5 A11.5,11.5 0 0 1 66.5,78 H41.5 A11.5,11.5 0 0 1 30,66.5 V41.5 A11.5,11.5 0 0 1 41.5,30 Z" fill="#181924" stroke="#8B5CF6" stroke-width="2.4"/>
+      <path d="M39,55 L48.5,64.5 L67.5,45.5" fill="none" stroke="url(#check-w)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <path d="M74,27 Q75.05,32.95 81,34 Q75.05,35.05 74,41 Q72.95,35.05 67,34 Q72.95,32.95 74,27 Z" fill="#FFAE33"/>
+    </g>
+  </g>
+  <text x="128" y="84" font-family="'Plus Jakarta Sans', 'PlusJakartaSans', Inter, sans-serif" font-size="58" font-weight="700" letter-spacing="-1.2" fill="#F8FAFC">Track Free</text>
+</svg>
