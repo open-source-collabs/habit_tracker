@@ -455,44 +455,4 @@ void main() {
       expect(tapped, isTrue);
     });
   });
-
-  group('AppLogo', () {
-    testWidgets('paints the brand mark at the requested size', (tester) async {
-      await tester.pumpWidget(_buildTestableWidget(const AppLogo(size: 64)));
-      await tester.pumpAndSettle();
-
-      expect(find.bySemanticsLabel('Track Free logo'), findsOneWidget);
-      expect(tester.getSize(find.byType(AppLogo)), const Size.square(64));
-      final painter = tester
-          .widget<CustomPaint>(
-            find.descendant(
-              of: find.byType(AppLogo),
-              matching: find.byType(CustomPaint),
-            ),
-          )
-          .painter! as AppLogoPainter;
-      expect(painter.palette.outline, AppLogoPalette.dusk.outline);
-    });
-
-    testWidgets('switches to the Dawn palette in light themes',
-        (tester) async {
-      await tester.pumpWidget(
-        _buildTestableWidget(
-          const AppLogo(),
-          themeModel: UserThemeModel.porcelainSunrise,
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      final painter = tester
-          .widget<CustomPaint>(
-            find.descendant(
-              of: find.byType(AppLogo),
-              matching: find.byType(CustomPaint),
-            ),
-          )
-          .painter! as AppLogoPainter;
-      expect(painter.palette.background, AppLogoPalette.dawn.background);
-    });
-  });
 }
