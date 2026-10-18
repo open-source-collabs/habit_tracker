@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../habits/data/models/habit_model.dart';
+import '../../../../home_widget/presentation/widgets/home_widget_tip_card.dart';
 import 'dashboard_empty_state.dart';
 import 'dashboard_filter_chips.dart';
 import 'dashboard_habit_actions.dart';
@@ -26,6 +27,8 @@ List<Widget> dashboardHabitFeedChildren({
     SizedBox(height: chipsSpacing),
     DashboardSectionTitle(activeFilter: activeFilter),
     SizedBox(height: 8.h),
+    // Self-hiding one-time suggestion to add the home-screen widget.
+    const HomeWidgetTipCard(),
     if (habits.isEmpty)
       DashboardEmptyState(activeFilter: activeFilter)
     else

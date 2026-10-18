@@ -38,4 +38,9 @@ abstract final class AppDateFormat {
   /// e.g. "Friday, 17 October".
   static String longDay(DateTime date) =>
       '${weekdayNames[date.weekday - 1]}, ${date.day} ${monthNames[date.month - 1]}';
+
+  /// e.g. "Fri, 17 Oct" (matches the home-screen widget header).
+  static String shortDay(DateTime date) =>
+      '${weekdayNames[date.weekday - 1].substring(0, 3)}, ${date.day} '
+      '${monthNames[date.month - 1].substring(0, 3)}';
 }

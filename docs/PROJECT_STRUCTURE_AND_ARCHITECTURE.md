@@ -35,6 +35,8 @@ lib/
     │       ├── providers/           # habitListProvider, stats, filters, creator form, heatmap
     │       └── widgets/             # BentoHabitCard, HeatmapGrid, HabitCreatorSheet,
     │                                #   habit_creator/ (sheet sections), DataLoadErrorView
+    ├── home_widget/                 # "Add to home screen" (Android pin API), Settings card + preview,
+    │                                #   one-time dashboard tip. Native widget: HabitWidgetProvider.kt
     ├── notifications/               # Reminder & digest settings (sound, haptics), permission banner
     ├── onboarding/                  # First-run flow (welcome, pick starters, reminders) + gate
     ├── settings/                    # Settings, display name, restore backup / delete all,
@@ -106,6 +108,7 @@ UI widgets ──watch──▶ feature notifiers (habits, themes, display name)
 - **Localization:** all UI text is English and inline; adding `flutter_localizations` + ARB files is the next step for other languages.
 - **Incremental saves:** every save rewrites the full payload. Fine for typical histories; switch to per-row writes if very large histories become slow.
 - **End-to-end tests:** no `integration_test/` yet (on-device reminder delivery, reboot restore, real sync).
+- **iOS home-screen widget:** needs a WidgetKit extension + App Group (Mac only); the Add option is hidden on iOS until then.
 - **Backup encryption:** cloud copies rely on Google/Apple account security; there is no extra app-level encryption.
 
 Run everything with:

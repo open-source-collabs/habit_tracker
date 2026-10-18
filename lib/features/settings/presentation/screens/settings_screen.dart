@@ -14,6 +14,8 @@ import '../../../../core/utils/app_error_log.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
+import '../../../home_widget/data/home_widget_service.dart';
+import '../../../home_widget/presentation/widgets/home_widget_settings_card.dart';
 import '../../../notifications/presentation/widgets/notification_settings_card.dart';
 import '../providers/profile_provider.dart';
 import '../widgets/about_links.dart';
@@ -72,6 +74,11 @@ class SettingsScreen extends ConsumerWidget {
               const _SectionLabel('NOTIFICATIONS'),
               const NotificationSettingsCard(),
               SizedBox(height: 20.h),
+              if (ref.watch(homeWidgetServiceProvider).isAvailable) ...[
+                const _SectionLabel('HOME SCREEN WIDGET'),
+                const HomeWidgetSettingsCard(),
+                SizedBox(height: 20.h),
+              ],
               const _SectionLabel('DATA & BACKUP'),
               _SettingsTile(
                 icon: Icons.import_export_rounded,
