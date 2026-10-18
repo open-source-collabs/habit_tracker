@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../../core/utils/calendar_days.dart';
+
 /// Frequency types supported by the habit tracking engine.
 enum HabitFrequencyType { daily, specificWeekdays, timesPerWeek }
 
@@ -231,7 +233,7 @@ class HabitModel {
 
   int _calculateDailyCurrentStreak(DateTime today) {
     final isTodayDone = isCompletedOn(today);
-    final yesterday = today.subtract(const Duration(days: 1));
+    final yesterday = CalendarDays.addDays(today, -1);
     final isYesterdayDone = isCompletedOn(yesterday);
 
     if (!isTodayDone && !isYesterdayDone) {
@@ -243,7 +245,7 @@ class HabitModel {
 
     while (isCompletedOn(cursor)) {
       streak++;
-      cursor = cursor.subtract(const Duration(days: 1));
+      cursor = CalendarDays.addDays(cursor, -1);
     }
 
     return streak;
@@ -281,12 +283,12 @@ class HabitModel {
   }
 
   DateTime? _previousScheduledDay(DateTime from, List<int> scheduledDays) {
-    DateTime cursor = from.subtract(const Duration(days: 1));
+    DateTime cursor = CalendarDays.addDays(from, -1);
     for (int i = 0; i < 14; i++) {
       if (scheduledDays.contains(cursor.weekday)) {
         return cursor;
       }
-      cursor = cursor.subtract(const Duration(days: 1));
+      cursor = CalendarDays.addDays(cursor, -1);
     }
     return null;
   }
@@ -295,7 +297,7 @@ class HabitModel {
     final target = frequency.targetTimesPerWeek;
     if (target <= 0) return 0;
 
-    final currentMonday = today.subtract(Duration(days: today.weekday - 1));
+    final currentMonday = CalendarDays.mondayOf(today);
     final currentWeekCount = _checkInsInWeek(currentMonday);
 
     DateTime checkMonday;
@@ -303,9 +305,9 @@ class HabitModel {
 
     if (currentWeekCount >= target) {
       streak++;
-      checkMonday = currentMonday.subtract(const Duration(days: 7));
+      checkMonday = CalendarDays.addDays(currentMonday, -7);
     } else {
-      final prevMonday = currentMonday.subtract(const Duration(days: 7));
+      final prevMonday = CalendarDays.addDays(currentMonday, -7);
       if (_checkInsInWeek(prevMonday) >= target) {
         checkMonday = prevMonday;
       } else {
@@ -315,7 +317,7 @@ class HabitModel {
 
     while (_checkInsInWeek(checkMonday) >= target) {
       streak++;
-      checkMonday = checkMonday.subtract(const Duration(days: 7));
+      checkMonday = CalendarDays.addDays(checkMonday, -7);
     }
 
     return streak;
@@ -324,7 +326,7 @@ class HabitModel {
   int _checkInsInWeek(DateTime monday) {
     int count = 0;
     for (int i = 0; i < 7; i++) {
-      final day = monday.add(Duration(days: i));
+      final day = CalendarDays.addDays(monday, i);
       if (isCompletedOn(day)) {
         count++;
       }
@@ -360,7 +362,7 @@ class HabitModel {
     for (int i = 1; i < completedDates.length; i++) {
       final prev = completedDates[i - 1];
       final curr = completedDates[i];
-      final diff = curr.difference(prev).inDays;
+      final diff = CalendarDays.daysBetween(prev, curr);
 
       if (diff == 1) {
         currentStreak++;
@@ -399,7 +401,7 @@ class HabitModel {
           currentStreak = 0;
         }
       }
-      cursor = cursor.add(const Duration(days: 1));
+      cursor = CalendarDays.addDays(cursor, 1);
     }
 
     return maxStreak;
@@ -412,8 +414,8 @@ class HabitModel {
     final first = completedDates.first;
     final last = completedDates.last;
 
-    final startMonday = first.subtract(Duration(days: first.weekday - 1));
-    final endMonday = last.subtract(Duration(days: last.weekday - 1));
+    final startMonday = CalendarDays.mondayOf(first);
+    final endMonday = CalendarDays.mondayOf(last);
 
     int maxStreak = 0;
     int currentStreak = 0;
@@ -428,7 +430,7 @@ class HabitModel {
       } else {
         currentStreak = 0;
       }
-      cursorMonday = cursorMonday.add(const Duration(days: 7));
+      cursorMonday = CalendarDays.addDays(cursorMonday, 7);
     }
 
     return maxStreak;

@@ -8,6 +8,7 @@ import 'package:habit_tracker/core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_font_sizes.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/calendar_days.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
 
 /// "Consistency score" weekly bar chart directly inspired by Reference Image 1.
@@ -24,12 +25,9 @@ class ConsistencyChart extends ConsumerWidget {
     // Monday-start, matching the weekly streak logic in HabitModel.
     const weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = ref.watch(currentDayProvider);
     // Show the week containing the selected date.
-    final monday = selectedDate.subtract(
-      Duration(days: selectedDate.weekday - 1),
-    );
+    final monday = CalendarDays.mondayOf(selectedDate);
 
     final weekData = List.generate(7, (i) {
       final day = DateTime(monday.year, monday.month, monday.day + i);
@@ -120,9 +118,9 @@ class ConsistencyChart extends ConsumerWidget {
           ),
           SizedBox(height: 10.h),
 
-          // Bar Chart
-          SizedBox(
-            height: 78.w,
+          // Bar Chart: grows with large text instead of overflowing.
+          ConstrainedBox(
+            constraints: BoxConstraints(minHeight: 78.w),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -132,6 +130,7 @@ class ConsistencyChart extends ConsumerWidget {
 
                 return Expanded(
                   child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       if (isHighlight) ...[

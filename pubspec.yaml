@@ -25,6 +25,9 @@ dependencies:
   sqflite: ^2.4.1
   sqflite_common_ffi: ^2.3.4
   path: ^1.9.0
+  package_info_plus: ^10.2.2
+  url_launcher: ^6.3.3
+  flutter_native_splash: ^2.4.8
 
 dev_dependencies:
   flutter_test:
@@ -35,6 +38,11 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  assets:
+    - assets/fonts/licenses/
+    - assets/branding/app_logo.png
+
+  # Variable fonts (all weights in one file), SIL Open Font License 1.1.
   fonts:
     - family: PlusJakartaSans
       fonts:
@@ -42,4 +50,33 @@ flutter:
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter-Regular.ttf
+    - family: Outfit
+      fonts:
+        - asset: assets/fonts/Outfit-Variable.ttf
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-Variable.ttf
+    - family: DMSans
+      fonts:
+        - asset: assets/fonts/DMSans-Variable.ttf
+    - family: Sora
+      fonts:
+        - asset: assets/fonts/Sora-Variable.ttf
 
+
+# Native launch screen (`dart run flutter_native_splash:create` after edits).
+# Plain white in light and dark mode, the app logo centred. The splash is held
+# until the first screen is ready (see main.dart / app.dart).
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/branding/splash/splash_logo.png
+  android_12:
+    color: "#FFFFFF"
+    image: assets/branding/splash/splash_logo_android12.png
+    icon_background_color: "#FFFFFF"
+  android: true
+  ios: true
+  web: false
+  fullscreen: false
+  android_gravity: center
+  ios_content_mode: center

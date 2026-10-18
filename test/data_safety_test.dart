@@ -117,6 +117,40 @@ void main() {
       await repo.update((p) => p.copyWith(habits: [_habit('fresh')]));
       expect(storage.stored!.habits.single.id, 'fresh');
     });
+
+    test('a failed save is reported and retried by the next write', () async {
+      final storage = _FlakyStorage(stored: _payloadWith(const []));
+      final repo = AppDataRepository(storage);
+      await repo.load();
+      final errors = <Object>[];
+      final sub = repo.saveErrors.listen(errors.add);
+      addTearDown(sub.cancel);
+
+      storage.failNext = true;
+      await expectLater(
+        repo.update((p) => p.copyWith(habits: [_habit('a')])),
+        throwsA(isA<FileSystemException>()),
+      );
+      await pumpEventQueue();
+      expect(errors, hasLength(1));
+      expect(repo.lastWriteFailed, isTrue);
+      expect(repo.current!.habits.single.id, 'a', reason: 'change kept');
+
+      await repo.update((p) => p.copyWith(habits: [...p.habits, _habit('b')]));
+      expect(repo.lastWriteFailed, isFalse);
+      expect(storage.stored!.habits.map((h) => h.id), ['a', 'b']);
+    });
+
+    test('deleteAllData wipes storage and the next load is a first run',
+        () async {
+      final storage = _RecordingStorage(stored: _payloadWith([_habit('x')]));
+      final repo = AppDataRepository(storage);
+      await repo.load();
+
+      await repo.deleteAllData();
+      expect(storage.stored, isNull);
+      expect((await repo.load()).isFirstRun, isTrue);
+    });
   });
 
   group('HabitListNotifier data safety', () {
@@ -150,16 +184,22 @@ void main() {
       expect(container.read(dailyHabitStatsProvider).totalScheduled, 0);
     });
 
-    test('starter habits are seeded and saved only on a true first run',
+    test('a first run seeds nothing and saves only once onboarding ends',
         () async {
       final storage = _RecordingStorage();
       final container = containerFor(storage);
+      final repository = container.read(appDataRepositoryProvider);
 
-      final habits = await container.read(habitListProvider.future);
-      await container.read(appDataRepositoryProvider).flush();
+      expect(await container.read(habitListProvider.future), isEmpty);
+      await repository.flush();
+      expect(storage.saves, isEmpty, reason: 'no demo data written');
+      expect(repository.hasNeverSaved, isTrue);
 
-      expect(habits, isNotEmpty);
-      expect(storage.stored!.habits.length, habits.length);
+      await container
+          .read(habitListProvider.notifier)
+          .completeOnboarding(const []);
+      expect(storage.saves, hasLength(1));
+      expect(repository.hasNeverSaved, isFalse);
     });
 
     test('an existing empty habit list is not replaced by starter habits',
@@ -273,4 +313,20 @@ void main() {
       expect(cleared.emoji, isNull);
     });
   });
+}
+
+/// Storage whose next save can be made to fail once.
+class _FlakyStorage extends _RecordingStorage {
+  _FlakyStorage({super.stored});
+
+  bool failNext = false;
+
+  @override
+  Future<void> savePayload(AppPayloadModel payload) async {
+    if (failNext) {
+      failNext = false;
+      throw const FileSystemException('disk full');
+    }
+    await super.savePayload(payload);
+  }
 }

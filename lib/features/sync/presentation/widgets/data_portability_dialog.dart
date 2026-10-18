@@ -54,8 +54,13 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
   AppPayloadModel _buildCurrentPayload() {
     final habits = ref.read(habitListProvider).valueOrNull ?? [];
     final themeState = ref.read(themeProvider);
+    final stored = ref.read(appDataRepositoryProvider).current;
 
+    // Deletion records travel with the export, so importing it elsewhere
+    // (and syncing) can't bring back habits deleted here.
     return AppPayloadModel(
+      deletedHabits: stored?.deletedHabits ?? const {},
+      deletedThemes: stored?.deletedThemes ?? const {},
       version: AppPayloadModel.currentSchemaVersion,
       lastModifiedBy: 'manual_portability',
       lastModifiedAt: DateTime.now(),
@@ -120,6 +125,14 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
         await ref
             .read(displayNameProvider.notifier)
             .setDisplayName(payloadToApply.displayName);
+      }
+
+      // The notifiers above update the screen even when saving fails, so
+      // only report success once everything is on disk.
+      final repository = ref.read(appDataRepositoryProvider);
+      await repository.flush();
+      if (repository.lastWriteFailed) {
+        throw StateError('the imported data could not be saved');
       }
 
       AppHaptics.heavyImpact();

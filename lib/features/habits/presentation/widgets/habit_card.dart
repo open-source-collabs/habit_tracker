@@ -104,7 +104,7 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeOutCubic,
-              padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+              padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
               decoration: _decoration(context, accentColor, isCompleted),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,6 +205,7 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
                 ),
               ),
             ),
+            HabitCardHeatmapToggle(habit: habit, accentColor: accentColor),
             if (widget._hasActions)
               HabitCardActionsMenu(
                 isArchived: habit.isArchived,
@@ -224,7 +225,7 @@ class _BentoHabitCardState extends ConsumerState<BentoHabitCard>
             ),
           ),
         ],
-        SizedBox(height: 8.h),
+        SizedBox(height: 6.h),
         HabitCardPills(
           habit: habit,
           currentStreak: currentStreak,

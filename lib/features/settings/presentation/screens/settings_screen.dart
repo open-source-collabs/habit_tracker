@@ -1,16 +1,23 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../../core/constants/app_links.dart';
 import '../../../../core/data/app_data_repository.dart';
 import '../../../../core/routes/app_navigator.dart';
+import '../../../../core/routes/app_routes.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/app_error_log.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
 import '../../../notifications/presentation/widgets/notification_settings_card.dart';
 import '../providers/profile_provider.dart';
+import '../widgets/about_links.dart';
+import '../widgets/data_management_actions.dart';
 
 /// App settings: profile, archived habits, data & backup, and privacy.
 class SettingsScreen extends ConsumerWidget {
@@ -45,7 +52,7 @@ class SettingsScreen extends ConsumerWidget {
               SizedBox(height: 20.h),
               const _SectionLabel('HABITS'),
               _SettingsTile(
-                icon: Icons.archive_outlined,
+                icon: Icons.archive_rounded,
                 title: 'Archived habits',
                 subtitle: archivedCount == 0
                     ? 'Archive a habit from its menu to pause it without '
@@ -74,12 +81,41 @@ class SettingsScreen extends ConsumerWidget {
                     'from another device.',
                 onTap: () => AppNavigator.toDataPortability(context),
               ),
+              SizedBox(height: 10.h),
+              _SettingsTile(
+                icon: Icons.history_rounded,
+                title: 'Restore from backup',
+                subtitle:
+                    'Go back to your latest save or how things looked on a '
+                    'previous day.',
+                onTap: () => showRestoreBackupSheet(context),
+              ),
+              SizedBox(height: 10.h),
+              _SettingsTile(
+                icon: Icons.delete_forever_rounded,
+                iconColor: context.colorScheme.error,
+                title: 'Delete all data',
+                subtitle: 'Permanently remove everything from this device.',
+                onTap: () => confirmAndDeleteAllData(context, ref),
+              ),
               SizedBox(height: 20.h),
               const _SectionLabel('PRIVACY'),
               AppCard(
                 padding: EdgeInsets.all(16.r),
                 child: const _PrivacySummary(),
               ),
+              SizedBox(height: 10.h),
+              _SettingsTile(
+                icon: Icons.policy_rounded,
+                title: 'Privacy policy',
+                subtitle: 'Exactly what is stored, where, and how to delete it.',
+                onTap: () =>
+                    Navigator.of(context).pushNamed(AppRoutes.privacyPolicy),
+              ),
+              SizedBox(height: 20.h),
+              const _SectionLabel('ABOUT'),
+              const _AboutSection(),
+              SizedBox(height: 24.h),
             ],
           ),
         ),
@@ -111,12 +147,14 @@ class _SectionLabel extends StatelessWidget {
 
 class _SettingsTile extends StatelessWidget {
   final IconData icon;
+  final Color? iconColor;
   final String title;
   final String subtitle;
   final VoidCallback? onTap;
 
   const _SettingsTile({
     required this.icon,
+    this.iconColor,
     required this.title,
     required this.subtitle,
     this.onTap,
@@ -133,7 +171,7 @@ class _SettingsTile extends StatelessWidget {
         padding: EdgeInsets.all(16.r),
         child: Row(
           children: [
-            Icon(icon, color: context.primaryAccent),
+            Icon(icon, color: iconColor ?? context.primaryAccent),
             SizedBox(width: 14.w),
             Expanded(
               child: Column(
@@ -251,7 +289,7 @@ class _PrivacySummary extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Icon(Icons.lock_outline_rounded, color: context.primaryAccent),
+            Icon(Icons.lock_rounded, color: context.primaryAccent),
             SizedBox(width: 10.w),
             Text(
               'No account. No tracking.',
@@ -278,6 +316,77 @@ class _PrivacySummary extends ConsumerWidget {
               color: context.textMutedColor,
             ),
           ),
+        ],
+      ],
+    );
+  }
+}
+
+class _AboutSection extends ConsumerWidget {
+  const _AboutSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final version = ref.watch(appVersionProvider).valueOrNull ?? '';
+    final storeListing = AppLinks.storeListing(defaultTargetPlatform);
+    final feedback = AppLinks.feedbackEmail;
+
+    final tiles = <Widget>[
+      _SettingsTile(
+        icon: Icons.info_rounded,
+        title: 'Track Free',
+        subtitle: version.isEmpty ? 'Habit tracker' : 'Version $version',
+      ),
+      if (storeListing != null)
+        _SettingsTile(
+          icon: Icons.star_rounded,
+          title: 'Rate Track Free',
+          subtitle: 'A quick review helps others find the app.',
+          onTap: () => openExternalLink(context, storeListing),
+        ),
+      if (feedback != null)
+        _SettingsTile(
+          icon: Icons.mail_rounded,
+          title: 'Send feedback',
+          subtitle: 'Report a problem or suggest an idea.',
+          onTap: () => openExternalLink(context, feedback),
+        ),
+      _SettingsTile(
+        icon: Icons.bug_report_rounded,
+        title: 'Copy diagnostics',
+        subtitle: 'Recent errors on this device, to paste into a bug report. '
+            'Contains no habit data.',
+        onTap: () async {
+          final messenger = ScaffoldMessenger.of(context);
+          await Clipboard.setData(
+            ClipboardData(text: AppErrorLog.export(appVersion: version)),
+          );
+          messenger.showSnackBar(
+            const SnackBar(
+              content: Text('Diagnostics copied.'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+      ),
+      _SettingsTile(
+        icon: Icons.description_rounded,
+        title: 'Open-source licenses',
+        subtitle: 'Fonts and libraries Track Free is built with.',
+        onTap: () => showLicensePage(
+          context: context,
+          applicationName: 'Track Free',
+          applicationVersion: version,
+        ),
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < tiles.length; i++) ...[
+          if (i > 0) SizedBox(height: 10.h),
+          tiles[i],
         ],
       ],
     );

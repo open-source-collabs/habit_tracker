@@ -7,6 +7,7 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_font_sizes.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/calendar_days.dart';
 import '../../../../core/utils/haptics.dart';
 import '../../data/models/habit_model.dart';
 import '../providers/heatmap_grid_provider.dart';
@@ -135,21 +136,19 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
   Widget build(BuildContext context) {
     final selectedRangeDays = ref.watch(heatmapRangeDaysProvider(_rangeParams));
     final today = _today;
-    final startDate = today.subtract(Duration(days: selectedRangeDays - 1));
+    final startDate = CalendarDays.addDays(today, -(selectedRangeDays - 1));
 
     // Align to the Monday of the start week
-    final startMonday = startDate.subtract(
-      Duration(days: startDate.weekday - 1),
-    );
+    final startMonday = CalendarDays.mondayOf(startDate);
 
     // Count weeks to render
-    final totalDaysBetween = today.difference(startMonday).inDays + 1;
+    final totalDaysBetween = CalendarDays.daysBetween(startMonday, today) + 1;
     final weekColumns = (totalDaysBetween / 7).ceil();
 
     // Compute stats within the selected range
     int completedCount = 0;
     for (int i = 0; i < selectedRangeDays; i++) {
-      final d = startDate.add(Duration(days: i));
+      final d = CalendarDays.addDays(startDate, i);
       if (widget.checkIns[_formatDateKey(d)] == true) {
         completedCount++;
       }
@@ -202,8 +201,9 @@ class _HeatmapGridState extends ConsumerState<HeatmapGrid> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: List.generate(7, (rowIdx) {
-                          final cellDate = startMonday.add(
-                            Duration(days: colIdx * 7 + rowIdx),
+                          final cellDate = CalendarDays.addDays(
+                            startMonday,
+                            colIdx * 7 + rowIdx,
                           );
 
                           return Padding(

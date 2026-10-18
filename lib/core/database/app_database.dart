@@ -27,16 +27,27 @@ class AppDatabase {
   Database? _db;
   Future<Database>? _openFuture;
 
-  AppDatabase({
-    Database? db,
-    this.customPath,
-    this.legacyJsonFile,
-  }) : _injectedDatabase = db;
+  /// True when pre-SQLite data exists but neither it nor its backups could
+  /// be read. Storage must then report corrupt data instead of a first run,
+  /// so starter habits never replace the user's unreadable history.
+  bool _legacyMigrationFailed = false;
+  bool get legacyMigrationFailed => _legacyMigrationFailed;
+
+  /// Legacy backups written next to `app_data.json` by file-based builds.
+  static const List<String> _legacyBackupNames = [
+    'backup_1.json',
+    'backup_2.json',
+    'backup_3.json',
+  ];
+
+  AppDatabase({Database? db, this.customPath, this.legacyJsonFile})
+    : _injectedDatabase = db;
 
   /// Initializes the FFI database factory on desktop (Windows, Linux, macOS)
   /// and unit test environments.
   static Future<void> initializePlatform() async {
-    if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    if (!kIsWeb &&
+        (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       sqfliteFfiInit();
       if (databaseFactory != databaseFactoryFfi) {
         databaseFactory = databaseFactoryFfi;
@@ -68,6 +79,8 @@ class AppDatabase {
       version: DatabaseSchema.version,
       onConfigure: _onConfigure,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+      onDowngrade: _onDowngrade,
     );
 
     _db = db;
@@ -103,6 +116,38 @@ class AppDatabase {
     }
   }
 
+  /// Schema migrations, keyed by the version they upgrade *to*. Add an entry
+  /// here whenever [DatabaseSchema.version] is bumped; each runs inside the
+  /// upgrade transaction, so a failure leaves the old schema intact.
+  static final Map<int, Future<void> Function(Database db)> _migrations = {};
+
+  static Future<void> _onUpgrade(
+    Database db,
+    int oldVersion,
+    int newVersion,
+  ) async {
+    for (var target = oldVersion + 1; target <= newVersion; target++) {
+      final migration = _migrations[target];
+      if (migration == null) {
+        throw StateError('No database migration to schema v$target');
+      }
+      await migration(db);
+    }
+  }
+
+  /// A database from a newer app version is never deleted or rewritten:
+  /// opening fails, the user sees the "data can't be read" screen, and the
+  /// file stays intact for when the newer version is reinstalled.
+  static Future<void> _onDowngrade(
+    Database db,
+    int oldVersion,
+    int newVersion,
+  ) async {
+    throw StateError(
+      'Database schema v$oldVersion is newer than this app (v$newVersion)',
+    );
+  }
+
   /// Migrates legacy file-based JSON (`app_data.json`) and legacy `SharedPreferences`
   /// into SQLite relational tables.
   Future<void> _migrateFromLegacyStorageIfNeeded(Database db) async {
@@ -116,10 +161,11 @@ class AppDatabase {
       // Check for legacy JSON payload
       final legacyFile = await _findLegacyJsonFile();
       if (legacyFile != null && await legacyFile.exists()) {
-        final content = await legacyFile.readAsString();
-        if (content.trim().isNotEmpty) {
-          final payload = AppPayloadModel.fromRawJson(content);
-
+        final payload = await _readLegacyPayload(legacyFile);
+        if (payload == _LegacyRead.unreadable) {
+          _legacyMigrationFailed = true;
+          await _preserveUnreadableLegacyFile(legacyFile);
+        } else if (payload is AppPayloadModel) {
           await db.transaction((txn) async {
             // Save habits and check-ins
             await habitDao.syncHabits(txn, payload.habits);
@@ -143,8 +189,8 @@ class AppDatabase {
             await metadataDao.setAllMetadata(txn, {
               DatabaseSchema.metaKeySchemaVersion: payload.version.toString(),
               DatabaseSchema.metaKeyLastModifiedBy: payload.lastModifiedBy,
-              DatabaseSchema.metaKeyLastModifiedAt:
-                  payload.lastModifiedAt.toIso8601String(),
+              DatabaseSchema.metaKeyLastModifiedAt: payload.lastModifiedAt
+                  .toIso8601String(),
               DatabaseSchema.metaKeyActiveThemeId: payload.activeThemeId,
               if (payload.displayName.isNotEmpty)
                 DatabaseSchema.metaKeyDisplayName: payload.displayName,
@@ -153,8 +199,9 @@ class AppDatabase {
 
           // Backup legacy file as migrated
           try {
-            final migratedCopy =
-                File('${legacyFile.parent.path}/app_data.migrated.json');
+            final migratedCopy = File(
+              '${legacyFile.parent.path}/app_data.migrated.json',
+            );
             if (!await migratedCopy.exists()) {
               await legacyFile.copy(migratedCopy.path);
             }
@@ -165,8 +212,9 @@ class AppDatabase {
       // Check for legacy SharedPreferences notifications
       try {
         final prefs = await SharedPreferences.getInstance();
-        final notifJson =
-            prefs.getString('habit_tracker_notification_settings_v1');
+        final notifJson = prefs.getString(
+          'habit_tracker_notification_settings_v1',
+        );
         if (notifJson != null && notifJson.isNotEmpty) {
           final decoded = json.decode(notifJson) as Map<String, dynamic>;
           final settings = NotificationSettingsModel.fromJson(decoded);
@@ -174,8 +222,48 @@ class AppDatabase {
         }
       } catch (_) {}
     } catch (e) {
+      // The transaction rolled back, so nothing half-migrated was written.
+      _legacyMigrationFailed = true;
       debugPrint('AppDatabase: Error running legacy migration: $e');
     }
+  }
+
+  /// The legacy payload: the main file if it parses, else the newest backup
+  /// next to it that does. Returns `null` when there is nothing to migrate
+  /// (empty file) and [_LegacyRead.unreadable] when data exists but none of
+  /// it parses.
+  Future<Object?> _readLegacyPayload(File legacyFile) async {
+    final candidates = [
+      legacyFile,
+      for (final name in _legacyBackupNames)
+        File(p.join(legacyFile.parent.path, name)),
+    ];
+    var sawData = false;
+    for (final file in candidates) {
+      try {
+        if (!await file.exists()) continue;
+        final content = await file.readAsString();
+        if (content.trim().isEmpty) continue;
+        sawData = true;
+        return AppPayloadModel.fromRawJson(content);
+      } catch (e) {
+        debugPrint(
+          'AppDatabase: legacy file ${p.basename(file.path)} '
+          'unreadable: $e',
+        );
+      }
+    }
+    return sawData ? _LegacyRead.unreadable : null;
+  }
+
+  /// Keeps a copy of unreadable legacy data that later saves never touch.
+  Future<void> _preserveUnreadableLegacyFile(File legacyFile) async {
+    try {
+      final copy = File(
+        p.join(legacyFile.parent.path, 'app_data.corrupt.json'),
+      );
+      if (!await copy.exists()) await legacyFile.copy(copy.path);
+    } catch (_) {}
   }
 
   Future<File?> _findLegacyJsonFile() async {
@@ -189,7 +277,8 @@ class AppDatabase {
     try {
       String basePath = './habit_tracker_data';
       if (Platform.isWindows) {
-        final appData = Platform.environment['APPDATA'] ??
+        final appData =
+            Platform.environment['APPDATA'] ??
             Platform.environment['USERPROFILE'];
         if (appData != null) basePath = '$appData/HabitTracker';
       } else if (Platform.isLinux || Platform.isMacOS) {
@@ -219,3 +308,6 @@ class AppDatabase {
   NotificationDao get notificationDao => const NotificationDao();
   BackupDao get backupDao => const BackupDao();
 }
+
+/// Marker for legacy data that exists but cannot be parsed.
+enum _LegacyRead { unreadable }

@@ -15,7 +15,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "co.trackfree.solforge"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -41,11 +41,32 @@ android {
 
     defaultConfig {
         applicationId = "co.trackfree.solforge"
-        minSdk = 21
+        minSdk = 28 // Android 9+
         targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
+    }
+
+    // A release signed with the debug key can't be uploaded to Play (or worse,
+    // gets uploaded under the wrong key), so release builds fail without the
+    // upload keystore. For a local-only test build, opt in explicitly with
+    // `flutter build apk --release -P allowDebugSigning=true`
+    // (never use it for a build you upload).
+    val allowDebugSigning = (project.findProperty("allowDebugSigning") as String?) == "true"
+    gradle.taskGraph.whenReady {
+        val buildsRelease = allTasks.any { task ->
+            task.project == project &&
+                (task.name.startsWith("assemble") || task.name.startsWith("bundle")) &&
+                task.name.endsWith("Release")
+        }
+        if (buildsRelease && !hasValidKeystore && !allowDebugSigning) {
+            throw GradleException(
+                "Release signing is not configured: android/key.properties or its " +
+                    "storeFile is missing. See docs/play_store_deployment_guide.md. " +
+                    "(For a local-only test build: flutter build apk --release -P allowDebugSigning=true)"
+            )
+        }
     }
 
     buildTypes {

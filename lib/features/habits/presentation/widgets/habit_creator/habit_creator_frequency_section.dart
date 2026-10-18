@@ -299,7 +299,7 @@ class _TimesPerWeekStepper extends StatelessWidget {
             children: [
               _stepButton(
                 context,
-                icon: Icons.remove_circle_outline_rounded,
+                icon: Icons.remove_circle_rounded,
                 enabled: target > 1,
                 onPressed: notifier.decrementTargetTimesPerWeek,
               ),
@@ -317,7 +317,7 @@ class _TimesPerWeekStepper extends StatelessWidget {
               ),
               _stepButton(
                 context,
-                icon: Icons.add_circle_outline_rounded,
+                icon: Icons.add_circle_rounded,
                 enabled: target < 6,
                 onPressed: notifier.incrementTargetTimesPerWeek,
               ),

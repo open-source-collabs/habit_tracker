@@ -1,20 +1,78 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:habit_tracker/core/widgets_kit/habit_widget_sync_service.dart';
 import '../../../../core/data/app_data_repository.dart';
 import '../../../../core/services/notification_service.dart';
+import '../../../../core/utils/calendar_days.dart';
 import '../../../themes/presentation/providers/theme_provider.dart';
 import '../../data/models/habit_model.dart';
+import '../../data/models/starter_habits.dart';
 
 export '../../../../core/data/app_data_repository.dart'
     show appDataRepositoryProvider, habitStorageProvider;
 
+/// Today's date (local midnight). Unlike reading `DateTime.now()` in build,
+/// watchers rebuild when the day changes: [DayRolloverWatcher] updates it at
+/// midnight and whenever the app returns to the foreground.
+final currentDayProvider = StateProvider<DateTime>(
+  (ref) => CalendarDays.dateOnly(DateTime.now()),
+);
+
 /// Currently selected date for inspecting or checking off habits (defaults to today).
 final selectedDateProvider = StateProvider<DateTime>((ref) {
-  final now = DateTime.now();
-  return DateTime(now.year, now.month, now.day);
+  return ref.read(currentDayProvider);
+});
+
+/// Keeps [currentDayProvider] in step with the clock. When the day changes
+/// while the user is looking at "today", the selection moves to the new day,
+/// so check-ins after midnight don't land on yesterday.
+class DayRolloverWatcher {
+  DayRolloverWatcher(this._ref);
+
+  final Ref _ref;
+  Timer? _midnight;
+  AppLifecycleListener? _lifecycle;
+
+  void start() {
+    _lifecycle ??= AppLifecycleListener(onResume: refresh);
+    _scheduleMidnight();
+  }
+
+  /// Re-reads the clock now (also called on resume).
+  void refresh() {
+    final today = CalendarDays.dateOnly(DateTime.now());
+    final previous = _ref.read(currentDayProvider);
+    if (!CalendarDays.isSameDay(previous, today)) {
+      final selected = _ref.read(selectedDateProvider.notifier);
+      final wasOnToday = CalendarDays.isSameDay(selected.state, previous);
+      _ref.read(currentDayProvider.notifier).state = today;
+      if (wasOnToday) selected.state = today;
+    }
+    _scheduleMidnight();
+  }
+
+  void _scheduleMidnight() {
+    _midnight?.cancel();
+    final now = DateTime.now();
+    final next = CalendarDays.addDays(now, 1);
+    // A second of slack so the timer never fires just before midnight.
+    _midnight = Timer(next.difference(now) + const Duration(seconds: 1), refresh);
+  }
+
+  void dispose() {
+    _midnight?.cancel();
+    _lifecycle?.dispose();
+    _midnight = null;
+    _lifecycle = null;
+  }
+}
+
+final dayRolloverWatcherProvider = Provider<DayRolloverWatcher>((ref) {
+  final watcher = DayRolloverWatcher(ref);
+  ref.onDispose(watcher.dispose);
+  return watcher;
 });
 
 /// Filter value showing every active habit.
@@ -27,6 +85,10 @@ const String kArchivedHabitsFilter = 'Archived';
 /// or [kArchivedHabitsFilter].
 final activeRoutineFilterProvider =
     StateProvider<String>((ref) => kAllHabitsFilter);
+
+/// Habit to scroll to and briefly highlight in the feed (e.g. after its
+/// reminder notification was tapped). The feed clears it once shown.
+final highlightedHabitIdProvider = StateProvider<String?>((ref) => null);
 
 /// Tracks heatmap expansion toggle state per habit ID.
 final habitHeatmapExpandedProvider = StateProvider.family<bool, String>((ref, habitId) => false);
@@ -46,14 +108,32 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
     final repository = ref.watch(appDataRepositoryProvider);
     final snapshot = await repository.load();
 
-    var habits = snapshot.payload.habits;
-    if (snapshot.isFirstRun) {
-      habits = _generateStarterHabits();
-      unawaited(_persist(habits));
-    } else {
+    // A first run starts empty; onboarding lets the user pick starters.
+    final habits = snapshot.payload.habits;
+    if (!snapshot.isFirstRun) {
       unawaited(Future.microtask(() => _syncWidgets(habits)));
     }
     return habits;
+  }
+
+  /// Finishes onboarding: adds the [picked] starters (with no history) and
+  /// saves, which also marks the first run as done — even when nothing was
+  /// picked.
+  Future<void> completeOnboarding(List<StarterHabit> picked) async {
+    final currentList = state.valueOrNull;
+    if (currentList == null) return;
+    final now = DateTime.now();
+    final created = [
+      for (var i = 0; i < picked.length; i++) picked[i].toHabit(now, index: i),
+    ];
+    final updatedList = [...currentList, ...created];
+
+    state = AsyncData(updatedList);
+    final notifications = ref.read(notificationServiceProvider);
+    for (final habit in created) {
+      unawaited(notifications.syncHabitReminder(habit));
+    }
+    await _persist(updatedList);
   }
 
   /// Re-attempts loading stored data after a failure.
@@ -90,6 +170,13 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
     updatedList[habitIndex] = updatedHabit;
 
     state = AsyncData(updatedList);
+    // Done today → today's reminder is skipped; unchecked → it's back.
+    if (updatedHabit.reminderTime != null &&
+        CalendarDays.isSameDay(day, now)) {
+      unawaited(
+        ref.read(notificationServiceProvider).syncHabitReminder(updatedHabit),
+      );
+    }
     await _persist(updatedList);
   }
 
@@ -237,90 +324,6 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
     } catch (e) {
       debugPrint('HabitListNotifier: Error syncing widgets_kit: $e');
     }
-  }
-
-  /// Curated default habits showcasing streak calculations and theme accents.
-  static List<HabitModel> _generateStarterHabits() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final twoDaysAgo = today.subtract(const Duration(days: 2));
-
-    return [
-      HabitModel(
-        id: 'habit_sunlight',
-        title: 'Morning Sunlight & Breath',
-        subtitle: '15 mins outdoors within 1 hour of waking',
-        frequency: const HabitFrequency.daily(),
-        routineGroup: 'Morning',
-        accentIndex: 0,
-        createdAt: today.subtract(const Duration(days: 14)),
-        emoji: '☀️',
-        checkIns: {
-          HabitModel.formatDate(yesterday): true,
-          HabitModel.formatDate(twoDaysAgo): true,
-        },
-      ),
-      HabitModel(
-        id: 'habit_focus_sprint',
-        title: 'Deep Focus Sprint',
-        subtitle: '90 mins uninterrupted coding or deep work',
-        frequency: const HabitFrequency.specificWeekdays([
-          DateTime.monday,
-          DateTime.tuesday,
-          DateTime.wednesday,
-          DateTime.thursday,
-          DateTime.friday,
-        ]),
-        routineGroup: 'Focus',
-        accentIndex: 1,
-        createdAt: today.subtract(const Duration(days: 10)),
-        emoji: '⚡',
-        checkIns: {
-          HabitModel.formatDate(yesterday): true,
-        },
-      ),
-      HabitModel(
-        id: 'habit_hydration',
-        title: 'Hydration Target (3L)',
-        subtitle: 'Electrolytes & consistent water intake',
-        frequency: const HabitFrequency.daily(),
-        routineGroup: 'Health',
-        accentIndex: 2,
-        createdAt: today.subtract(const Duration(days: 7)),
-        emoji: '💧',
-        checkIns: {
-          HabitModel.formatDate(yesterday): true,
-          HabitModel.formatDate(twoDaysAgo): true,
-        },
-      ),
-      HabitModel(
-        id: 'habit_gratitude',
-        title: 'Evening Gratitude Journal',
-        subtitle: 'Reflect on 3 micro-wins before sleep',
-        frequency: const HabitFrequency.daily(),
-        routineGroup: 'Evening',
-        accentIndex: 3,
-        createdAt: today.subtract(const Duration(days: 21)),
-        emoji: '📖',
-        checkIns: {
-          HabitModel.formatDate(yesterday): true,
-        },
-      ),
-      HabitModel(
-        id: 'habit_strength',
-        title: 'Strength & Mobility',
-        subtitle: 'Compound lifts or bodyweight circuit',
-        frequency: const HabitFrequency.timesPerWeek(3),
-        routineGroup: 'Fitness',
-        accentIndex: 4,
-        createdAt: today.subtract(const Duration(days: 30)),
-        emoji: '💪',
-        checkIns: {
-          HabitModel.formatDate(yesterday): true,
-        },
-      ),
-    ];
   }
 }
 

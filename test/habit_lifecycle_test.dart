@@ -9,6 +9,7 @@ import 'package:habit_tracker/features/dashboard/presentation/widgets/favorite_a
 import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
 import 'package:habit_tracker/features/habits/data/storage/web_habit_storage.dart';
 import 'package:habit_tracker/features/habits/presentation/providers/habit_provider.dart';
+import 'package:habit_tracker/features/notifications/presentation/providers/notification_provider.dart';
 import 'package:habit_tracker/features/settings/presentation/providers/profile_provider.dart';
 import 'package:habit_tracker/features/sync/domain/merge_engine.dart';
 import 'package:habit_tracker/features/themes/data/models/app_payload_model.dart';
@@ -57,6 +58,7 @@ class _FakeNotifications implements NotificationService {
     required String body,
     required TimeOfDay time,
     String? payload,
+    bool skipToday = false,
   }) async {}
 
   @override
@@ -322,5 +324,39 @@ void main() {
     await tester.tap(find.text('Undo'));
     await tester.pumpAndSettle();
     expect(find.byTooltip('Habit actions'), findsOneWidget);
+  });
+
+  group('Reminders follow today\'s progress', () {
+    test('checking off today re-plans that habit\'s reminder', () async {
+      final container = await containerWith([
+        _habit('r').copyWith(reminderTime: '08:00'),
+        _habit('no_reminder'),
+      ]);
+      final notifier = container.read(habitListProvider.notifier);
+
+      await notifier.toggleHabit('r', DateTime.now());
+      await notifier.toggleHabit('no_reminder', DateTime.now());
+      await notifier.toggleHabit(
+        'r',
+        DateTime.now().subtract(const Duration(days: 3)),
+      );
+
+      expect(notifications.synced.map((h) => h.id), ['r'],
+          reason: 'only today\'s check-off of a habit with a reminder');
+      expect(notifications.synced.single.isCompletedOn(DateTime.now()), isTrue);
+    });
+
+    test('"all done today" turns true only when every habit is done',
+        () async {
+      final container = await containerWith([_habit('a'), _habit('b')]);
+      final notifier = container.read(habitListProvider.notifier);
+      expect(container.read(allHabitsDoneTodayProvider), isFalse);
+
+      await notifier.toggleHabit('a', DateTime.now());
+      expect(container.read(allHabitsDoneTodayProvider), isFalse);
+
+      await notifier.toggleHabit('b', DateTime.now());
+      expect(container.read(allHabitsDoneTodayProvider), isTrue);
+    });
   });
 }

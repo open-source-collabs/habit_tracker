@@ -47,7 +47,7 @@ class NotificationService {
       tz.initializeTimeZones();
       await _configureLocalTimeZone();
 
-      const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidSettings = AndroidInitializationSettings(_smallIcon);
       const darwinSettings = DarwinInitializationSettings(
         requestAlertPermission: false,
         requestBadgePermission: false,
@@ -94,6 +94,16 @@ class NotificationService {
       // Leaves tz.local as UTC; reminders would fire at the UTC wall time.
       debugPrint('NotificationService: could not resolve local time zone: $e');
     }
+  }
+
+  /// Re-reads the device time zone (e.g. after travelling). Returns `true`
+  /// when it changed, in which case reminders must be rescheduled so they
+  /// keep firing at the same wall-clock time.
+  Future<bool> refreshTimeZone() async {
+    if (!_isInitialized) return false;
+    final before = tz.local.name;
+    await _configureLocalTimeZone();
+    return tz.local.name != before;
   }
 
   /// Payload of the notification that launched the app, if any. Returned
@@ -176,17 +186,64 @@ class NotificationService {
   /// Brings [habit]'s scheduled reminders in line with its current state:
   /// scheduled per [ReminderSchedule.slotsFor] when reminders are enabled,
   /// cancelled otherwise.
+  ///
+  /// Once the habit is done for today, today's reminder is skipped: the
+  /// repeating series is rescheduled to start tomorrow.
   Future<void> syncHabitReminder(HabitModel habit) async {
     await cancelHabitReminder(habit.id);
     if (!remindersEnabled) return;
     final slots = ReminderSchedule.slotsFor(habit);
     if (slots.isEmpty) return;
 
+    final now = DateTime.now();
+    final after = habit.isCompletedOn(now) ? _endOfDay(now) : null;
     final mode = await _androidScheduleMode();
     for (final slot in slots) {
-      await _scheduleSlot(slot, habit, mode);
+      await _scheduleSlot(slot, habit, mode, after: after);
     }
   }
+
+  static DateTime _endOfDay(DateTime day) =>
+      DateTime(day.year, day.month, day.day, 23, 59, 59);
+
+  /// Global switch from notification settings. When false, notifications are
+  /// delivered silently (separate Android channels, since a channel's sound
+  /// can't change after it's created).
+  bool soundEnabled = true;
+
+  NotificationDetails _details({
+    required String channelId,
+    required String channelName,
+    required String channelDescription,
+    Importance importance = Importance.high,
+  }) {
+    final silent = !soundEnabled;
+    return NotificationDetails(
+      android: AndroidNotificationDetails(
+        silent ? '${channelId}_silent' : channelId,
+        silent ? '$channelName (silent)' : channelName,
+        channelDescription: channelDescription,
+        importance: importance,
+        priority: Priority.high,
+        showWhen: true,
+        playSound: !silent,
+        icon: _smallIcon,
+      ),
+      iOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: !silent,
+      ),
+      macOS: DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: !silent,
+      ),
+    );
+  }
+
+  /// Monochrome status-bar icon (Android renders it as a white silhouette).
+  static const String _smallIcon = 'ic_stat_notification';
 
   /// Reconciles every pending habit reminder with [habits]: schedules what
   /// should exist and cancels anything stale (deleted habits, legacy ids).
@@ -234,23 +291,10 @@ class NotificationService {
   Future<void> _scheduleSlot(
     ReminderSlot slot,
     HabitModel habit,
-    AndroidScheduleMode mode,
-  ) async {
+    AndroidScheduleMode mode, {
+    DateTime? after,
+  }) async {
     try {
-      const androidDetails = AndroidNotificationDetails(
-        'habit_reminders',
-        'Habit Reminders',
-        channelDescription: 'Reminders for the habits you set a time on',
-        importance: Importance.high,
-        priority: Priority.high,
-        showWhen: true,
-      );
-      const darwinDetails = DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-      );
-
       await _plugin.zonedSchedule(
         id: slot.id,
         title: 'Time for ${habit.title}',
@@ -259,11 +303,12 @@ class NotificationService {
           hour: slot.hour,
           minute: slot.minute,
           weekday: slot.weekday,
+          after: after,
         ),
-        notificationDetails: const NotificationDetails(
-          android: androidDetails,
-          iOS: darwinDetails,
-          macOS: darwinDetails,
+        notificationDetails: _details(
+          channelId: 'habit_reminders',
+          channelName: 'Habit Reminders',
+          channelDescription: 'Reminders for the habits you set a time on',
         ),
         androidScheduleMode: mode,
         matchDateTimeComponents: slot.weekday == null
@@ -293,14 +338,26 @@ class NotificationService {
     }
   }
 
+  /// Next [hour]:[minute] (on [weekday]) strictly after now, or after
+  /// [after] when that is later (used to skip today).
   tz.TZDateTime _nextInstance({
     required int hour,
     required int minute,
     int? weekday,
+    DateTime? after,
   }) {
-    final now = tz.TZDateTime.now(tz.local);
+    final tzNow = tz.TZDateTime.now(tz.local);
+    var from = DateTime(
+      tzNow.year,
+      tzNow.month,
+      tzNow.day,
+      tzNow.hour,
+      tzNow.minute,
+      tzNow.second,
+    );
+    if (after != null && after.isAfter(from)) from = after;
     final next = ReminderSchedule.nextOccurrence(
-      DateTime(now.year, now.month, now.day, now.hour, now.minute, now.second),
+      from,
       hour: hour,
       minute: minute,
       weekday: weekday,
@@ -319,28 +376,15 @@ class NotificationService {
       await init();
       if (!_isInitialized) return;
 
-      const androidDetails = AndroidNotificationDetails(
-        'habit_instant',
-        'Instant Alerts',
-        channelDescription: 'Immediate feedback and test notifications',
-        importance: Importance.max,
-        priority: Priority.high,
-        showWhen: true,
-      );
-      const darwinDetails = DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-      );
-
       await _plugin.show(
         id: id,
         title: title,
         body: body,
-        notificationDetails: const NotificationDetails(
-          android: androidDetails,
-          iOS: darwinDetails,
-          macOS: darwinDetails,
+        notificationDetails: _details(
+          channelId: 'habit_instant',
+          channelName: 'Instant Alerts',
+          channelDescription: 'Immediate feedback and test notifications',
+          importance: Importance.max,
         ),
         payload: payload,
       );
@@ -350,40 +394,35 @@ class NotificationService {
   }
 
   /// Schedules a recurring daily digest notification at [time].
+  ///
+  /// With [skipToday], the first delivery is tomorrow (e.g. the evening
+  /// streak-saver once every habit is already done).
   Future<void> scheduleDailyDigest({
     required int id,
     required String title,
     required String body,
     required TimeOfDay time,
     String? payload,
+    bool skipToday = false,
   }) async {
     try {
       await init();
       if (!_isInitialized) return;
 
-      const androidDetails = AndroidNotificationDetails(
-        'habit_digests',
-        'Daily Digests',
-        channelDescription: 'Morning kickoffs and evening streak-saver digests',
-        importance: Importance.high,
-        priority: Priority.high,
-        showWhen: true,
-      );
-      const darwinDetails = DarwinNotificationDetails(
-        presentAlert: true,
-        presentBadge: true,
-        presentSound: true,
-      );
-
       await _plugin.zonedSchedule(
         id: id,
         title: title,
         body: body,
-        scheduledDate: _nextInstance(hour: time.hour, minute: time.minute),
-        notificationDetails: const NotificationDetails(
-          android: androidDetails,
-          iOS: darwinDetails,
-          macOS: darwinDetails,
+        scheduledDate: _nextInstance(
+          hour: time.hour,
+          minute: time.minute,
+          after: skipToday ? _endOfDay(DateTime.now()) : null,
+        ),
+        notificationDetails: _details(
+          channelId: 'habit_digests',
+          channelName: 'Daily Digests',
+          channelDescription:
+              'Morning kickoffs and evening streak-saver digests',
         ),
         androidScheduleMode: await _androidScheduleMode(),
         matchDateTimeComponents: DateTimeComponents.time,

@@ -58,35 +58,40 @@ class ThemeStudioAccentPalette extends StatelessWidget {
           runSpacing: 10.h,
           children: List.generate(theme.accentPalette.length, (index) {
             final color = theme.accentPalette[index];
-            return InkWell(
-              onTap: () => onPickColor(
-                title: 'Accent Color #${index + 1}',
-                currentColor: color,
-                onSelected: (newColor) => onAccentChanged(index, newColor),
-              ),
-              borderRadius: BorderRadius.circular(AppRadius.chip),
-              child: Container(
-                width: 44.r,
-                height: 44.r,
-                decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(AppRadius.chip),
-                  border: Border.all(
-                    color: theme.textPrimary.withValues(alpha: 0.2),
-                    width: AppSizes.borderWidthFocused,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+            return Semantics(
+              button: true,
+              label: 'Edit accent colour ${index + 1}',
+              excludeSemantics: true,
+              child: InkWell(
+                onTap: () => onPickColor(
+                  title: 'Accent Color #${index + 1}',
+                  currentColor: color,
+                  onSelected: (newColor) => onAccentChanged(index, newColor),
                 ),
-                child: Icon(
-                  Icons.colorize,
-                  color: AppColors.white.withValues(alpha: 0.8),
-                  size: AppIconSizes.sm,
+                borderRadius: BorderRadius.circular(AppRadius.chip),
+                child: Container(
+                  width: 44.r,
+                  height: 44.r,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(AppRadius.chip),
+                    border: Border.all(
+                      color: theme.textPrimary.withValues(alpha: 0.2),
+                      width: AppSizes.borderWidthFocused,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.colorize,
+                    color: AppColors.white.withValues(alpha: 0.8),
+                    size: AppIconSizes.sm,
+                  ),
                 ),
               ),
             );

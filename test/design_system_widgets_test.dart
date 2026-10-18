@@ -219,15 +219,15 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.visibility_off_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.visibility_off_rounded), findsOneWidget);
 
       final textFieldBefore = tester.widget<TextField>(find.byType(TextField));
       expect(textFieldBefore.obscureText, isTrue);
 
-      await tester.tap(find.byIcon(Icons.visibility_off_outlined));
+      await tester.tap(find.byIcon(Icons.visibility_off_rounded));
       await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.visibility_rounded), findsOneWidget);
       final textFieldAfter = tester.widget<TextField>(find.byType(TextField));
       expect(textFieldAfter.obscureText, isFalse);
     });

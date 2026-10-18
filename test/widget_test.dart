@@ -9,11 +9,16 @@ import 'package:habit_tracker/features/themes/data/models/app_payload_model.dart
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FakeHabitStorage implements HabitStorage {
-  @override
-  Future<AppPayloadModel?> loadPayload() async => null;
+  FakeHabitStorage({this.stored});
+
+  /// `null` simulates a fresh install.
+  AppPayloadModel? stored;
 
   @override
-  Future<void> savePayload(AppPayloadModel payload) async {}
+  Future<AppPayloadModel?> loadPayload() async => stored;
+
+  @override
+  Future<void> savePayload(AppPayloadModel payload) async => stored = payload;
 
   @override
   Future<List<String>> listBackups() async => [];
@@ -44,7 +49,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            habitStorageProvider.overrideWithValue(FakeHabitStorage()),
+            habitStorageProvider.overrideWithValue(_returningUser()),
           ],
           child: const HabitTrackerApp(),
         ),
@@ -71,7 +76,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [habitStorageProvider.overrideWithValue(FakeHabitStorage())],
+        overrides: [habitStorageProvider.overrideWithValue(_returningUser())],
         child: const HabitTrackerApp(),
       ),
     );
@@ -85,4 +90,45 @@ void main() {
     // On desktop, the Bento Streak Champion tile is rendered
     expect(find.text('STREAK CHAMPION'), findsOneWidget);
   });
+
+  testWidgets('a fresh install walks through onboarding into the dashboard', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(780, 1688);
+    tester.view.devicePixelRatio = 2.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final storage = FakeHabitStorage();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [habitStorageProvider.overrideWithValue(storage)],
+        child: const HabitTrackerApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Welcome to Track Free'), findsOneWidget);
+    await tester.tap(find.text('Get started'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Hydration Target (3L)'));
+    await tester.pump();
+    await tester.tap(find.text('Add 1 & continue'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Not now'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Welcome to Track Free'), findsNothing);
+    expect(find.text('ACTIVE HABITS'), findsOneWidget);
+    final saved = storage.stored!.habits.single;
+    expect(saved.title, 'Hydration Target (3L)');
+    expect(saved.checkIns, isEmpty, reason: 'no fake history');
+  });
 }
+
+/// Someone who has used the app before (data exists, even if empty).
+FakeHabitStorage _returningUser() => FakeHabitStorage(
+      stored: AppPayloadModel.initial(lastModifiedBy: 'test'),
+    );

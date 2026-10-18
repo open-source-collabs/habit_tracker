@@ -62,7 +62,7 @@ class ThemeStudioActionButtons extends StatelessWidget {
                       variant: AppButtonVariant.outline,
                       customColor: context.colorScheme.error,
                       leadingIcon: Icon(
-                        Icons.delete_outline,
+                        Icons.delete_rounded,
                         size: AppIconSizes.sm,
                       ),
                       fullWidth: true,

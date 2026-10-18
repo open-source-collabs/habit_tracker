@@ -5,6 +5,7 @@ import 'package:habit_tracker/core/database/app_database.dart';
 import 'package:habit_tracker/core/database/daos/backup_dao.dart';
 import 'package:habit_tracker/core/database/database_schema.dart';
 import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
+import 'package:habit_tracker/features/habits/data/storage/habit_storage.dart';
 import 'package:habit_tracker/features/habits/data/storage/sqflite_habit_storage.dart';
 import 'package:habit_tracker/features/notifications/data/models/notification_settings_model.dart';
 import 'package:habit_tracker/features/themes/data/models/app_payload_model.dart';
@@ -142,15 +143,19 @@ void main() {
       final p2 = AppPayloadModel.initial(lastModifiedBy: 'device_2');
       final p3 = AppPayloadModel.initial(lastModifiedBy: 'device_3');
 
-      await backupDao.rotateAndSaveBackup(db, p1);
+      final day1 = DateTime(2026, 3, 1, 9);
+      final day2 = DateTime(2026, 3, 2, 9);
+      final day3 = DateTime(2026, 3, 3, 9);
+
+      await backupDao.rotateAndSaveBackup(db, p1, now: day1);
       var backups = await backupDao.listBackups(db);
       expect(backups, [BackupDao.backup1FileName]);
 
-      await backupDao.rotateAndSaveBackup(db, p2);
+      await backupDao.rotateAndSaveBackup(db, p2, now: day2);
       backups = await backupDao.listBackups(db);
       expect(backups, [BackupDao.backup1FileName, BackupDao.backup2FileName]);
 
-      await backupDao.rotateAndSaveBackup(db, p3);
+      await backupDao.rotateAndSaveBackup(db, p3, now: day3);
       backups = await backupDao.listBackups(db);
       expect(backups, [
         BackupDao.backup1FileName,
@@ -169,6 +174,39 @@ void main() {
         BackupDao.backup2FileName,
       );
       expect(restoredP2?.lastModifiedBy, 'device_2');
+    });
+
+    test('BackupDao rotates once per day, so bursts keep yesterday', () async {
+      final backupDao = appDb.backupDao;
+      final yesterday = DateTime(2026, 3, 1, 22);
+      await backupDao.rotateAndSaveBackup(
+        db,
+        AppPayloadModel.initial(lastModifiedBy: 'yesterday'),
+        now: yesterday,
+      );
+
+      for (var i = 0; i < 5; i++) {
+        await backupDao.rotateAndSaveBackup(
+          db,
+          AppPayloadModel.initial(lastModifiedBy: 'today_$i'),
+          now: DateTime(2026, 3, 2, 8, i),
+        );
+      }
+
+      expect(await backupDao.listBackups(db), [
+        BackupDao.backup1FileName,
+        BackupDao.backup2FileName,
+      ]);
+      final latest =
+          await backupDao.restoreBackup(db, BackupDao.backup1FileName);
+      final previousDay =
+          await backupDao.restoreBackup(db, BackupDao.backup2FileName);
+      expect(latest?.lastModifiedBy, 'today_4');
+      expect(previousDay?.lastModifiedBy, 'yesterday');
+      expect(
+        await backupDao.backupCreatedAt(db, BackupDao.backup2FileName),
+        yesterday,
+      );
     });
   });
 
@@ -302,6 +340,83 @@ void main() {
       expect(loaded.habits.first.checkIns['2026-10-15'], isTrue);
 
       await appDb.close();
+    });
+
+    AppPayloadModel legacyPayload(String by) => AppPayloadModel(
+          version: AppPayloadModel.currentSchemaVersion,
+          lastModifiedBy: by,
+          lastModifiedAt: DateTime(2026, 10, 15),
+          activeThemeId: UserThemeModel.defaultTheme.id,
+          userThemes: UserThemeModel.builtInPresets,
+          habits: [
+            HabitModel(
+              id: 'legacy_$by',
+              title: 'Read Book',
+              frequency: const HabitFrequency.daily(),
+              createdAt: DateTime(2026, 1, 1),
+            ),
+          ],
+        );
+
+    test('falls back to a legacy backup when app_data.json is damaged',
+        () async {
+      final legacyDir = Directory('${tempDir.path}/habit_tracker_data')
+        ..createSync(recursive: true);
+      final legacyFile = File('${legacyDir.path}/app_data.json')
+        ..writeAsStringSync('{ not json');
+      File('${legacyDir.path}/backup_1.json')
+          .writeAsStringSync(legacyPayload('from_backup').toRawJson());
+
+      final appDb = AppDatabase(
+        customPath: '${tempDir.path}/fallback.db',
+        legacyJsonFile: legacyFile,
+      );
+      final loaded = await SqfliteHabitStorage(database: appDb).loadPayload();
+
+      expect(loaded?.habits.single.id, 'legacy_from_backup');
+      await appDb.close();
+    });
+
+    test('unreadable legacy data is reported, never treated as a first run',
+        () async {
+      final legacyDir = Directory('${tempDir.path}/habit_tracker_data')
+        ..createSync(recursive: true);
+      final legacyFile = File('${legacyDir.path}/app_data.json')
+        ..writeAsStringSync('{ not json');
+
+      final appDb = AppDatabase(
+        customPath: '${tempDir.path}/unreadable.db',
+        legacyJsonFile: legacyFile,
+      );
+      final storage = SqfliteHabitStorage(database: appDb);
+
+      await expectLater(
+        storage.loadPayload(),
+        throwsA(isA<CorruptPayloadException>()),
+      );
+      expect(
+        File('${legacyDir.path}/app_data.corrupt.json').existsSync(),
+        isTrue,
+      );
+      await appDb.close();
+    });
+
+    test('recovers from the mirror file when the database is unusable',
+        () async {
+      final mirror = File('${tempDir.path}/mirror.json');
+      final healthyDb = AppDatabase(customPath: '${tempDir.path}/ok.db');
+      await SqfliteHabitStorage(database: healthyDb, mirrorFile: mirror)
+          .savePayload(legacyPayload('mirrored'));
+      await healthyDb.close();
+      expect(mirror.existsSync(), isTrue);
+
+      // A path inside a regular file can never be opened as a database.
+      final brokenDb = AppDatabase(customPath: '${mirror.path}/broken.db');
+      final loaded =
+          await SqfliteHabitStorage(database: brokenDb, mirrorFile: mirror)
+              .loadPayload();
+
+      expect(loaded?.habits.single.id, 'legacy_mirrored');
     });
   });
 }

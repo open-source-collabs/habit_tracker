@@ -63,7 +63,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Padding(
             padding: EdgeInsets.only(right: 12.w),
             child: AppIconButton(
-              icon: Icons.settings_outlined,
+              icon: Icons.settings_rounded,
               tooltip: 'Settings',
               onPressed: () => AppNavigator.toSettings(context),
             ),

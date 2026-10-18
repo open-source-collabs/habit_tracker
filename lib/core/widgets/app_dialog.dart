@@ -220,12 +220,12 @@ Future<bool> showAppConfirmDialog({
           icon ??
           (isDestructive
               ? Icon(
-                  Icons.delete_outline_rounded,
+                  Icons.delete_rounded,
                   color: AppColors.error,
                   size: AppIconSizes.xl,
                 )
               : Icon(
-                  Icons.help_outline_rounded,
+                  Icons.help_rounded,
                   color: context.primaryAccent,
                   size: AppIconSizes.xl,
                 )),

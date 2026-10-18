@@ -1,6 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Track Free</string>
-    <string name="widget_name">Track Free Summary</string>
-    <string name="widget_description">Displays today\'s habit completion progress and current streak.</string>
+    <string name="widget_name">Today\'s progress</string>
+    <string name="widget_description">Today\'s habits, progress and streak at a glance.</string>
+    <string name="widget_today">Today</string>
+    <string name="widget_done_label">done</string>
+    <string name="widget_all_done">All done today! 🎉</string>
+    <string name="widget_no_habits">No habits scheduled today</string>
+    <string name="widget_next_habit">Next: %1$s</string>
+    <string name="widget_stale">Tap to see today\'s habits</string>
+    <string name="widget_streak_days">🔥 %1$d</string>
+    <string name="widget_streak_days_placeholder">🔥 0</string>
+    <string name="widget_placeholder">Open Track Free to start</string>
+    <string name="widget_date_placeholder">—</string>
+    <!-- Picker preview sample data -->
+    <string name="widget_preview_date">Mon, 19 Oct</string>
+    <string name="widget_preview_pending">Next: 💧 Hydration Target</string>
+    <string name="widget_preview_streak">🔥 6</string>
 </resources>

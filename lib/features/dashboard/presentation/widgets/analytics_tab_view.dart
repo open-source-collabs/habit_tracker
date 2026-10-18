@@ -6,6 +6,7 @@ import '../../../../core/theme/app_breakpoints.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_font_sizes.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/calendar_days.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
 import '../../../habits/presentation/widgets/heatmap_grid.dart';
@@ -37,11 +38,10 @@ class AnalyticsTabView extends ConsumerWidget {
     // scheduled that day (see dailyHabitStatsProvider).
     final completionPct = (stats.completionRate * 100).round();
     final selectedDate = ref.watch(selectedDateProvider);
-    final now = DateTime.now();
-    final isToday =
-        selectedDate.year == now.year &&
-        selectedDate.month == now.month &&
-        selectedDate.day == now.day;
+    final isToday = CalendarDays.isSameDay(
+      selectedDate,
+      ref.watch(currentDayProvider),
+    );
 
     return ListView(
       padding: EdgeInsets.symmetric(

@@ -237,7 +237,7 @@ void main() {
 
       expect(initial.version, AppPayloadModel.currentSchemaVersion);
       expect(initial.lastModifiedBy, 'device_abc');
-      expect(initial.activeThemeId, UserThemeModel.obsidianTwilight.id);
+      expect(initial.activeThemeId, UserThemeModel.nordicSerenity.id);
       expect(initial.userThemes.length, greaterThanOrEqualTo(2));
       expect(initial.habits, isEmpty);
     });

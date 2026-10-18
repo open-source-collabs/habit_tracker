@@ -151,12 +151,12 @@ void main() {
       expect(find.text('3 × / wk'), findsOneWidget);
 
       // Increment stepper
-      await tester.tap(find.byIcon(Icons.add_circle_outline_rounded));
+      await tester.tap(find.byIcon(Icons.add_circle_rounded));
       await tester.pumpAndSettle();
       expect(find.text('4 × / wk'), findsOneWidget);
 
       // Decrement stepper
-      await tester.tap(find.byIcon(Icons.remove_circle_outline_rounded));
+      await tester.tap(find.byIcon(Icons.remove_circle_rounded));
       await tester.pumpAndSettle();
       expect(find.text('3 × / wk'), findsOneWidget);
     });

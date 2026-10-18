@@ -1,1 +1,3 @@
 #include "Generated.xcconfig"
+// Optional, not committed: Google Sign-In client ids (see GoogleSignIn.xcconfig.example).
+#include? "GoogleSignIn.xcconfig"

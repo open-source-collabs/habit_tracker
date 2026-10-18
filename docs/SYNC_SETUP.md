@@ -36,7 +36,7 @@ Both providers tie credentials to the app ID, which is **`co.trackfree.solforge`
 3. Configure the **OAuth consent screen** and add the scope `https://www.googleapis.com/auth/drive.appdata`.
 4. Create the OAuth client IDs:
    - **Web application**: its client ID is the `GOOGLE_SERVER_CLIENT_ID`. Android requires it.
-   - **Android**: the package name plus the SHA-1 of each signing key (debug and release). Get the SHA-1 with `cd android && ./gradlew signingReport`.
+   - **Android**: the package name plus the SHA-1 of each signing key: debug, your upload key, **and the Play App Signing key** (Play Console → Test and release → App integrity → App signing). Apps installed from Play are re-signed with Google's key, so without that SHA-1 sign-in fails only in the store build. Get local SHA-1s with `cd android && ./gradlew signingReport`.
    - **iOS** (optional): add `GIDClientID` and the reversed-client-ID URL scheme to `ios/Runner/Info.plist`, as described in the `google_sign_in_ios` README.
 5. Build with the web client ID:
    ```sh

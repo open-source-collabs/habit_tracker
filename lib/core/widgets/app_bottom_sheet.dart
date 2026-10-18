@@ -82,6 +82,7 @@ class AppBottomSheet extends StatelessWidget {
                   if (showCloseButton)
                     AppIconButton(
                       icon: Icons.close_rounded,
+                      tooltip: 'Close',
                       size: AppIconSizes.xxl,
                       iconSize: AppIconSizes.md,
                       border: false,

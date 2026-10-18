@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home-screen widget palette (light: Nordic Serenity). Dark variant in
+     values-night/widget_colors.xml. -->
+<resources>
+    <color name="widget_surface">#FFFFFF</color>
+    <color name="widget_border">#DCE5EA</color>
+    <color name="widget_text">#11252E</color>
+    <color name="widget_text_secondary">#5C6E76</color>
+    <color name="widget_accent">#146A68</color>
+    <color name="widget_progress">#28A484</color>
+    <color name="widget_track">#E3ECEF</color>
+    <color name="widget_streak">#C2410C</color>
+    <color name="widget_streak_bg">#FFF1E6</color>
+</resources>

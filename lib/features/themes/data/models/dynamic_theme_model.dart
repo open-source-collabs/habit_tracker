@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_fonts.dart';
 
 /// Data model representing a user-customizable or built-in theme.
 @immutable
@@ -136,7 +137,7 @@ class UserThemeModel {
     return UserThemeModel(
       id: json['id'] as String? ?? 'custom_${DateTime.now().millisecondsSinceEpoch}',
       name: json['name'] as String? ?? 'Custom Theme',
-      fontFamily: json['fontFamily'] as String? ?? 'PlusJakartaSans',
+      fontFamily: json['fontFamily'] as String? ?? AppFonts.fallback,
       scaffoldBgHex: (json['scaffoldBgHex'] ?? json['scaffoldBg']) as String? ?? '#0F1016',
       cardBgHex: (json['cardBgHex'] ?? json['cardBg']) as String? ?? '#181924',
       cardBorderHex: (json['cardBorderHex'] ?? json['cardBorder']) as String? ?? '#262837',
@@ -156,7 +157,7 @@ class UserThemeModel {
   static const UserThemeModel nordicSerenity = UserThemeModel(
     id: 'nordic_serenity',
     name: 'Nordic Serenity',
-    fontFamily: 'PlusJakartaSans',
+    fontFamily: AppFonts.plusJakartaSans,
     scaffoldBgHex: '#EBF2F5',
     cardBgHex: '#FFFFFF',
     cardBorderHex: '#DCE5EA',
@@ -177,7 +178,7 @@ class UserThemeModel {
   static const UserThemeModel sunsetAurora = UserThemeModel(
     id: 'sunset_aurora',
     name: 'Sunset Aurora',
-    fontFamily: 'PlusJakartaSans',
+    fontFamily: AppFonts.plusJakartaSans,
     scaffoldBgHex: '#FFF7F2',
     cardBgHex: '#FFFFFF',
     cardBorderHex: '#F5E2D8',
@@ -198,7 +199,7 @@ class UserThemeModel {
   static const UserThemeModel obsidianTwilight = UserThemeModel(
     id: 'obsidian_twilight',
     name: 'Obsidian Twilight',
-    fontFamily: 'PlusJakartaSans',
+    fontFamily: AppFonts.plusJakartaSans,
     scaffoldBgHex: '#0F1016',
     cardBgHex: '#181924',
     cardBorderHex: '#262837',
@@ -219,7 +220,7 @@ class UserThemeModel {
   static const UserThemeModel porcelainSunrise = UserThemeModel(
     id: 'porcelain_sunrise',
     name: 'Porcelain Sunrise',
-    fontFamily: 'Inter',
+    fontFamily: AppFonts.inter,
     scaffoldBgHex: '#F8F9FD',
     cardBgHex: '#FFFFFF',
     cardBorderHex: '#E2E8F0',
@@ -237,7 +238,7 @@ class UserThemeModel {
   );
 
   /// The theme used on first launch and whenever a referenced theme is missing.
-  static const UserThemeModel defaultTheme = obsidianTwilight;
+  static const UserThemeModel defaultTheme = nordicSerenity;
 
   static List<UserThemeModel> get builtInPresets => const [
         nordicSerenity,

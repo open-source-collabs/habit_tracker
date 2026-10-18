@@ -1,11 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../features/themes/data/models/dynamic_theme_model.dart';
 import 'app_colors.dart';
 import 'app_dimensions.dart';
 import 'app_font_sizes.dart';
+import 'app_fonts.dart';
 import 'app_theme_extension.dart';
 
 /// Pure factory for transforming any [UserThemeModel] into a complete [ThemeData]
@@ -14,6 +16,7 @@ abstract final class ThemeFactory {
   /// Builds a complete [ThemeData] from a [UserThemeModel].
   static ThemeData createTheme(UserThemeModel model) {
     final isDark = model.isDark;
+    final fontFamily = AppFonts.resolve(model.fontFamily);
     final primaryAccent = model.accentPalette.isNotEmpty
         ? model.accentPalette.first
         : AppColors.neonLavender;
@@ -37,7 +40,7 @@ abstract final class ThemeFactory {
 
     // Build the dynamic geometric TextTheme with tight letter spacing
     final textTheme = _buildTextTheme(
-      fontFamily: model.fontFamily,
+      fontFamily: fontFamily,
       primaryTextColor: model.textPrimary,
       isDark: isDark,
     );
@@ -65,7 +68,7 @@ abstract final class ThemeFactory {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: model.scaffoldBg,
       canvasColor: model.scaffoldBg,
-      fontFamily: model.fontFamily,
+      fontFamily: fontFamily,
       textTheme: textTheme,
       primaryTextTheme: textTheme,
 
@@ -86,6 +89,10 @@ abstract final class ThemeFactory {
 
       // App Bar Theme
       appBarTheme: AppBarTheme(
+        systemOverlayStyle: systemOverlayStyle(
+          isDark: isDark,
+          navigationBarColor: model.scaffoldBg,
+        ),
         backgroundColor: AppColors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -199,6 +206,25 @@ abstract final class ThemeFactory {
 
   /// Rescales a theme built in raw mobile design units to the live ScreenUtil
   /// scale. Call only below `AppScreenUtilInit`; on desktop the factor is 1.0.
+  /// Status- and navigation-bar styling for a theme: dark icons on light
+  /// themes, light icons on dark ones, transparent status bar.
+  static SystemUiOverlayStyle systemOverlayStyle({
+    required bool isDark,
+    required Color navigationBarColor,
+  }) {
+    final base = isDark
+        ? SystemUiOverlayStyle.light
+        : SystemUiOverlayStyle.dark;
+    return base.copyWith(
+      statusBarColor: AppColors.transparent,
+      systemNavigationBarColor: navigationBarColor,
+      systemNavigationBarIconBrightness: isDark
+          ? Brightness.light
+          : Brightness.dark,
+      systemNavigationBarDividerColor: AppColors.transparent,
+    );
+  }
+
   static ThemeData applyScreenScale(ThemeData theme) {
     final factor = 1.sp;
     if (factor == 1.0) return theme;

@@ -22,6 +22,12 @@ abstract final class AppRoutes {
 
   /// Data Portability & Sync Backup
   static const String dataPortability = '/settings/data-portability';
+
+  /// First-run welcome flow
+  static const String onboarding = '/onboarding';
+
+  /// In-app privacy policy
+  static const String privacyPolicy = '/settings/privacy';
 }
 
 /// Strongly-typed arguments for habit creation/editing via named routes.

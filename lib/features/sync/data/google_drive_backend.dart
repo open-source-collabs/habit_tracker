@@ -29,7 +29,10 @@ class GoogleDriveBackend implements CloudSyncBackend {
     if (kIsWeb) return false;
     return switch (defaultTargetPlatform) {
       TargetPlatform.android => SyncConfig.googleServerClientId.isNotEmpty,
-      TargetPlatform.iOS || TargetPlatform.macOS => true,
+      // Without an iOS client id (and its URL scheme in Info.plist) sign-in
+      // can't complete, so don't offer Drive at all.
+      TargetPlatform.iOS ||
+      TargetPlatform.macOS => SyncConfig.googleClientId.isNotEmpty,
       _ => false,
     };
   }

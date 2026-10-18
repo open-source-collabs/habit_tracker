@@ -74,6 +74,26 @@ class AppDataRepository {
   /// a sync result doesn't trigger another sync).
   Stream<void> get localChanges => _localChanges.stream;
 
+  final StreamController<Object> _saveErrors =
+      StreamController<Object>.broadcast();
+
+  /// Emits each failed write, so the app can tell the user instead of the
+  /// failure being swallowed by whichever feature triggered the save. The
+  /// in-memory payload keeps the change and the next write retries it.
+  Stream<Object> get saveErrors => _saveErrors.stream;
+
+  bool _lastWriteFailed = false;
+
+  bool _neverSaved = false;
+
+  /// True after a [load] found no stored data, until something is saved.
+  /// The app uses it to show onboarding on a genuine first run.
+  bool get hasNeverSaved => _neverSaved;
+
+  /// Whether the most recent write failed, i.e. the in-memory payload has
+  /// changes that are not on disk yet. Check after [flush].
+  bool get lastWriteFailed => _lastWriteFailed;
+
   bool _hasPendingWrite = false;
   Future<void>? _activeDrain;
   final Set<Future<void>> _pendingUpdates = {};
@@ -112,6 +132,7 @@ class AppDataRepository {
           stored ?? AppPayloadModel.initial(lastModifiedBy: await deviceId);
       _writesBlocked = false;
       _loaded = true;
+      _neverSaved = stored == null;
       return AppDataSnapshot(payload: _current!, isFirstRun: stored == null);
     } catch (_) {
       _writesBlocked = true;
@@ -169,6 +190,33 @@ class AppDataRepository {
     await _scheduleWrite();
   }
 
+  /// Restores rolling backup [backupName] as the current data. Callers must
+  /// rebuild notifiers afterwards. Returns `false` if the backup is missing.
+  Future<bool> restoreBackup(String backupName) async {
+    await flush();
+    final payload = await _storage.restoreBackup(backupName);
+    if (payload == null) return false;
+    _current = payload;
+    _loaded = true;
+    _writesBlocked = false;
+    _loadFuture = null;
+    return true;
+  }
+
+  /// Names of the rolling backups that exist, newest first.
+  Future<List<String>> listBackups() => _storage.listBackups();
+
+  /// Permanently deletes all stored data, including backups. The next [load]
+  /// reports a first run.
+  Future<void> deleteAllData() async {
+    await flush();
+    await _storage.clear();
+    _current = null;
+    _loaded = false;
+    _writesBlocked = false;
+    _loadFuture = null;
+  }
+
   /// Completes when every update started so far has been written (or has
   /// failed). Errors are not rethrown; callers of [update] receive them.
   Future<void> flush() async {
@@ -194,6 +242,7 @@ class AppDataRepository {
         _hasPendingWrite = false;
         try {
           await _storage.savePayload(_current!);
+          _neverSaved = false;
           lastError = null;
           lastStackTrace = null;
         } catch (e, st) {
@@ -204,7 +253,9 @@ class AppDataRepository {
     } finally {
       _activeDrain = null;
     }
+    _lastWriteFailed = lastError != null;
     if (lastError != null) {
+      _saveErrors.add(lastError);
       Error.throwWithStackTrace(lastError, lastStackTrace!);
     }
   }

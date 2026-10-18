@@ -6,14 +6,14 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_dimensions.dart';
 import '../../../../../core/theme/app_font_sizes.dart';
 import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/utils/haptics.dart';
+import '../../../../../core/widgets/app_button.dart';
 import '../../../data/models/habit_model.dart';
 import '../../providers/habit_provider.dart';
 import '../habit_extensions.dart';
 
-/// The row of micro-pills under a habit's title: routine, frequency, current
-/// streak (when > 0) and the heatmap toggle.
-class HabitCardPills extends ConsumerWidget {
+/// The row of micro-pills under a habit's title: routine, frequency and
+/// current streak (when > 0). Purely informational, so it stays compact.
+class HabitCardPills extends StatelessWidget {
   final HabitModel habit;
   final int currentStreak;
   final Color accentColor;
@@ -26,9 +26,7 @@ class HabitCardPills extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final heatmapProvider = habitHeatmapExpandedProvider(habit.id);
-    final showHeatmap = ref.watch(heatmapProvider);
+  Widget build(BuildContext context) {
     final neutralFill = context.isDarkMode
         ? context.surfaceElevatedColor
         : context.cardBorderColor.withValues(alpha: 0.4);
@@ -57,24 +55,6 @@ class HabitCardPills extends ConsumerWidget {
             borderColor: accentColor.withValues(alpha: 0.3),
             fontWeight: FontWeight.w800,
           ),
-        GestureDetector(
-          onTap: () {
-            AppHaptics.selectionClick();
-            ref.read(heatmapProvider.notifier).state = !showHeatmap;
-          },
-          child: _HabitCardPill(
-            label: 'Heatmap',
-            icon: Icons.calendar_view_week_rounded,
-            iconSize: AppIconSizes.xxs,
-            iconColor: showHeatmap ? accentColor : context.textMutedColor,
-            background: showHeatmap
-                ? accentColor.withValues(alpha: 0.18)
-                : neutralFill,
-            foreground: showHeatmap ? accentColor : context.textSecondaryColor,
-            borderColor: showHeatmap ? accentColor : AppColors.transparent,
-            horizontalPadding: 7.w,
-          ),
-        ),
       ],
     );
   }
@@ -87,10 +67,8 @@ class _HabitCardPill extends StatelessWidget {
   final Color foreground;
   final IconData? icon;
   final double? iconSize;
-  final Color? iconColor;
   final Color? borderColor;
   final FontWeight fontWeight;
-  final double? horizontalPadding;
 
   const _HabitCardPill({
     required this.label,
@@ -98,10 +76,8 @@ class _HabitCardPill extends StatelessWidget {
     required this.foreground,
     this.icon,
     this.iconSize,
-    this.iconColor,
     this.borderColor,
     this.fontWeight = FontWeight.w600,
-    this.horizontalPadding,
   });
 
   @override
@@ -116,10 +92,7 @@ class _HabitCardPill extends StatelessWidget {
     );
 
     return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: horizontalPadding ?? 8.w,
-        vertical: 3.h,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
       decoration: BoxDecoration(
         color: background,
         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -135,12 +108,48 @@ class _HabitCardPill extends StatelessWidget {
                 Icon(
                   icon,
                   size: iconSize ?? AppIconSizes.xs,
-                  color: iconColor ?? foreground,
+                  color: foreground,
                 ),
                 SizedBox(width: 3.w),
                 text,
               ],
             ),
+    );
+  }
+}
+
+/// Shows or hides the habit's heatmap. Lives in the title row next to the
+/// actions menu, which is already finger-height, so a full 48dp touch area
+/// costs the card no extra height.
+class HabitCardHeatmapToggle extends ConsumerWidget {
+  final HabitModel habit;
+  final Color accentColor;
+
+  const HabitCardHeatmapToggle({
+    super.key,
+    required this.habit,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final provider = habitHeatmapExpandedProvider(habit.id);
+    final showHeatmap = ref.watch(provider);
+
+    return Semantics(
+      toggled: showHeatmap,
+      child: AppIconButton(
+        icon: Icons.calendar_view_week_rounded,
+        tooltip: showHeatmap ? 'Hide heatmap' : 'Show heatmap',
+        size: 30.r,
+        iconSize: AppIconSizes.sm,
+        border: false,
+        color: showHeatmap ? accentColor : context.textMutedColor,
+        backgroundColor: showHeatmap
+            ? accentColor.withValues(alpha: 0.15)
+            : AppColors.transparent,
+        onPressed: () => ref.read(provider.notifier).state = !showHeatmap,
+      ),
     );
   }
 }

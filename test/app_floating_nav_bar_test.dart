@@ -19,25 +19,25 @@ Widget _buildTestableNavBar({
 
   final defaultItems = [
     const AppFloatingNavBarItem(
-      icon: Icons.grid_view_outlined,
+      icon: Icons.grid_view_rounded,
       activeIcon: Icons.grid_view_rounded,
       label: 'Today',
       tooltip: 'Today Dashboard',
     ),
     const AppFloatingNavBarItem(
-      icon: Icons.insights_outlined,
+      icon: Icons.insights_rounded,
       activeIcon: Icons.insights_rounded,
       label: 'Analytics',
       tooltip: 'Habit Analytics',
     ),
     const AppFloatingNavBarItem(
-      icon: Icons.palette_outlined,
+      icon: Icons.palette_rounded,
       activeIcon: Icons.palette_rounded,
       label: 'Themes',
       tooltip: 'Themes Studio',
     ),
     const AppFloatingNavBarItem(
-      icon: Icons.cloud_sync_outlined,
+      icon: Icons.cloud_sync_rounded,
       activeIcon: Icons.cloud_sync_rounded,
       label: 'Sync',
       tooltip: 'Cloud Sync',
@@ -148,20 +148,20 @@ void main() {
       // Active Analytics tab should display activeIcon (Icons.insights_rounded)
       expect(find.byIcon(Icons.insights_rounded), findsOneWidget);
 
-      // Inactive Today tab should display icon (Icons.grid_view_outlined)
-      expect(find.byIcon(Icons.grid_view_outlined), findsOneWidget);
+      // Inactive Today tab should display icon (Icons.grid_view_rounded)
+      expect(find.byIcon(Icons.grid_view_rounded), findsOneWidget);
     });
 
     testWidgets('renders badge counter correctly when item has badgeCount',
         (tester) async {
       final itemsWithBadge = [
         const AppFloatingNavBarItem(
-          icon: Icons.grid_view_outlined,
+          icon: Icons.grid_view_rounded,
           label: 'Today',
           badgeCount: 5,
         ),
         const AppFloatingNavBarItem(
-          icon: Icons.insights_outlined,
+          icon: Icons.insights_rounded,
           label: 'Analytics',
         ),
       ];

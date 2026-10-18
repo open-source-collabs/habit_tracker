@@ -427,8 +427,8 @@ class _AppTextFieldState extends ConsumerState<AppTextField> {
             padding: EdgeInsets.symmetric(horizontal: 8.w),
             child: Icon(
               obscureText
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined,
+                  ? Icons.visibility_off_rounded
+                  : Icons.visibility_rounded,
               size: AppIconSizes.md,
               color: isFocused ? accent : context.textMutedColor,
             ),

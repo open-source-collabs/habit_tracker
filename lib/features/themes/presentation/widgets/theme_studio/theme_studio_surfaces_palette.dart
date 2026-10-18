@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../../../core/theme/app_contrast.dart';
 import '../../../../../core/theme/app_dimensions.dart';
 import '../../../../../core/theme/app_font_sizes.dart';
+import '../../../../../core/theme/app_fonts.dart';
 import '../../../data/models/dynamic_theme_model.dart';
-import 'theme_studio_font_selector.dart';
 import 'theme_studio_section_label.dart';
 
 /// Opens a color picker titled [title] seeded with [currentColor] and reports
@@ -84,7 +85,56 @@ class ThemeStudioSurfacesPalette extends StatelessWidget {
             ),
           ),
         ],
+        _ContrastWarning(theme: theme, previewTheme: previewTheme),
       ],
+    );
+  }
+}
+
+/// Flags text colors that would be hard to read on the chosen surfaces.
+class _ContrastWarning extends StatelessWidget {
+  final UserThemeModel theme;
+  final ThemeData previewTheme;
+
+  const _ContrastWarning({required this.theme, required this.previewTheme});
+
+  @override
+  Widget build(BuildContext context) {
+    final onCard = AppContrast.ratio(theme.textPrimary, theme.cardBg);
+    final onScaffold = AppContrast.ratio(theme.textPrimary, theme.scaffoldBg);
+    final worst = onCard < onScaffold ? onCard : onScaffold;
+    if (worst >= AppContrast.minTextRatio) return const SizedBox.shrink();
+
+    final error = previewTheme.colorScheme.error;
+    return Padding(
+      padding: EdgeInsets.only(top: 10.h),
+      child: Semantics(
+        liveRegion: true,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.warning_amber_rounded,
+              size: AppIconSizes.sm,
+              color: error,
+            ),
+            SizedBox(width: 8.w),
+            Expanded(
+              child: Text(
+                'Text may be hard to read: contrast is '
+                '${worst.toStringAsFixed(1)}:1 (aim for at least '
+                '${AppContrast.minTextRatio}:1). Try a darker or lighter '
+                'text colour.',
+                style: previewTheme.textTheme.labelSmall?.copyWith(
+                  fontFamily: theme.fontFamily,
+                  fontSize: AppFontSizes.labelSmall,
+                  color: error,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -151,7 +201,7 @@ class _ColorTile extends StatelessWidget {
                   Text(
                     subtitle,
                     style: previewTheme.textTheme.labelSmall?.copyWith(
-                      fontFamily: ThemeStudioFonts.inter,
+                      fontFamily: AppFonts.inter,
                       fontSize: AppFontSizes.labelSmall,
                       fontWeight: FontWeight.w400,
                       color: theme.textPrimary.withValues(alpha: 0.5),

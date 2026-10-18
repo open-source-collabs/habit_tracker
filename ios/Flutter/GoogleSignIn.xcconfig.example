@@ -1,0 +1,9 @@
+// Copy to GoogleSignIn.xcconfig (git-ignored) and fill in the iOS OAuth
+// client from Google Cloud Console (see docs/SYNC_SETUP.md). Both values come
+// from the same client: "1234-abc.apps.googleusercontent.com" reversed is
+// "com.googleusercontent.apps.1234-abc".
+//
+// Also build with --dart-define=GOOGLE_CLIENT_ID=<the same client id> so the
+// app shows Google Drive as a sync option on iOS.
+GOOGLE_IOS_CLIENT_ID = 1234-abc.apps.googleusercontent.com
+GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.1234-abc

@@ -53,6 +53,7 @@ class HabitCreatorColorSection extends ConsumerWidget {
           children: [
             ...List.generate(palette.length, (idx) {
               return _PaletteSwatch(
+                label: 'Colour ${idx + 1}',
                 color: palette[idx],
                 isSelected:
                     formState.customColor == null &&
@@ -89,11 +90,13 @@ class HabitCreatorColorSection extends ConsumerWidget {
 }
 
 class _PaletteSwatch extends StatelessWidget {
+  final String label;
   final Color color;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _PaletteSwatch({
+    required this.label,
     required this.color,
     required this.isSelected,
     required this.onTap,
@@ -101,40 +104,46 @@ class _PaletteSwatch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        width: 34.r,
-        height: 34.r,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected
-                ? context.textPrimaryColor
-                : AppColors.transparent,
-            width: AppSizes.borderWidthSelected,
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: label,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 34.r,
+          height: 34.r,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isSelected
+                  ? context.textPrimaryColor
+                  : AppColors.transparent,
+              width: AppSizes.borderWidthSelected,
+            ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.5),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null,
           ),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.5),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+          child: isSelected
+              ? Center(
+                  child: Icon(
+                    Icons.check_rounded,
+                    size: AppIconSizes.md,
+                    color: habitCreatorOnColor(color),
                   ),
-                ]
+                )
               : null,
         ),
-        child: isSelected
-            ? Center(
-                child: Icon(
-                  Icons.check_rounded,
-                  size: AppIconSizes.md,
-                  color: habitCreatorOnColor(color),
-                ),
-              )
-            : null,
       ),
     );
   }

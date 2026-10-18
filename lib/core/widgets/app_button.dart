@@ -364,24 +364,36 @@ class _AppIconButtonState extends State<AppIconButton>
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
           onTap: _handleTap,
-          child: Container(
-            width: boxSize,
-            height: boxSize,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: widget.isCircle ? BoxShape.circle : BoxShape.rectangle,
-              borderRadius: widget.isCircle
-                  ? null
-                  : BorderRadius.circular(AppRadius.chip),
-              color: bgColor,
-              border: widget.border
-                  ? Border.all(
-                      color: context.cardBorderColor,
-                      width: AppSizes.borderWidth,
-                    )
-                  : null,
+          // The visual can be smaller than a finger; the touch area never is.
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minWidth: AppSizes.minTapTarget,
+              minHeight: AppSizes.minTapTarget,
             ),
-            child: Icon(widget.icon, size: iSize, color: iconColor),
+            child: Center(
+              widthFactor: 1,
+              heightFactor: 1,
+              child: Container(
+                width: boxSize,
+                height: boxSize,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape:
+                      widget.isCircle ? BoxShape.circle : BoxShape.rectangle,
+                  borderRadius: widget.isCircle
+                      ? null
+                      : BorderRadius.circular(AppRadius.chip),
+                  color: bgColor,
+                  border: widget.border
+                      ? Border.all(
+                          color: context.cardBorderColor,
+                          width: AppSizes.borderWidth,
+                        )
+                      : null,
+                ),
+                child: Icon(widget.icon, size: iSize, color: iconColor),
+              ),
+            ),
           ),
         ),
       ),
@@ -391,6 +403,11 @@ class _AppIconButtonState extends State<AppIconButton>
       button = Tooltip(message: widget.tooltip!, child: button);
     }
 
-    return button;
+    // The tooltip (when given) provides the spoken label.
+    return Semantics(
+      button: true,
+      enabled: widget.onPressed != null,
+      child: button,
+    );
   }
 }

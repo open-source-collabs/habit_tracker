@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/habits/data/models/habit_model.dart';
 import '../../features/habits/presentation/widgets/habit_creator_sheet.dart';
+import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
+import '../../features/settings/presentation/screens/privacy_policy_screen.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 import '../../features/sync/presentation/widgets/data_portability_dialog.dart';
 import '../../features/themes/presentation/screens/theme_studio_sheet.dart';
@@ -22,6 +24,11 @@ class AppRouter {
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 
+  /// Global messenger key for app-wide snackbars (e.g. failed saves) that
+  /// aren't tied to one screen's context.
+  static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+      GlobalKey<ScaffoldMessengerState>();
+
   /// Primary route generation handler for [MaterialApp.onGenerateRoute].
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -29,6 +36,13 @@ class AppRouter {
         return _buildPageRoute(
           const DashboardScreen(initialTabIndex: 0),
           settings,
+        );
+
+      case AppRoutes.onboarding:
+        return MaterialPageRoute<void>(
+          builder: (_) => const OnboardingScreen(),
+          settings: settings,
+          fullscreenDialog: true,
         );
 
       case AppRoutes.analytics:
@@ -70,6 +84,9 @@ class AppRouter {
           (context) => const ThemeStudioSheet(),
           settings,
         );
+
+      case AppRoutes.privacyPolicy:
+        return _buildPageRoute(const PrivacyPolicyScreen(), settings);
 
       case AppRoutes.settings:
         return _buildPageRoute(const SettingsScreen(), settings);

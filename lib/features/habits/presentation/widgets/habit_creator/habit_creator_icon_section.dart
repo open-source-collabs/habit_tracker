@@ -127,6 +127,7 @@ class _HabitCreatorIconSectionState
                           emoji,
                         ) {
                           return _GlyphTile(
+                            label: emoji,
                             isSelected:
                                 formState.isEmojiSelected &&
                                 formState.selectedEmoji == emoji,
@@ -182,6 +183,7 @@ class _HabitCreatorIconSectionState
                         !formState.isEmojiSelected &&
                         formState.selectedIconCode == entry.key;
                     return _GlyphTile(
+                      label: entry.key.replaceAll('_', ' '),
                       isSelected: isSelected,
                       activeColor: activeColor,
                       onTap: () {
@@ -254,12 +256,14 @@ class _HabitCreatorIconSectionState
 
 /// Square selectable tile shared by the emoji and Material icon grids.
 class _GlyphTile extends StatelessWidget {
+  final String label;
   final bool isSelected;
   final Color activeColor;
   final VoidCallback onTap;
   final Widget child;
 
   const _GlyphTile({
+    required this.label,
     required this.isSelected,
     required this.activeColor,
     required this.onTap,
@@ -268,22 +272,30 @@ class _GlyphTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 36.r,
-        height: 36.r,
-        decoration: BoxDecoration(
-          color: isSelected
-              ? activeColor.withValues(alpha: 0.22)
-              : context.cardBackgroundColor,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(
-            color: isSelected ? activeColor : context.cardBorderColor,
-            width: isSelected ? AppSizes.borderWidthFocused : 1.0,
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: label,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 36.r,
+          height: 36.r,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? activeColor.withValues(alpha: 0.22)
+                : context.cardBackgroundColor,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(
+              color: isSelected ? activeColor : context.cardBorderColor,
+              width: isSelected
+                  ? AppSizes.borderWidthFocused
+                  : AppSizes.borderWidth,
+            ),
           ),
+          child: Center(child: child),
         ),
-        child: Center(child: child),
       ),
     );
   }

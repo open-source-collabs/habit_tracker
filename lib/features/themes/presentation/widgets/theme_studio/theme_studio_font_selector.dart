@@ -4,26 +4,12 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_dimensions.dart';
 import '../../../../../core/theme/app_font_sizes.dart';
+import '../../../../../core/theme/app_fonts.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../data/models/dynamic_theme_model.dart';
 import 'theme_studio_section_label.dart';
 
-/// Bundled (offline) font families the Theme Studio can switch between.
-abstract final class ThemeStudioFonts {
-  static const String plusJakartaSans = 'PlusJakartaSans';
-  static const String inter = 'Inter';
-
-  static const List<String> registry = [plusJakartaSans, inter];
-
-  static String displayName(String font) =>
-      font == plusJakartaSans ? 'Plus Jakarta Sans' : 'Inter';
-
-  static String tagline(String font) => font == plusJakartaSans
-      ? 'Tactile Geometric Sans'
-      : 'Modern Precision Sans';
-}
-
-/// Side-by-side font cards; each previews itself in its own family.
+/// Two-column grid of font cards; each previews itself in its own family.
 class ThemeStudioFontSelector extends StatelessWidget {
   final UserThemeModel theme;
   final ThemeData previewTheme;
@@ -36,90 +22,144 @@ class ThemeStudioFontSelector extends StatelessWidget {
     required this.onFontSelected,
   });
 
+  static const int _columns = 2;
+
   @override
   Widget build(BuildContext context) {
-    const fonts = ThemeStudioFonts.registry;
+    const fonts = AppFonts.options;
+    final selectedFamily = AppFonts.resolve(theme.fontFamily);
+    final gap = 10.w;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ThemeStudioSectionLabel(
-          text: 'OFFLINE FONT REGISTRY (2 PROFESSIONAL FONTS)',
+          text: 'OFFLINE FONT REGISTRY (${fonts.length} PROFESSIONAL FONTS)',
           theme: theme,
           previewTheme: previewTheme,
         ),
         SizedBox(height: 10.h),
-        Row(
-          children: fonts.map((font) {
-            final isSelected = theme.fontFamily == font;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => onFontSelected(font),
-                child: Container(
-                  margin: EdgeInsets.only(
-                    right: font == fonts.first ? 10.w : 0,
-                  ),
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 14.w,
-                    vertical: 14.h,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.cardBg,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(
-                      color: isSelected
-                          ? (theme.accentPalette.isNotEmpty
-                                ? theme.accentPalette.first
-                                : theme.cardBorder)
-                          : theme.cardBorder,
-                      width: isSelected ? 1.8 : AppSizes.borderWidth,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final cardWidth =
+                (constraints.maxWidth - gap * (_columns - 1)) / _columns;
+            return Wrap(
+              spacing: gap,
+              runSpacing: gap,
+              children: [
+                for (final font in fonts)
+                  SizedBox(
+                    width: cardWidth,
+                    child: _FontCard(
+                      font: font,
+                      theme: theme,
+                      isSelected: font.family == selectedFamily,
+                      onTap: () => onFontSelected(font.family),
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              ThemeStudioFonts.displayName(font),
-                              overflow: TextOverflow.ellipsis,
-                              style: context.textTheme.labelMedium?.copyWith(
-                                fontFamily: font,
-                                fontSize: AppFontSizes.caption,
-                                fontWeight: FontWeight.w700,
-                                color: theme.textPrimary,
-                              ),
-                            ),
-                          ),
-                          if (isSelected)
-                            Icon(
-                              Icons.check_circle,
-                              size: AppIconSizes.sm,
-                              color: theme.accentPalette.isNotEmpty
-                                  ? theme.accentPalette.first
-                                  : AppColors.neonLavender,
-                            ),
-                        ],
-                      ),
-                      SizedBox(height: 4.h),
-                      Text(
-                        ThemeStudioFonts.tagline(font),
-                        style: context.textTheme.labelSmall?.copyWith(
-                          fontFamily: font,
-                          fontSize: AppFontSizes.labelSmall,
-                          fontWeight: FontWeight.w400,
-                          color: theme.textPrimary.withValues(alpha: 0.6),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              ],
             );
-          }).toList(),
+          },
         ),
       ],
+    );
+  }
+}
+
+class _FontCard extends StatelessWidget {
+  final FontOption font;
+  final UserThemeModel theme;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FontCard({
+    required this.font,
+    required this.theme,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = theme.accentPalette.isNotEmpty
+        ? theme.accentPalette.first
+        : AppColors.neonLavender;
+
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      label: '${font.displayName} font',
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.pastelSurface(accent, isDark: theme.isDark)
+                : theme.cardBg,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: isSelected ? accent : theme.cardBorder,
+              width: isSelected
+                  ? AppSizes.borderWidthSelected
+                  : AppSizes.borderWidth,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Aa',
+                      style: context.textTheme.headlineSmall?.copyWith(
+                        fontFamily: font.family,
+                        fontWeight: FontWeight.w700,
+                        height: 1.1,
+                        color: theme.textPrimary,
+                      ),
+                    ),
+                  ),
+                  if (isSelected)
+                    Icon(
+                      Icons.check_circle,
+                      size: AppIconSizes.sm,
+                      color: accent,
+                    ),
+                ],
+              ),
+              SizedBox(height: 6.h),
+              Text(
+                font.displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.labelMedium?.copyWith(
+                  fontFamily: font.family,
+                  fontSize: AppFontSizes.caption,
+                  fontWeight: FontWeight.w700,
+                  color: theme.textPrimary,
+                ),
+              ),
+              SizedBox(height: 2.h),
+              Text(
+                font.tagline,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: context.textTheme.labelSmall?.copyWith(
+                  fontFamily: font.family,
+                  fontSize: AppFontSizes.labelSmall,
+                  fontWeight: FontWeight.w400,
+                  color: theme.textPrimary.withValues(alpha: 0.6),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../../core/theme/app_font_sizes.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/date_format.dart';
+import '../../../../habits/presentation/providers/habit_provider.dart';
 import '../../../../settings/presentation/providers/profile_provider.dart';
 
 /// App bar title: time-of-day greeting (personalised when a display name is
@@ -56,7 +57,7 @@ class DashboardGreetingHeader extends ConsumerWidget {
         ),
         SizedBox(height: 2.h),
         Text(
-          AppDateFormat.longDay(DateTime.now()),
+          AppDateFormat.longDay(ref.watch(currentDayProvider)),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: context.textTheme.labelSmall?.copyWith(

@@ -33,7 +33,7 @@ class NotificationSettingsCard extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _SwitchRow(
-            icon: Icons.notifications_active_outlined,
+            icon: Icons.notifications_active_rounded,
             title: 'Reminders',
             subtitle: 'Habit reminders and digests, scheduled on this device.',
             value: settings.masterEnabled,
@@ -47,7 +47,7 @@ class NotificationSettingsCard extends ConsumerWidget {
             const NotificationPermissionBanner(),
             SizedBox(height: 12.h),
             _SwitchRow(
-              icon: Icons.wb_sunny_outlined,
+              icon: Icons.wb_sunny_rounded,
               title: 'Morning kickoff',
               subtitle: 'A nudge to plan the day',
               value: settings.morningKickoffEnabled,
@@ -58,7 +58,7 @@ class NotificationSettingsCard extends ConsumerWidget {
             ),
             SizedBox(height: 8.h),
             _SwitchRow(
-              icon: Icons.nights_stay_outlined,
+              icon: Icons.nights_stay_rounded,
               title: 'Evening streak saver',
               subtitle: 'A reminder before the day ends',
               value: settings.eveningStreakSaverEnabled,
@@ -68,18 +68,34 @@ class NotificationSettingsCard extends ConsumerWidget {
               onTimeChanged: (time) =>
                   notifier.updateEveningStreakSaver(time: time),
             ),
+            SizedBox(height: 8.h),
+            _SwitchRow(
+              icon: Icons.volume_up_rounded,
+              title: 'Sound',
+              subtitle: 'Play a sound with reminders',
+              value: settings.soundEnabled,
+              onChanged: notifier.toggleSound,
+            ),
             SizedBox(height: 12.h),
             Align(
               alignment: Alignment.centerLeft,
               child: AppButton(
-                text: 'Send a test notification',
+                text: 'Check that reminders reach you',
                 variant: AppButtonVariant.ghost,
                 size: AppButtonSize.sm,
-                leadingIcon: Icon(Icons.send_outlined, size: AppIconSizes.sm),
+                leadingIcon: Icon(Icons.send_rounded, size: AppIconSizes.sm),
                 onPressed: notifier.sendTestNotification,
               ),
             ),
           ],
+          SizedBox(height: 8.h),
+          _SwitchRow(
+            icon: Icons.vibration_rounded,
+            title: 'Haptic feedback',
+            subtitle: 'Subtle vibrations when you tap and check off',
+            value: settings.hapticsEnabled,
+            onChanged: notifier.toggleHaptics,
+          ),
         ],
       ),
     );

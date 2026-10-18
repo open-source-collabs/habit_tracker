@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
+import 'package:habit_tracker/features/habits/data/models/starter_habits.dart';
 import 'package:habit_tracker/features/habits/data/storage/habit_storage.dart';
 import 'package:habit_tracker/features/habits/presentation/providers/habit_provider.dart';
 import 'package:habit_tracker/features/themes/data/models/app_payload_model.dart';
@@ -37,7 +38,8 @@ class InMemoryHabitStorage implements HabitStorage {
 
 void main() {
   group('HabitListNotifier State Management & Optimistic Updates', () {
-    test('Loads starter habits when storage is empty', () async {
+    test('A fresh install starts empty; onboarding adds clean starters',
+        () async {
       final fakeStorage = InMemoryHabitStorage();
       final container = ProviderContainer(
         overrides: [
@@ -46,13 +48,20 @@ void main() {
       );
       addTearDown(container.dispose);
 
-      final habits = await container.read(habitListProvider.future);
-      expect(habits, isNotEmpty);
-      expect(habits.length, greaterThanOrEqualTo(4));
-      expect(
-        habits.any((h) => h.title.contains('Morning Sunlight')),
-        isTrue,
-      );
+      expect(await container.read(habitListProvider.future), isEmpty);
+
+      await container
+          .read(habitListProvider.notifier)
+          .completeOnboarding(StarterHabits.all.take(2).toList());
+
+      final habits = container.read(habitListProvider).value!;
+      expect(habits.map((h) => h.title), [
+        StarterHabits.all[0].title,
+        StarterHabits.all[1].title,
+      ]);
+      expect(habits.every((h) => h.checkIns.isEmpty), isTrue);
+      expect(habits.map((h) => h.id).toSet(), hasLength(2));
+      expect(fakeStorage.storedPayload?.habits, hasLength(2));
     });
 
     test('Loads existing habits from storage when present', () async {

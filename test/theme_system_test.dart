@@ -147,15 +147,15 @@ void main() {
   });
 
   group('ThemeNotifier State & Operations', () {
-    test('initializes with builtInPresets and Obsidian Twilight active', () {
+    test('initializes with builtInPresets and Nordic Serenity active', () {
       final container = ProviderContainer(overrides: [_inMemoryStorage()]);
       addTearDown(container.dispose);
 
       final state = container.read(themeProvider);
 
       expect(state.allThemes.length, greaterThanOrEqualTo(2));
-      expect(state.activeThemeId, 'obsidian_twilight');
-      expect(state.activeTheme.name, 'Obsidian Twilight');
+      expect(state.activeThemeId, UserThemeModel.nordicSerenity.id);
+      expect(state.activeTheme.name, 'Nordic Serenity');
     });
 
     test(

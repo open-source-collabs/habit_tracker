@@ -80,6 +80,11 @@ abstract final class AppColors {
   // Tier 5: Curated Editorial Swatches
   // ===========================================================================
   static const Color nordicTeal = Color(0xFF0E4856);
+
+  // Brand (leaf-and-check logo), used by the launch screen
+  static const Color brandTealDark = Color(0xFF0B3C4D);
+  static const Color brandTeal = Color(0xFF146A68);
+  static const Color brandGreen = Color(0xFF28A484);
   static const Color nordicMist = Color(0xFFEBF2F5);
   static const Color nordicBorder = Color(0xFFDCE5EA);
   static const Color peachMist = Color(0xFFFFF7F2);

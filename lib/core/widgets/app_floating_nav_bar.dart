@@ -386,9 +386,13 @@ class _CenterActionButtonState extends State<_CenterActionButton>
   Widget build(BuildContext context) {
     final primaryAccent = context.primaryAccent;
 
+    // One spoken label: the tooltip and the hidden text below would
+    // otherwise each be announced too.
     return Semantics(
       label: widget.tooltip,
       button: true,
+      excludeSemantics: true,
+      onTap: _handlePress,
       child: Tooltip(
         message: widget.tooltip,
         child: GestureDetector(
@@ -399,51 +403,61 @@ class _CenterActionButtonState extends State<_CenterActionButton>
             _handlePress();
           },
           onTapCancel: () => _controller.reverse(),
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: Container(
-              width: 42.r,
-              height: 42.r,
-              decoration: BoxDecoration(
-                color: primaryAccent,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryAccent.withValues(alpha: 0.40),
-                    blurRadius: 12,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-                border: Border.all(
-                  color: context.onPrimaryColor.withValues(alpha: 0.2),
-                  width: AppSizes.borderWidthFocused,
-                ),
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Icon(
-                    widget.icon,
-                    color: context.onPrimaryColor,
-                    size: AppIconSizes.xl,
-                  ),
-                  SizedBox(
-                    width: 0,
-                    height: 0,
-                    child: OverflowBox(
-                      minWidth: 0,
-                      maxWidth: 0,
-                      minHeight: 0,
-                      maxHeight: 0,
-                      child: Text(
-                        widget.tooltip,
-                        style: context.textTheme.labelSmall?.copyWith(
-                          fontSize: 0,
-                        ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minWidth: AppSizes.minTapTarget,
+              minHeight: AppSizes.minTapTarget,
+            ),
+            child: Center(
+              widthFactor: 1,
+              heightFactor: 1,
+              child: ScaleTransition(
+                scale: _scaleAnimation,
+                child: Container(
+                  width: 42.r,
+                  height: 42.r,
+                  decoration: BoxDecoration(
+                    color: primaryAccent,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: primaryAccent.withValues(alpha: 0.40),
+                        blurRadius: 12,
+                        offset: const Offset(0, 3),
                       ),
+                    ],
+                    border: Border.all(
+                      color: context.onPrimaryColor.withValues(alpha: 0.2),
+                      width: AppSizes.borderWidthFocused,
                     ),
                   ),
-                ],
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Icon(
+                        widget.icon,
+                        color: context.onPrimaryColor,
+                        size: AppIconSizes.xl,
+                      ),
+                      SizedBox(
+                        width: 0,
+                        height: 0,
+                        child: OverflowBox(
+                          minWidth: 0,
+                          maxWidth: 0,
+                          minHeight: 0,
+                          maxHeight: 0,
+                          child: Text(
+                            widget.tooltip,
+                            style: context.textTheme.labelSmall?.copyWith(
+                              fontSize: 0,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

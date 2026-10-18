@@ -28,6 +28,10 @@ class HabitWidgetSyncService {
   static const String keyTopPendingTitle = 'habit_top_pending_title';
   static const String keyTopPendingEmoji = 'habit_top_pending_emoji';
   static const String keyDateStr = 'habit_date_str';
+
+  /// `yyyy-MM-dd` of the day the data describes; the native widget shows
+  /// a "tap to see today" state instead of stale numbers once it changes.
+  static const String keyDateKey = 'habit_date_key';
   static const String keyAllCompleted = 'habit_all_completed';
   static const String keyActiveThemeId = 'habit_active_theme_id';
 
@@ -90,6 +94,10 @@ class HabitWidgetSyncService {
       await WidgetsKit.saveWidgetData<String>(keyTopPendingTitle, topPendingTitle);
       await WidgetsKit.saveWidgetData<String>(keyTopPendingEmoji, topPendingEmoji);
       await WidgetsKit.saveWidgetData<String>(keyDateStr, dateStr);
+      await WidgetsKit.saveWidgetData<String>(
+        keyDateKey,
+        HabitModel.formatDate(normalizedDate),
+      );
       await WidgetsKit.saveWidgetData<bool>(keyAllCompleted, allCompleted);
 
       if (activeTheme != null) {

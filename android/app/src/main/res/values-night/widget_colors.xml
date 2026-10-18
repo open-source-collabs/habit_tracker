@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home-screen widget palette, dark mode (Obsidian surfaces). -->
+<resources>
+    <color name="widget_surface">#181924</color>
+    <color name="widget_border">#262837</color>
+    <color name="widget_text">#F8FAFC</color>
+    <color name="widget_text_secondary">#94A3B8</color>
+    <color name="widget_accent">#3CC79F</color>
+    <color name="widget_progress">#28A484</color>
+    <color name="widget_track">#262837</color>
+    <color name="widget_streak">#FFAE33</color>
+    <color name="widget_streak_bg">#33FFAE33</color>
+</resources>

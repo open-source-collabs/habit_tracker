@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/services/notification_service.dart';
+import '../../../../core/utils/haptics.dart';
 import '../../../habits/data/models/habit_model.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
 import '../../data/models/notification_settings_model.dart';
@@ -48,6 +49,8 @@ class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsMod
     final service = ref.watch(notificationServiceProvider);
     final settings = await storage.loadSettings();
     service.remindersEnabled = settings.masterEnabled;
+    service.soundEnabled = settings.soundEnabled;
+    AppHaptics.enabled = settings.hapticsEnabled;
 
     // Schedule digests if master and individual flags are enabled
     if (settings.masterEnabled) {
@@ -120,20 +123,44 @@ class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsMod
     }
   }
 
-  /// Toggles sound alerts.
+  /// Toggles notification sound. Already-scheduled notifications carry their
+  /// sound setting, so everything is rescheduled.
   Future<void> toggleSound(bool enabled) async {
     final current = state.value ?? const NotificationSettingsModel();
     final updated = current.copyWith(soundEnabled: enabled);
     state = AsyncData(updated);
     await ref.read(notificationStorageProvider).saveSettings(updated);
+    _service.soundEnabled = enabled;
+    if (updated.masterEnabled) {
+      if (updated.morningKickoffEnabled) {
+        _scheduleMorningKickoff(updated.morningTime);
+      }
+      if (updated.eveningStreakSaverEnabled) {
+        _scheduleEveningStreakSaver(updated.eveningTime);
+      }
+      _rescheduleAllHabits();
+    }
   }
 
-  /// Toggles tactile haptics.
+  /// Toggles in-app haptic feedback.
   Future<void> toggleHaptics(bool enabled) async {
     final current = state.value ?? const NotificationSettingsModel();
     final updated = current.copyWith(hapticsEnabled: enabled);
     state = AsyncData(updated);
     await ref.read(notificationStorageProvider).saveSettings(updated);
+    AppHaptics.enabled = enabled;
+  }
+
+  /// Re-plans tonight's streak-saver: skipped once every habit scheduled
+  /// today is done, restored if one is unchecked again.
+  void syncEveningDigest() {
+    final settings = state.value;
+    if (settings == null ||
+        !settings.masterEnabled ||
+        !settings.eveningStreakSaverEnabled) {
+      return;
+    }
+    _scheduleEveningStreakSaver(settings.eveningTime);
   }
 
   /// Dispatches an immediate test notification to verify delivery on device.
@@ -199,6 +226,7 @@ class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsMod
         body: 'Don\'t break the chain! Review your uncompleted habits before tonight.',
         time: time,
         payload: 'digest_evening',
+        skipToday: ref.read(allHabitsDoneTodayProvider),
       ),
     );
   }
@@ -208,6 +236,25 @@ class NotificationSettingsNotifier extends AsyncNotifier<NotificationSettingsMod
     unawaited(_service.rescheduleAll(habits));
   }
 }
+
+/// True when at least one habit is scheduled today and all of them are done.
+final allHabitsDoneTodayProvider = Provider<bool>((ref) {
+  final today = ref.watch(currentDayProvider);
+  final habits = ref.watch(habitListProvider).valueOrNull ?? const [];
+  final scheduled = habits
+      .where((h) => !h.isArchived && h.frequency.isScheduledFor(today))
+      .toList();
+  return scheduled.isNotEmpty && scheduled.every((h) => h.isCompletedOn(today));
+});
+
+/// Keeps the evening streak-saver in step with today's progress. Read once
+/// at app start to activate.
+final eveningDigestSyncProvider = Provider<void>((ref) {
+  ref.listen<bool>(allHabitsDoneTodayProvider, (previous, next) {
+    if (previous == next) return;
+    ref.read(notificationSettingsProvider.notifier).syncEveningDigest();
+  });
+});
 
 /// Restores every scheduled notification at app start: applies the user's
 /// notification settings (which schedules digests), then reconciles habit

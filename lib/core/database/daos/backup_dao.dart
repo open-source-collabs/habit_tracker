@@ -11,53 +11,59 @@ class BackupDao {
 
   const BackupDao();
 
-  /// Rotates backups (1 -> 2, 2 -> 3) and stores the current [payload] as backup 1.
+  /// Keeps `backup_1` as a copy of the latest save and `backup_2`/`backup_3`
+  /// as the last state of the two previous days the app was used.
+  ///
+  /// Rotation happens only on the first save of a new day, so a burst of
+  /// edits can't push yesterday's data out of the backups.
   Future<void> rotateAndSaveBackup(
     DatabaseExecutor executor,
-    AppPayloadModel payload,
-  ) async {
-    final now = DateTime.now().toIso8601String();
+    AppPayloadModel payload, {
+    DateTime? now,
+  }) async {
+    final timestamp = now ?? DateTime.now();
+    final latest = await _getBackupRow(executor, backup1FileName);
+    final latestAt = _createdAt(latest);
 
-    // Check existing backups
-    final b2 = await _getBackupRecord(executor, backup2FileName);
-    if (b2 != null) {
-      await executor.insert(
-        DatabaseSchema.tableBackups,
-        {
-          DatabaseSchema.colBackupName: backup3FileName,
-          DatabaseSchema.colBackupPayloadJson: b2,
-          DatabaseSchema.colBackupCreatedAt: now,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+    if (latest != null &&
+        (latestAt == null || !_sameDay(latestAt, timestamp))) {
+      final previous = await _getBackupRow(executor, backup2FileName);
+      if (previous != null) {
+        await _copyRow(executor, previous, backup3FileName);
+      }
+      await _copyRow(executor, latest, backup2FileName);
     }
 
-    final b1 = await _getBackupRecord(executor, backup1FileName);
-    if (b1 != null) {
-      await executor.insert(
-        DatabaseSchema.tableBackups,
-        {
-          DatabaseSchema.colBackupName: backup2FileName,
-          DatabaseSchema.colBackupPayloadJson: b1,
-          DatabaseSchema.colBackupCreatedAt: now,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-    }
-
-    final jsonString = payload.toRawJson(pretty: true);
-    await executor.insert(
-      DatabaseSchema.tableBackups,
-      {
-        DatabaseSchema.colBackupName: backup1FileName,
-        DatabaseSchema.colBackupPayloadJson: jsonString,
-        DatabaseSchema.colBackupCreatedAt: now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await executor.insert(DatabaseSchema.tableBackups, {
+      DatabaseSchema.colBackupName: backup1FileName,
+      DatabaseSchema.colBackupPayloadJson: payload.toRawJson(),
+      DatabaseSchema.colBackupCreatedAt: timestamp.toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
-  Future<String?> _getBackupRecord(
+  static bool _sameDay(DateTime a, DateTime b) {
+    final x = a.toLocal();
+    final y = b.toLocal();
+    return x.year == y.year && x.month == y.month && x.day == y.day;
+  }
+
+  static DateTime? _createdAt(Map<String, Object?>? row) => DateTime.tryParse(
+    row?[DatabaseSchema.colBackupCreatedAt] as String? ?? '',
+  );
+
+  /// Copies [row] under [name], keeping its original creation time.
+  Future<void> _copyRow(
+    DatabaseExecutor executor,
+    Map<String, Object?> row,
+    String name,
+  ) => executor.insert(DatabaseSchema.tableBackups, {
+    DatabaseSchema.colBackupName: name,
+    DatabaseSchema.colBackupPayloadJson:
+        row[DatabaseSchema.colBackupPayloadJson],
+    DatabaseSchema.colBackupCreatedAt: row[DatabaseSchema.colBackupCreatedAt],
+  }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+  Future<Map<String, Object?>?> _getBackupRow(
     DatabaseExecutor executor,
     String name,
   ) async {
@@ -66,9 +72,22 @@ class BackupDao {
       where: '${DatabaseSchema.colBackupName} = ?',
       whereArgs: [name],
     );
-    if (rows.isEmpty) return null;
-    return rows.first[DatabaseSchema.colBackupPayloadJson] as String?;
+    return rows.isEmpty ? null : rows.first;
   }
+
+  Future<String?> _getBackupRecord(
+    DatabaseExecutor executor,
+    String name,
+  ) async {
+    final row = await _getBackupRow(executor, name);
+    return row?[DatabaseSchema.colBackupPayloadJson] as String?;
+  }
+
+  /// When backup [name] was saved, or `null` if it doesn't exist.
+  Future<DateTime?> backupCreatedAt(
+    DatabaseExecutor executor,
+    String name,
+  ) async => _createdAt(await _getBackupRow(executor, name));
 
   /// Lists all available backup names.
   Future<List<String>> listBackups(DatabaseExecutor executor) async {
