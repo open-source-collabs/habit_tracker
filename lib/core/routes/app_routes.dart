@@ -5,6 +5,10 @@ abstract final class AppRoutes {
   /// Root Dashboard (Today tab)
   static const String dashboard = '/';
 
+  /// Deep-link & widget aliases to open the Today dashboard
+  static const String open = '/open';
+  static const String today = '/today';
+
   /// Direct Dashboard Tabs
   static const String analytics = '/analytics';
   static const String themes = '/themes';

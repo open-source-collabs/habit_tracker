@@ -29,44 +29,134 @@ class AppRouter {
   static final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();
 
+  /// Normalizes incoming named routes, deep links, and widget intents into canonical route names.
+  ///
+  /// Examples:
+  /// - `habittracker://open` -> `AppRoutes.dashboard`
+  /// - `habittracker://today` -> `AppRoutes.dashboard`
+  /// - `habittracker:///open` -> `AppRoutes.dashboard`
+  /// - `habittracker://` -> `AppRoutes.dashboard`
+  /// - `/open` -> `AppRoutes.dashboard`
+  /// - `/today` -> `AppRoutes.dashboard`
+  /// - `habittracker://analytics` -> `AppRoutes.analytics`
+  /// - `habittracker://toggle?id=xyz` -> `AppRoutes.dashboard`
+  static String normalizeRouteName(String? rawRouteName) {
+    if (rawRouteName == null || rawRouteName.isEmpty) {
+      return AppRoutes.dashboard;
+    }
+
+    final uri = Uri.tryParse(rawRouteName);
+    if (uri != null && uri.scheme == 'habittracker') {
+      final host = uri.host.toLowerCase();
+      final path = uri.path.toLowerCase();
+
+      // Deep link aliases to Dashboard / Today
+      if (host == 'open' ||
+          host == 'today' ||
+          host == 'dashboard' ||
+          host == 'toggle' ||
+          (host.isEmpty &&
+              (path == '' ||
+                  path == '/' ||
+                  path == '/open' ||
+                  path == '/today' ||
+                  path == '/dashboard'))) {
+        return AppRoutes.dashboard;
+      }
+
+      // Deep link to tabs or sub-routes
+      final combinedPath = host.isNotEmpty
+          ? '/$host${path.startsWith('/') ? path : (path.isEmpty ? '' : '/$path')}'
+          : (path.isEmpty ? '/' : path);
+
+      return _matchCanonicalRoute(combinedPath);
+    }
+
+    final uriPath = (uri?.path.isNotEmpty ?? false) ? uri!.path : rawRouteName;
+    return _matchCanonicalRoute(uriPath);
+  }
+
+  static String _matchCanonicalRoute(String path) {
+    var cleanPath = path.trim();
+    if (cleanPath.length > 1 && cleanPath.endsWith('/')) {
+      cleanPath = cleanPath.substring(0, cleanPath.length - 1);
+    }
+
+    switch (cleanPath) {
+      case '':
+      case AppRoutes.dashboard:
+      case AppRoutes.open:
+      case AppRoutes.today:
+        return AppRoutes.dashboard;
+      case AppRoutes.analytics:
+        return AppRoutes.analytics;
+      case AppRoutes.themes:
+        return AppRoutes.themes;
+      case AppRoutes.sync:
+        return AppRoutes.sync;
+      case AppRoutes.createHabit:
+      case '/create':
+        return AppRoutes.createHabit;
+      case AppRoutes.editHabit:
+        return AppRoutes.editHabit;
+      case AppRoutes.themeStudio:
+        return AppRoutes.themeStudio;
+      case AppRoutes.privacyPolicy:
+        return AppRoutes.privacyPolicy;
+      case AppRoutes.settings:
+        return AppRoutes.settings;
+      case AppRoutes.dataPortability:
+        return AppRoutes.dataPortability;
+      case AppRoutes.onboarding:
+        return AppRoutes.onboarding;
+      default:
+        return cleanPath;
+    }
+  }
+
   /// Primary route generation handler for [MaterialApp.onGenerateRoute].
   static Route<dynamic> onGenerateRoute(RouteSettings settings) {
-    switch (settings.name) {
+    final routeName = normalizeRouteName(settings.name);
+    final normalizedSettings = settings.name == routeName
+        ? settings
+        : RouteSettings(name: routeName, arguments: settings.arguments);
+
+    switch (routeName) {
       case AppRoutes.dashboard:
         return _buildPageRoute(
           const DashboardScreen(initialTabIndex: 0),
-          settings,
+          normalizedSettings,
         );
 
       case AppRoutes.onboarding:
         return MaterialPageRoute<void>(
           builder: (_) => const OnboardingScreen(),
-          settings: settings,
+          settings: normalizedSettings,
           fullscreenDialog: true,
         );
 
       case AppRoutes.analytics:
         return _buildPageRoute(
           const DashboardScreen(initialTabIndex: 1),
-          settings,
+          normalizedSettings,
         );
 
       case AppRoutes.themes:
         return _buildPageRoute(
           const DashboardScreen(initialTabIndex: 2),
-          settings,
+          normalizedSettings,
         );
 
       case AppRoutes.sync:
         return _buildPageRoute(
           const DashboardScreen(initialTabIndex: 3),
-          settings,
+          normalizedSettings,
         );
 
       case AppRoutes.createHabit:
         return _buildAdaptiveModalRoute<HabitModel?>(
           (context) => HabitCreatorSheet(isDialog: context.isDesktop),
-          settings,
+          normalizedSettings,
         );
 
       case AppRoutes.editHabit:
@@ -76,29 +166,29 @@ class AppRouter {
             initialHabit: args?.habit,
             isDialog: context.isDesktop,
           ),
-          settings,
+          normalizedSettings,
         );
 
       case AppRoutes.themeStudio:
         return _buildAdaptiveModalRoute<void>(
           (context) => const ThemeStudioSheet(),
-          settings,
+          normalizedSettings,
         );
 
       case AppRoutes.privacyPolicy:
-        return _buildPageRoute(const PrivacyPolicyScreen(), settings);
+        return _buildPageRoute(const PrivacyPolicyScreen(), normalizedSettings);
 
       case AppRoutes.settings:
-        return _buildPageRoute(const SettingsScreen(), settings);
+        return _buildPageRoute(const SettingsScreen(), normalizedSettings);
 
       case AppRoutes.dataPortability:
         return _buildAdaptiveDialogRoute<void>(
           (context) => const DataPortabilityDialog(),
-          settings,
+          normalizedSettings,
         );
 
       default:
-        return onUnknownRoute(settings);
+        return onUnknownRoute(normalizedSettings);
     }
   }
 

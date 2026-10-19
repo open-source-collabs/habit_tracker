@@ -5,6 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_tracker/core/theme/theme_factory.dart';
 import 'package:habit_tracker/core/widgets_kit/habit_widget_snapshot_view.dart';
 import 'package:habit_tracker/core/widgets_kit/habit_widget_sync_service.dart';
+import 'package:habit_tracker/core/widgets_kit/widgets_kit_interop.dart';
+import 'package:habit_tracker/features/dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:habit_tracker/features/habits/data/models/habit_model.dart';
 import 'package:habit_tracker/features/habits/data/storage/habit_storage.dart';
 import 'package:habit_tracker/features/habits/presentation/providers/habit_provider.dart';
@@ -210,6 +212,38 @@ void main() {
       expect(uri.scheme, 'habittracker');
       expect(uri.host, 'toggle');
       expect(uri.queryParameters['id'], 'habit_sunlight');
+    });
+
+    testWidgets('handleWidgetClick switches to today on habittracker://open', (
+      tester,
+    ) async {
+      late WidgetRef capturedRef;
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [habitStorageProvider.overrideWithValue(FakeTestStorage())],
+          child: MaterialApp(
+            home: Consumer(
+              builder: (context, ref, child) {
+                capturedRef = ref;
+                return const SizedBox();
+              },
+            ),
+          ),
+        ),
+      );
+
+      // Mutate tab state first
+      capturedRef.read(selectedDashboardTabProvider.notifier).state = 2;
+      expect(capturedRef.read(selectedDashboardTabProvider), 2);
+
+      // Handle habittracker://open
+      WidgetsKitInterop.handleWidgetClick(
+        Uri.parse('habittracker://open'),
+        capturedRef,
+      );
+
+      // Verify it switched back to Tab 0 (Today)
+      expect(capturedRef.read(selectedDashboardTabProvider), 0);
     });
   });
 }

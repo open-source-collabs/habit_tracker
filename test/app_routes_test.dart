@@ -99,6 +99,64 @@ void main() {
       },
     );
 
+    test('normalizeRouteName handles all widget URIs and deep links correctly', () {
+      expect(AppRouter.normalizeRouteName(null), equals(AppRoutes.dashboard));
+      expect(AppRouter.normalizeRouteName(''), equals(AppRoutes.dashboard));
+      expect(AppRouter.normalizeRouteName('/'), equals(AppRoutes.dashboard));
+      expect(AppRouter.normalizeRouteName('/open'), equals(AppRoutes.dashboard));
+      expect(AppRouter.normalizeRouteName('/today'), equals(AppRoutes.dashboard));
+      expect(AppRouter.normalizeRouteName('habittracker://open'), equals(AppRoutes.dashboard));
+      expect(AppRouter.normalizeRouteName('habittracker://today'), equals(AppRoutes.dashboard));
+      expect(AppRouter.normalizeRouteName('habittracker:///open'), equals(AppRoutes.dashboard));
+      expect(AppRouter.normalizeRouteName('habittracker://'), equals(AppRoutes.dashboard));
+      expect(AppRouter.normalizeRouteName('habittracker:///'), equals(AppRoutes.dashboard));
+      expect(AppRouter.normalizeRouteName('habittracker://toggle?id=123'), equals(AppRoutes.dashboard));
+      expect(AppRouter.normalizeRouteName('habittracker://analytics'), equals(AppRoutes.analytics));
+      expect(AppRouter.normalizeRouteName('habittracker://themes'), equals(AppRoutes.themes));
+      expect(AppRouter.normalizeRouteName('habittracker://sync'), equals(AppRoutes.sync));
+      expect(AppRouter.normalizeRouteName('habittracker://settings'), equals(AppRoutes.settings));
+      expect(AppRouter.normalizeRouteName('habittracker://habits/create'), equals(AppRoutes.createHabit));
+      expect(AppRouter.normalizeRouteName('/invalid-path-123'), equals('/invalid-path-123'));
+    });
+
+    testWidgets(
+      'onGenerateRoute resolves widget deep links to DashboardScreen without 404',
+      (tester) async {
+        late BuildContext testContext;
+        await tester.pumpWidget(
+          _wrapWithApp(
+            Builder(
+              builder: (ctx) {
+                testContext = ctx;
+                return const SizedBox();
+              },
+            ),
+          ),
+        );
+
+        // habittracker://open from home-screen widget
+        final widgetRoute = AppRouter.onGenerateRoute(
+          const RouteSettings(name: 'habittracker://open'),
+        ) as MaterialPageRoute;
+        final widgetScreen = widgetRoute.builder(testContext) as DashboardScreen;
+        expect(widgetScreen.initialTabIndex, equals(0));
+
+        // habittracker://today
+        final todayRoute = AppRouter.onGenerateRoute(
+          const RouteSettings(name: 'habittracker://today'),
+        ) as MaterialPageRoute;
+        final todayScreen = todayRoute.builder(testContext) as DashboardScreen;
+        expect(todayScreen.initialTabIndex, equals(0));
+
+        // /open alias
+        final openAliasRoute = AppRouter.onGenerateRoute(
+          const RouteSettings(name: AppRoutes.open),
+        ) as MaterialPageRoute;
+        final openAliasScreen = openAliasRoute.builder(testContext) as DashboardScreen;
+        expect(openAliasScreen.initialTabIndex, equals(0));
+      },
+    );
+
     test('onGenerateRoute resolves editHabit with typed HabitRouteArgs', () {
       final sampleHabit = HabitModel(
         id: 'habit-123',

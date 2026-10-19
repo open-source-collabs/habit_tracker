@@ -27,7 +27,8 @@ class HabitTrackerApp extends ConsumerStatefulWidget {
   ConsumerState<HabitTrackerApp> createState() => _HabitTrackerAppState();
 }
 
-class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp> {
+class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp>
+    with WidgetsBindingObserver {
   StreamSubscription<String>? _notificationTaps;
   StreamSubscription<Object>? _saveErrors;
   AppLifecycleListener? _lifecycle;
@@ -44,6 +45,7 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Subscribe once for the app's lifetime, not on every rebuild.
     WidgetsKitInterop.initialize(ref);
     _saveErrors = ref
@@ -70,19 +72,82 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp> {
       final launchPayload = await notifications.takeLaunchPayload();
       if (launchPayload != null && mounted) {
         _openFromNotification(launchPayload);
+      } else {
+        // Cold start deep-link check (e.g. launched from home screen widget)
+        final defaultRoute =
+            WidgetsBinding.instance.platformDispatcher.defaultRouteName;
+        final defaultUri = Uri.tryParse(defaultRoute);
+        if (defaultUri != null && mounted) {
+          _handleIncomingDeepLink(defaultUri);
+        }
       }
     });
+  }
+
+  @override
+  Future<bool> didPushRouteInformation(
+    RouteInformation routeInformation,
+  ) async {
+    final uri = routeInformation.uri;
+    if (_handleIncomingDeepLink(uri)) {
+      return true;
+    }
+    return super.didPushRouteInformation(routeInformation);
+  }
+
+  bool _handleIncomingDeepLink(Uri? uri) {
+    if (uri == null) return false;
+    final host = uri.host.toLowerCase();
+    final path = uri.path.toLowerCase();
+    final scheme = uri.scheme.toLowerCase();
+
+    final isWidgetOrTodayLink =
+        (scheme == 'habittracker' &&
+            (host == 'open' ||
+                host == 'today' ||
+                host == 'dashboard' ||
+                (host.isEmpty &&
+                    (path == '' ||
+                        path == '/' ||
+                        path == '/open' ||
+                        path == '/today' ||
+                        path == '/dashboard')))) ||
+        (scheme.isEmpty && (path == '/open' || path == '/today'));
+
+    if (isWidgetOrTodayLink) {
+      _openTodayDashboard();
+      return true;
+    }
+
+    if (scheme == 'habittracker' && host == 'toggle') {
+      final habitId = uri.queryParameters['id'];
+      if (habitId != null && habitId.isNotEmpty) {
+        final today = DateTime.now();
+        ref.read(habitListProvider.notifier).toggleHabit(habitId, today);
+      }
+      _openTodayDashboard();
+      return true;
+    }
+
+    return false;
+  }
+
+  /// Brings the user to Today's habits on the root dashboard, resetting
+  /// any active filters or sub-screens.
+  void _openTodayDashboard() {
+    ref.read(dayRolloverWatcherProvider).refresh();
+    ref.read(selectedDashboardTabProvider.notifier).state = 0;
+    ref.read(selectedDateProvider.notifier).state = ref.read(
+      currentDayProvider,
+    );
+    ref.read(activeRoutineFilterProvider.notifier).state = kAllHabitsFilter;
+    AppRouter.navigatorKey.currentState?.popUntil((route) => route.isFirst);
   }
 
   /// Brings the user to today's habits and, for a habit reminder (payload is
   /// the habit id), scrolls to and highlights that habit.
   void _openFromNotification(String payload) {
-    ref.read(dayRolloverWatcherProvider).refresh();
-    ref.read(selectedDashboardTabProvider.notifier).state = 0;
-    ref.read(selectedDateProvider.notifier).state =
-        ref.read(currentDayProvider);
-    ref.read(activeRoutineFilterProvider.notifier).state = kAllHabitsFilter;
-    AppRouter.navigatorKey.currentState?.popUntil((route) => route.isFirst);
+    _openTodayDashboard();
 
     final habits = ref.read(habitListProvider).valueOrNull ?? const [];
     if (habits.any((h) => h.id == payload && !h.isArchived)) {
@@ -125,6 +190,7 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _saveErrors?.cancel();
     _lifecycle?.dispose();
     _notificationTaps?.cancel();
