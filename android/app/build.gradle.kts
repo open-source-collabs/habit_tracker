@@ -42,7 +42,7 @@ android {
     defaultConfig {
         applicationId = "co.trackfree.solforge"
         minSdk = 28 // Android 9+
-        targetSdk = 35
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true

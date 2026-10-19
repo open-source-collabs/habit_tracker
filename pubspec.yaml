@@ -2,7 +2,7 @@ name: habit_tracker
 description: "Track Free - Minimalist Bento habit tracker with privacy-first offline SQLite storage and cloud backup."
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.0+2
 environment:
   sdk: ^3.13.5
 
