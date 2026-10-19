@@ -93,6 +93,7 @@ lib/
   - Buttons: Use [AppButton](file:///d:/Projects/habit_tracker/lib/core/widgets/app_button.dart) or [AppIconButton](file:///d:/Projects/habit_tracker/lib/core/widgets/app_button.dart).
   - Text inputs: Use [AppTextField](file:///d:/Projects/habit_tracker/lib/core/widgets/app_text_field.dart).
   - Dropdowns: Use [AppDropdown](file:///d:/Projects/habit_tracker/lib/core/widgets/app_dropdown.dart).
+  - Toggles: Use [AppSwitch](file:///d:/Projects/habit_tracker/lib/core/widgets/app_switch.dart) — never `Switch` / `Switch.adaptive`.
   - Dialogs: Use [AppDialog](file:///d:/Projects/habit_tracker/lib/core/widgets/app_dialog.dart) or `showAppConfirmDialog`.
   - Bottom Sheets: Use [AppBottomSheet](file:///d:/Projects/habit_tracker/lib/core/widgets/app_bottom_sheet.dart).
   - Badges: Use [AppBadge](file:///d:/Projects/habit_tracker/lib/core/widgets/app_badge.dart) or [AppStreakBadge](file:///d:/Projects/habit_tracker/lib/core/widgets/app_badge.dart).

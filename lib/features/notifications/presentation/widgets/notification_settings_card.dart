@@ -4,7 +4,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/utils/haptics.dart';
 import '../../../../core/widgets/widgets.dart';
 import '../providers/notification_provider.dart';
 import 'notification_permission_banner.dart';
@@ -162,16 +161,10 @@ class _SwitchRow extends StatelessWidget {
             size: AppButtonSize.sm,
             onPressed: () => _pickTime(context),
           ),
-        Semantics(
-          label: title,
-          child: Switch.adaptive(
-            value: value,
-            activeTrackColor: context.primaryAccent,
-            onChanged: (enabled) {
-              AppHaptics.selectionClick();
-              onChanged(enabled);
-            },
-          ),
+        AppSwitch(
+          value: value,
+          semanticLabel: title,
+          onChanged: onChanged,
         ),
       ],
     );

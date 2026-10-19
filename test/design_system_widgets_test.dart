@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:habit_tracker/core/theme/app_colors.dart';
+import 'package:habit_tracker/core/theme/app_dimensions.dart';
 import 'package:habit_tracker/core/theme/theme_factory.dart';
 import 'package:habit_tracker/core/widgets/app_screen_util_init.dart';
 import 'package:habit_tracker/core/widgets/widgets.dart';
@@ -453,6 +454,67 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tapped, isTrue);
+    });
+  });
+
+  group('AppSwitch', () {
+    testWidgets('toggles on tap and exposes toggled semantics', (tester) async {
+      bool value = false;
+
+      await tester.pumpWidget(
+        _buildTestableWidget(
+          StatefulBuilder(
+            builder: (context, setState) => AppSwitch(
+              value: value,
+              semanticLabel: 'Sound',
+              onChanged: (v) => setState(() => value = v),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(AppSwitch));
+      await tester.pumpAndSettle();
+
+      expect(value, isTrue);
+      final semantics = tester.widget<Semantics>(
+        find
+            .descendant(
+              of: find.byType(AppSwitch),
+              matching: find.byType(Semantics),
+            )
+            .first,
+      );
+      expect(semantics.properties.label, 'Sound');
+      expect(semantics.properties.toggled, isTrue);
+    });
+
+    testWidgets('keeps a compact track inside a full tap target',
+        (tester) async {
+      await tester.pumpWidget(
+        _buildTestableWidget(AppSwitch(value: true, onChanged: (_) {})),
+      );
+      await tester.pumpAndSettle();
+
+      final size = tester.getSize(find.byType(AppSwitch));
+      expect(size.height, AppSizes.minTapTarget);
+      expect(size.width, AppSizes.minTapTarget);
+    });
+
+    testWidgets('disabled switch has no tap handler', (tester) async {
+      await tester.pumpWidget(
+        _buildTestableWidget(const AppSwitch(value: false, onChanged: null)),
+      );
+      await tester.pumpAndSettle();
+
+      final detector = tester.widget<GestureDetector>(
+        find.descendant(
+          of: find.byType(AppSwitch),
+          matching: find.byType(GestureDetector),
+        ),
+      );
+      expect(detector.onTap, isNull);
     });
   });
 }

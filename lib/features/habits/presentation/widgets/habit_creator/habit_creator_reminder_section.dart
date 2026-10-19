@@ -7,6 +7,7 @@ import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_dimensions.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/haptics.dart';
+import '../../../../../core/widgets/widgets.dart';
 import '../../../data/models/habit_model.dart';
 import '../../providers/habit_creator_form_provider.dart';
 import 'habit_creator_accent.dart';
@@ -70,11 +71,11 @@ class HabitCreatorReminderSection extends ConsumerWidget {
                   ),
                 ],
               ),
-              Switch.adaptive(
+              AppSwitch(
                 value: formState.reminderEnabled,
-                activeTrackColor: activeColor,
+                activeColor: activeColor,
+                semanticLabel: 'Reminder Alarm',
                 onChanged: (val) {
-                  AppHaptics.selectionClick();
                   formNotifier.setReminderEnabled(val);
                   // Ask at the moment it matters, not on first launch.
                   if (val) {
