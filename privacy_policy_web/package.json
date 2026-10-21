@@ -1,0 +1,10 @@
+{
+  "name": "track-free-privacy-policy",
+  "version": "1.0.0",
+  "description": "Privacy policy web page for Track Free habit tracker, optimized for Vercel deployment.",
+  "private": true,
+  "scripts": {
+    "start": "npx serve ."
+  }
+}
+
