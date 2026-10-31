@@ -18,7 +18,7 @@ class HomeWidgetPreview extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final today = ref.watch(currentDayProvider);
-    final habits = ref.watch(habitListProvider).valueOrNull ?? const [];
+    final habits = ref.watch(habitListProvider).value ?? const [];
     final scheduled = habits
         .where((h) => !h.isArchived && h.frequency.isScheduledFor(today))
         .toList();

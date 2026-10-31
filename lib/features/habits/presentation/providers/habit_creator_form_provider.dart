@@ -74,9 +74,14 @@ class HabitCreatorFormState {
 
 /// Auto-disposing family notifier managing comprehensive habit creation studio form state.
 class HabitCreatorFormNotifier
-    extends AutoDisposeFamilyNotifier<HabitCreatorFormState, HabitModel?> {
+    extends Notifier<HabitCreatorFormState> {
+  HabitCreatorFormNotifier(this.initialHabit);
+
+  final HabitModel? initialHabit;
+
   @override
-  HabitCreatorFormState build(HabitModel? initialHabit) {
+  HabitCreatorFormState build() {
+    final initialHabit = this.initialHabit;
     if (initialHabit == null) {
       return const HabitCreatorFormState();
     }
@@ -212,7 +217,7 @@ class HabitCreatorFormNotifier
 }
 
 /// Family provider exposing the comprehensive habit creator studio form state.
-final habitCreatorFormProvider = AutoDisposeNotifierProvider.family<
+final habitCreatorFormProvider = NotifierProvider.autoDispose.family<
     HabitCreatorFormNotifier, HabitCreatorFormState, HabitModel?>(
   HabitCreatorFormNotifier.new,
 );

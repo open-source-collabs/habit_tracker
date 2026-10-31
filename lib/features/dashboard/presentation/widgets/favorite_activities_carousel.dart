@@ -14,7 +14,7 @@ import '../../../habits/presentation/widgets/habit_extensions.dart';
 /// The user's strongest active habits, ranked by current streak (then total
 /// check-ins). Tapping a card filters the feed to that habit's routine.
 final topHabitsProvider = Provider<List<HabitModel>>((ref) {
-  final habits = ref.watch(habitListProvider).valueOrNull ?? const [];
+  final habits = ref.watch(habitListProvider).value ?? const [];
   final asOf = ref.watch(selectedDateProvider);
 
   final ranked =

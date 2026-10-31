@@ -4,9 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 
 /// Auto-disposing notifier for managing the selected HSL color inside ColorPickerDialog.
-class ColorPickerNotifier extends AutoDisposeFamilyNotifier<HSLColor, Color> {
+class ColorPickerNotifier extends Notifier<HSLColor> {
+  ColorPickerNotifier(this.arg);
+
+  final Color arg;
+
   @override
-  HSLColor build(Color arg) {
+  HSLColor build() {
     return HSLColor.fromColor(arg);
   }
 
@@ -26,6 +30,6 @@ class ColorPickerNotifier extends AutoDisposeFamilyNotifier<HSLColor, Color> {
 
 /// Provider exposing the reactive HSL color selection for a given initial color.
 final colorPickerProvider =
-    AutoDisposeNotifierProviderFamily<ColorPickerNotifier, HSLColor, Color>(
+    NotifierProvider.autoDispose.family<ColorPickerNotifier, HSLColor, Color>(
   ColorPickerNotifier.new,
 );

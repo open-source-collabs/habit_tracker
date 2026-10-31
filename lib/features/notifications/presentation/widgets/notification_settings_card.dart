@@ -16,7 +16,7 @@ class NotificationSettingsCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(notificationSettingsProvider);
-    final settings = settingsAsync.valueOrNull;
+    final settings = settingsAsync.value;
     final notifier = ref.read(notificationSettingsProvider.notifier);
 
     if (settings == null) {

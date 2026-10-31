@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 
 import 'package:habit_tracker/core/widgets_kit/habit_widget_sync_service.dart';
 import '../../../../core/data/app_data_repository.dart';
@@ -120,7 +121,7 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
   /// saves, which also marks the first run as done — even when nothing was
   /// picked.
   Future<void> completeOnboarding(List<StarterHabit> picked) async {
-    final currentList = state.valueOrNull;
+    final currentList = state.value;
     if (currentList == null) return;
     final now = DateTime.now();
     final created = [
@@ -157,7 +158,7 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
     final day = DateTime(date.year, date.month, date.day);
     if (day.isAfter(DateTime(now.year, now.month, now.day))) return;
 
-    final currentList = state.valueOrNull;
+    final currentList = state.value;
     if (currentList == null) return;
     final habitIndex = currentList.indexWhere((h) => h.id == habitId);
     if (habitIndex == -1) return;
@@ -182,7 +183,7 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
 
   /// Creates and appends a new dynamic habit with optimistic UI update.
   Future<void> createHabit(HabitModel habit) async {
-    final currentList = state.valueOrNull;
+    final currentList = state.value;
     if (currentList == null) return;
     final notifications = ref.read(notificationServiceProvider);
     final updatedHabit = habit.copyWith(lastModifiedAt: DateTime.now());
@@ -195,7 +196,7 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
 
   /// Updates an existing habit's configuration or frequency.
   Future<void> updateHabit(HabitModel habit) async {
-    final currentList = state.valueOrNull;
+    final currentList = state.value;
     if (currentList == null) return;
     final index = currentList.indexWhere((h) => h.id == habit.id);
     if (index == -1) return;
@@ -215,7 +216,7 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
   /// Returns the removed habit and its position so the caller can offer undo
   /// via [restoreHabit], or `null` if no such habit exists.
   Future<({HabitModel habit, int index})?> deleteHabit(String habitId) async {
-    final currentList = state.valueOrNull;
+    final currentList = state.value;
     if (currentList == null) return null;
     final index = currentList.indexWhere((h) => h.id == habitId);
     if (index == -1) return null;
@@ -238,7 +239,7 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
   /// Re-inserts a previously deleted [habit] (e.g. from an undo action) at
   /// [index], restoring its reminder.
   Future<void> restoreHabit(HabitModel habit, {int? index}) async {
-    final currentList = state.valueOrNull;
+    final currentList = state.value;
     if (currentList == null || currentList.any((h) => h.id == habit.id)) {
       return;
     }
@@ -263,7 +264,7 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
   /// Archives (pauses) or unarchives a habit. History is kept; archived
   /// habits can't be checked off, don't count in stats, and have no reminder.
   Future<void> setArchived(String habitId, {required bool archived}) async {
-    final currentList = state.valueOrNull;
+    final currentList = state.value;
     if (currentList == null) return;
     final index = currentList.indexWhere((h) => h.id == habitId);
     if (index == -1 || currentList[index].isArchived == archived) return;
@@ -328,9 +329,13 @@ class HabitListNotifier extends AsyncNotifier<List<HabitModel>> {
 }
 
 /// Global provider for habit list state.
+///
+/// Automatic retry is disabled: a failed load means unreadable data, which
+/// must surface immediately so the user can recover or discard it.
 final habitListProvider =
     AsyncNotifierProvider<HabitListNotifier, List<HabitModel>>(
   HabitListNotifier.new,
+  retry: (count, error) => null,
 );
 
 /// Habits filtered by the active routine group.
@@ -338,7 +343,7 @@ final filteredHabitsProvider = Provider<List<HabitModel>>((ref) {
   final habitsAsync = ref.watch(habitListProvider);
   final filter = ref.watch(activeRoutineFilterProvider);
 
-  final habits = habitsAsync.valueOrNull ?? const [];
+  final habits = habitsAsync.value ?? const [];
   if (filter == kAllHabitsFilter) {
     return habits.where((h) => !h.isArchived).toList();
   }
@@ -369,7 +374,7 @@ class DailyHabitStats {
 
 /// Provider computing daily completion stats and active streaks.
 final dailyHabitStatsProvider = Provider<DailyHabitStats>((ref) {
-  final habits = ref.watch(habitListProvider).valueOrNull ?? const [];
+  final habits = ref.watch(habitListProvider).value ?? const [];
   final selectedDate = ref.watch(selectedDateProvider);
 
   final activeHabits = habits.where((h) => !h.isArchived).toList();
@@ -408,7 +413,7 @@ final dailyHabitStatsProvider = Provider<DailyHabitStats>((ref) {
 /// Filter options: [kAllHabitsFilter], each routine group used by an active
 /// habit, then [kArchivedHabitsFilter] when any habit is archived.
 final routineGroupsProvider = Provider<List<String>>((ref) {
-  final habits = ref.watch(habitListProvider).valueOrNull ?? const [];
+  final habits = ref.watch(habitListProvider).value ?? const [];
   final groups = <String>{kAllHabitsFilter};
   var hasArchived = false;
   for (final habit in habits) {
@@ -423,6 +428,6 @@ final routineGroupsProvider = Provider<List<String>>((ref) {
 
 /// Number of archived (paused) habits.
 final archivedHabitCountProvider = Provider<int>((ref) {
-  final habits = ref.watch(habitListProvider).valueOrNull ?? const [];
+  final habits = ref.watch(habitListProvider).value ?? const [];
   return habits.where((h) => h.isArchived).length;
 });

@@ -18,7 +18,7 @@ class AnalyticsTabView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final habits = ref.watch(habitListProvider).valueOrNull ?? [];
+    final habits = ref.watch(habitListProvider).value ?? [];
     final stats = ref.watch(dailyHabitStatsProvider);
     final primaryAccent = context.primaryAccent;
     final secondaryAccent = context.secondaryAccent;

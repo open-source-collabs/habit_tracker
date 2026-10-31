@@ -291,7 +291,7 @@ class _PrivacySummary extends ConsumerWidget {
     final bodyStyle = context.textTheme.bodyMedium?.copyWith(
       color: context.textSecondaryColor,
     );
-    final deviceId = ref.watch(deviceIdProvider).valueOrNull;
+    final deviceId = ref.watch(deviceIdProvider).value;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,7 +336,7 @@ class _AboutSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final version = ref.watch(appVersionProvider).valueOrNull ?? '';
+    final version = ref.watch(appVersionProvider).value ?? '';
     final storeListing = AppLinks.storeListing(defaultTargetPlatform);
     final feedback = AppLinks.feedbackEmail;
     final update = ref.watch(appUpdateControllerProvider);

@@ -19,7 +19,7 @@ class ConsistencyChart extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final primaryAccent = context.primaryAccent;
 
-    final habits = ref.watch(habitListProvider).valueOrNull ?? const [];
+    final habits = ref.watch(habitListProvider).value ?? const [];
     final selectedDate = ref.watch(selectedDateProvider);
 
     // Monday-start, matching the weekly streak logic in HabitModel.

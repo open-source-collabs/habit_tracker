@@ -39,7 +39,7 @@ class DataPortabilityState {
 
 /// Auto-disposing notifier orchestrating JSON export, import, and validation.
 class DataPortabilityNotifier
-    extends AutoDisposeNotifier<DataPortabilityState> {
+    extends Notifier<DataPortabilityState> {
   @override
   DataPortabilityState build() {
     return const DataPortabilityState();
@@ -94,6 +94,6 @@ class DataPortabilityNotifier
 
 /// Provider exposing the reactive state for the Data Portability modal.
 final dataPortabilityProvider =
-    AutoDisposeNotifierProvider<DataPortabilityNotifier, DataPortabilityState>(
+    NotifierProvider.autoDispose<DataPortabilityNotifier, DataPortabilityState>(
       DataPortabilityNotifier.new,
     );

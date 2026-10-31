@@ -181,7 +181,7 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp>
   void _openFromNotification(String payload) {
     _openTodayDashboard();
 
-    final habits = ref.read(habitListProvider).valueOrNull ?? const [];
+    final habits = ref.read(habitListProvider).value ?? const [];
     if (habits.any((h) => h.id == payload && !h.isArchived)) {
       ref.read(highlightedHabitIdProvider.notifier).state = payload;
     }
@@ -239,15 +239,15 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp>
     // A new day: refresh the home screen widget with today's numbers.
     ref.listen(currentDayProvider, (prev, next) {
       if (prev == next) return;
-      final habits = ref.read(habitListProvider).valueOrNull ?? [];
+      final habits = ref.read(habitListProvider).value ?? [];
       ref
           .read(habitWidgetSyncServiceProvider)
           .syncHabits(habits: habits, activeTheme: themeState.activeTheme);
     });
 
     ref.listen(habitListProvider, (prev, next) {
-      final habits = next.valueOrNull;
-      if (habits != null) _onHabitsChanged(prev?.valueOrNull, habits);
+      final habits = next.value;
+      if (habits != null) _onHabitsChanged(prev?.value, habits);
     });
 
     // A background update finished downloading: offer to restart into it.
@@ -261,7 +261,7 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp>
     // Sync home screen widget when active theme changes
     ref.listen(themeProvider, (prev, next) {
       if (prev?.activeThemeId != next.activeThemeId) {
-        final habits = ref.read(habitListProvider).valueOrNull ?? [];
+        final habits = ref.read(habitListProvider).value ?? [];
         ref
             .read(habitWidgetSyncServiceProvider)
             .syncHabits(habits: habits, activeTheme: next.activeTheme);

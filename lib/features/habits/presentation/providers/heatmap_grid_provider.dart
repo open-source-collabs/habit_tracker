@@ -23,9 +23,13 @@ class HeatmapRangeParams {
 
 /// Auto-disposing notifier managing the active display range (30, 60, or 90 days) for a heatmap.
 class HeatmapRangeDaysNotifier
-    extends AutoDisposeFamilyNotifier<int, HeatmapRangeParams> {
+    extends Notifier<int> {
+  HeatmapRangeDaysNotifier(this.arg);
+
+  final HeatmapRangeParams arg;
+
   @override
-  int build(HeatmapRangeParams arg) {
+  int build() {
     return arg.initialDays.clamp(30, 90);
   }
 
@@ -35,7 +39,7 @@ class HeatmapRangeDaysNotifier
 }
 
 /// Provider exposing the reactive selected range days for a heatmap grid instance.
-final heatmapRangeDaysProvider = AutoDisposeNotifierProviderFamily<
+final heatmapRangeDaysProvider = NotifierProvider.autoDispose.family<
     HeatmapRangeDaysNotifier, int, HeatmapRangeParams>(
   HeatmapRangeDaysNotifier.new,
 );

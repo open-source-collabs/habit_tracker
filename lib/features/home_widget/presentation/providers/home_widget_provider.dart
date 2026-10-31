@@ -65,10 +65,10 @@ class HomeWidgetTipDismissed extends AsyncNotifier<bool> {
 /// widget available and addable, at least two active habits, none placed
 /// yet, and the tip not dismissed before.
 final showHomeWidgetTipProvider = Provider.autoDispose<bool>((ref) {
-  final status = ref.watch(homeWidgetStatusProvider).valueOrNull;
-  final dismissed = ref.watch(homeWidgetTipDismissedProvider).valueOrNull;
+  final status = ref.watch(homeWidgetStatusProvider).value;
+  final dismissed = ref.watch(homeWidgetTipDismissedProvider).value;
   if (status == null || dismissed == null || dismissed) return false;
   if (!status.available || !status.canPin || status.isInstalled) return false;
-  final habits = ref.watch(habitListProvider).valueOrNull ?? const [];
+  final habits = ref.watch(habitListProvider).value ?? const [];
   return habits.where((h) => !h.isArchived).length >= 2;
 });

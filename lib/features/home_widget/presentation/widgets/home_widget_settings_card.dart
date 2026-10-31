@@ -40,7 +40,7 @@ class _HomeWidgetSettingsCardState
 
   @override
   Widget build(BuildContext context) {
-    final status = ref.watch(homeWidgetStatusProvider).valueOrNull;
+    final status = ref.watch(homeWidgetStatusProvider).value;
     final installed = status?.isInstalled ?? false;
 
     return AppCard(

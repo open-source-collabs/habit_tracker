@@ -21,7 +21,7 @@ class SyncTabView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final habits = ref.watch(habitListProvider).valueOrNull ?? [];
+    final habits = ref.watch(habitListProvider).value ?? [];
     final checkIns = habits.fold<int>(
       0,
       (sum, h) => sum + h.checkIns.values.where((done) => done).length,

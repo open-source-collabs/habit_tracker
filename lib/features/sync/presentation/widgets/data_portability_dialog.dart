@@ -52,7 +52,7 @@ class _DataPortabilityDialogState extends ConsumerState<DataPortabilityDialog> {
   }
 
   AppPayloadModel _buildCurrentPayload() {
-    final habits = ref.read(habitListProvider).valueOrNull ?? [];
+    final habits = ref.read(habitListProvider).value ?? [];
     final themeState = ref.read(themeProvider);
     final stored = ref.read(appDataRepositoryProvider).current;
 

@@ -50,9 +50,13 @@ class AppTextFieldParams {
 
 /// Auto-disposing notifier orchestrating focus, password toggle, and clear button state.
 class AppTextFieldUiNotifier
-    extends AutoDisposeFamilyNotifier<AppTextFieldUiState, AppTextFieldParams> {
+    extends Notifier<AppTextFieldUiState> {
+  AppTextFieldUiNotifier(this.arg);
+
+  final AppTextFieldParams arg;
+
   @override
-  AppTextFieldUiState build(AppTextFieldParams arg) {
+  AppTextFieldUiState build() {
     return AppTextFieldUiState(
       obscureText: arg.initialObscure,
       showClear: arg.initialShowClear,
@@ -77,7 +81,7 @@ class AppTextFieldUiNotifier
 }
 
 /// Provider exposing the reactive UI state for an AppTextField instance.
-final appTextFieldUiProvider = AutoDisposeNotifierProviderFamily<
+final appTextFieldUiProvider = NotifierProvider.autoDispose.family<
     AppTextFieldUiNotifier, AppTextFieldUiState, AppTextFieldParams>(
   AppTextFieldUiNotifier.new,
 );
