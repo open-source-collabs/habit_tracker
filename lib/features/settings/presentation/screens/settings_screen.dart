@@ -12,6 +12,8 @@ import '../../../../core/theme/app_dimensions.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/app_error_log.dart';
 import '../../../../core/widgets/widgets.dart';
+import '../../../app_update/presentation/app_update_prompts.dart';
+import '../../../app_update/presentation/providers/app_update_controller.dart';
 import '../../../dashboard/presentation/providers/dashboard_provider.dart';
 import '../../../habits/presentation/providers/habit_provider.dart';
 import '../../../home_widget/data/home_widget_service.dart';
@@ -337,6 +339,8 @@ class _AboutSection extends ConsumerWidget {
     final version = ref.watch(appVersionProvider).valueOrNull ?? '';
     final storeListing = AppLinks.storeListing(defaultTargetPlatform);
     final feedback = AppLinks.feedbackEmail;
+    final update = ref.watch(appUpdateControllerProvider);
+    final updates = ref.read(appUpdateControllerProvider.notifier);
 
     final tiles = <Widget>[
       _SettingsTile(
@@ -344,6 +348,23 @@ class _AboutSection extends ConsumerWidget {
         title: 'Track Free',
         subtitle: version.isEmpty ? 'Habit tracker' : 'Version $version',
       ),
+      if (updates.isSupported)
+        _SettingsTile(
+          icon: Icons.system_update_rounded,
+          title: 'Check for updates',
+          subtitle: switch (update.status) {
+            AppUpdateStatus.checking => 'Checking Google Play…',
+            AppUpdateStatus.downloading => 'Downloading the update…',
+            AppUpdateStatus.readyToInstall =>
+              'Update downloaded. Tap to restart and install.',
+            _ => 'See whether a newer version is on Google Play.',
+          },
+          onTap: switch (update.status) {
+            AppUpdateStatus.checking || AppUpdateStatus.downloading => null,
+            AppUpdateStatus.readyToInstall => updates.installDownloaded,
+            _ => () => checkForAppUpdate(ref, manual: true, context: context),
+          },
+        ),
       if (storeListing != null)
         _SettingsTile(
           icon: Icons.star_rounded,

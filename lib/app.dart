@@ -10,7 +10,12 @@ import 'core/services/notification_service.dart';
 import 'core/widgets/app_screen_util_init.dart';
 import 'core/widgets_kit/habit_widget_sync_service.dart';
 import 'core/widgets_kit/widgets_kit_interop.dart';
+import 'features/app_review/presentation/app_review_prompts.dart';
+import 'features/app_review/presentation/providers/review_prompt_service.dart';
+import 'features/app_update/presentation/app_update_prompts.dart';
+import 'features/app_update/presentation/providers/app_update_controller.dart';
 import 'features/dashboard/presentation/providers/dashboard_provider.dart';
+import 'features/habits/data/models/habit_model.dart';
 import 'features/habits/presentation/providers/habit_provider.dart';
 import 'features/notifications/presentation/providers/notification_provider.dart';
 import 'features/onboarding/presentation/onboarding_gate.dart';
@@ -32,10 +37,35 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp>
   StreamSubscription<String>? _notificationTaps;
   StreamSubscription<Object>? _saveErrors;
   AppLifecycleListener? _lifecycle;
+  Timer? _updateCheck;
+  Timer? _reviewPrompt;
+
+  /// Looks for a Play Store update a few seconds after launch, so it never
+  /// competes with startup. Rate-limited and silent unless one is available.
+  void _scheduleUpdateCheck() {
+    _updateCheck = Timer(const Duration(seconds: 5), () {
+      if (mounted) unawaited(checkForAppUpdate(ref));
+    });
+  }
+
+  /// After a check-in, asks for a store review if the user is on a roll. The
+  /// short pause lets the check-in animation land first.
+  void _onHabitsChanged(List<HabitModel>? prev, List<HabitModel> next) {
+    final today = DateTime.now();
+    int doneToday(List<HabitModel> habits) =>
+        habits.where((h) => !h.isArchived && h.isCompletedOn(today)).length;
+    if (prev == null || doneToday(next) <= doneToday(prev)) return;
+    _reviewPrompt?.cancel();
+    _reviewPrompt = Timer(const Duration(seconds: 2), () {
+      if (mounted) unawaited(maybeAskForReview(ref, next));
+    });
+  }
 
   /// Reminders are scheduled in the device's zone; after travelling they are
   /// rebuilt so they still fire at the chosen local time.
   Future<void> _onResume() async {
+    // Finishes or resumes an update started earlier (no-op when up to date).
+    unawaited(checkForAppUpdate(ref));
     final notifications = ref.read(notificationServiceProvider);
     if (!await notifications.refreshTimeZone() || !mounted) return;
     ref.invalidate(notificationSettingsProvider); // reschedules digests
@@ -55,6 +85,7 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp>
     ref.read(dayRolloverWatcherProvider).start();
     _lifecycle = AppLifecycleListener(onResume: _onResume);
     unawaited(_appReady);
+    unawaited(ref.read(reviewPromptServiceProvider).registerFirstUse());
 
     final notifications = ref.read(notificationServiceProvider);
     _notificationTaps = notifications.notificationTaps.listen(
@@ -69,6 +100,7 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp>
       // Skips tonight's streak-saver once everything is done.
       ref.read(eveningDigestSyncProvider);
       await ref.read(reminderSyncProvider).restoreAll();
+      _scheduleUpdateCheck();
       final launchPayload = await notifications.takeLaunchPayload();
       if (launchPayload != null && mounted) {
         _openFromNotification(launchPayload);
@@ -193,6 +225,8 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp>
     WidgetsBinding.instance.removeObserver(this);
     _saveErrors?.cancel();
     _lifecycle?.dispose();
+    _updateCheck?.cancel();
+    _reviewPrompt?.cancel();
     _notificationTaps?.cancel();
     WidgetsKitInterop.dispose();
     super.dispose();
@@ -209,6 +243,19 @@ class _HabitTrackerAppState extends ConsumerState<HabitTrackerApp>
       ref
           .read(habitWidgetSyncServiceProvider)
           .syncHabits(habits: habits, activeTheme: themeState.activeTheme);
+    });
+
+    ref.listen(habitListProvider, (prev, next) {
+      final habits = next.valueOrNull;
+      if (habits != null) _onHabitsChanged(prev?.valueOrNull, habits);
+    });
+
+    // A background update finished downloading: offer to restart into it.
+    ref.listen(appUpdateControllerProvider, (prev, next) {
+      if (prev?.status != next.status &&
+          next.status == AppUpdateStatus.readyToInstall) {
+        showUpdateReadySnackBar(ref);
+      }
     });
 
     // Sync home screen widget when active theme changes

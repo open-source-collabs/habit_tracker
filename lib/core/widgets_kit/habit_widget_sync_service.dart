@@ -33,6 +33,11 @@ class HabitWidgetSyncService {
   /// a "tap to see today" state instead of stale numbers once it changes.
   static const String keyDateKey = 'habit_date_key';
   static const String keyAllCompleted = 'habit_all_completed';
+
+  /// Prefix for the per-weekday scheduled habit count (`habit_total_wd_1`
+  /// = Monday … `_7` = Sunday). Lets the native widget roll over to a fresh
+  /// "0 / N" at midnight without the app having to run.
+  static const String keyWeekdayTotalPrefix = 'habit_total_wd_';
   static const String keyActiveThemeId = 'habit_active_theme_id';
 
   /// Synchronizes current habit data to native home screen widgets.
@@ -99,6 +104,14 @@ class HabitWidgetSyncService {
         HabitModel.formatDate(normalizedDate),
       );
       await WidgetsKit.saveWidgetData<bool>(keyAllCompleted, allCompleted);
+      for (var weekday = DateTime.monday; weekday <= DateTime.sunday; weekday++) {
+        // 2024-01-01 is a Monday, so day N falls on weekday N.
+        final sample = DateTime(2024, 1, weekday);
+        final count = habits
+            .where((h) => !h.isArchived && h.frequency.isScheduledFor(sample))
+            .length;
+        await WidgetsKit.saveWidgetData<int>('$keyWeekdayTotalPrefix$weekday', count);
+      }
 
       if (activeTheme != null) {
         await WidgetsKit.saveWidgetData<String>(

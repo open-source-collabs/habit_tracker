@@ -1,14 +1,17 @@
 package co.trackfree.solforge
 
+import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.widget.RemoteViews
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -26,6 +29,69 @@ class HabitWidgetProvider : AppWidgetProvider() {
         for (appWidgetId in appWidgetIds) {
             appWidgetManager.updateAppWidget(appWidgetId, buildViews(context))
         }
+        scheduleMidnightRefresh(context)
+    }
+
+    override fun onReceive(context: Context, intent: Intent) {
+        super.onReceive(context, intent)
+        // The day, clock or time zone changed (or the device restarted):
+        // re-render so yesterday's progress never lingers, even though the
+        // app itself is not running.
+        when (intent.action) {
+            Intent.ACTION_DATE_CHANGED,
+            Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED,
+            Intent.ACTION_BOOT_COMPLETED,
+            ACTION_MIDNIGHT_REFRESH -> refreshAll(context)
+        }
+    }
+
+    override fun onEnabled(context: Context) {
+        scheduleMidnightRefresh(context)
+    }
+
+    override fun onDisabled(context: Context) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        alarmManager.cancel(midnightPendingIntent(context))
+    }
+
+    private fun refreshAll(context: Context) {
+        val manager = AppWidgetManager.getInstance(context)
+        val ids = manager.getAppWidgetIds(ComponentName(context, HabitWidgetProvider::class.java))
+        if (ids.isNotEmpty()) onUpdate(context, manager, ids)
+    }
+
+    /**
+     * Inexact alarm shortly after the next local midnight. No special
+     * permission is needed; DATE_CHANGED covers the exact moment when the
+     * system delivers it, and this alarm is the backstop.
+     */
+    private fun scheduleMidnightRefresh(context: Context) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val nextMidnight = Calendar.getInstance().apply {
+            add(Calendar.DAY_OF_YEAR, 1)
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 5)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        alarmManager.set(AlarmManager.RTC, nextMidnight, midnightPendingIntent(context))
+    }
+
+    private fun midnightPendingIntent(context: Context): PendingIntent {
+        val intent = Intent(context, HabitWidgetProvider::class.java).apply {
+            action = ACTION_MIDNIGHT_REFRESH
+        }
+        return PendingIntent.getBroadcast(
+            context,
+            1,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    private companion object {
+        const val ACTION_MIDNIGHT_REFRESH = "co.trackfree.solforge.action.MIDNIGHT_REFRESH"
     }
 
     private fun buildViews(context: Context): RemoteViews {
@@ -42,10 +108,17 @@ class HabitWidgetProvider : AppWidgetProvider() {
         val isFresh = prefs.text("habit_date_key") == todayKey
 
         if (!isFresh) {
-            views.setTextViewText(R.id.widget_completion_count, "–")
-            views.setTextViewText(R.id.widget_completion_percentage, "")
+            // A new day began and the app hasn't synced yet: nothing is done
+            // today, so show a clean slate sized to today's schedule.
+            val total = prefs.number("habit_total_wd_${dartWeekday(now)}")
+            views.setTextViewText(R.id.widget_completion_count, "0 / $total")
+            views.setTextViewText(R.id.widget_completion_percentage, "0%")
             views.setProgressBar(R.id.widget_progress, 100, 0, false)
-            views.setTextViewText(R.id.widget_top_pending, context.getString(R.string.widget_stale))
+            views.setTextViewText(
+                R.id.widget_top_pending,
+                if (total == 0) context.getString(R.string.widget_no_habits)
+                else context.getString(R.string.widget_stale)
+            )
             views.setTextViewText(
                 R.id.widget_streak_badge,
                 context.getString(R.string.widget_streak_days, prefs.number("habit_active_streak"))
@@ -102,6 +175,12 @@ private fun SharedPreferences.number(key: String): Int = when (val value = all[k
     is Number -> value.toInt()
     is String -> value.toDoubleOrNull()?.toInt() ?: 0
     else -> 0
+}
+
+/** Dart's `DateTime.weekday` (Monday = 1 … Sunday = 7) for [date]. */
+private fun dartWeekday(date: Date): Int {
+    val calendarDay = Calendar.getInstance().apply { time = date }.get(Calendar.DAY_OF_WEEK)
+    return (calendarDay + 5) % 7 + 1
 }
 
 private fun SharedPreferences.text(key: String): String? =
